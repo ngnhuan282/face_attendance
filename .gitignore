@@ -1,0 +1,77 @@
+    # ========================
+# Python
+# ========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+
+# ========================
+# Virtual Environment
+# ========================
+venv/
+env/
+ENV/
+.venv/
+
+# ========================
+# Django
+# ========================
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Static files collected
+staticfiles/
+static_root/
+
+# ========================
+# Media files (ảnh sinh viên)
+# ========================
+media/student_photos/*
+media/encodings/*
+
+# Giữ lại cấu trúc thư mục
+!media/student_photos/.gitkeep
+!media/encodings/.gitkeep
+
+# ========================
+# Environment variables
+# ========================
+.env
+.env.local
+.env.production
+*.env
+
+# ========================
+# IDE / Editor
+# ========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ========================
+# face_recognition / AI
+# ========================
+*.pkl           # file encodings khuôn mặt
+*.dat           # shape predictor model
+*.bak
+
+# ========================
+# Jupyter Notebook (nếu dùng)
+# ========================
+.ipynb_checkpoints
+*.ipynb
+
+# ========================
+# OS
+# ========================
+Desktop.ini
+ehthumbs.db
