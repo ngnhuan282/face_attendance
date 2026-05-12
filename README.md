@@ -432,16 +432,16 @@ Hệ thống gồm **10 bảng** chia thành 7 app, theo đúng thứ tự phụ
 
 ## 👥 Thành Viên Nhóm
 
-| Họ tên |
-|---|---|---|
-| Nguyễn Văn Nhuận |
-| Vũ Hoàng |
-| Phạm Minh Hoàng |
-| Võ Ngọc Nguyên |
+| Họ tên |</br>
+|---|---|---| </br>
+Nguyễn Văn Nhuận </br>
+Vũ Hoàng </br>
+Phạm Minh Hoàng </br>
+Võ Ngọc Nguyên </br>
 
 ---
 
 ## 📄 Giấy Phép
 
-Đồ án môn học — Ngôn ngữ lập trình Python
+Đồ án môn học — Ngôn ngữ lập trình Python </br>
 Trường Đại học Sài Gòn — Khoa Công nghệ Thông tin
