@@ -142,18 +142,23 @@ Mở trình duyệt và truy cập:
 
 ```
 face_attendance/
-├── config/                 # Cấu hình Django (settings, urls)
-├── accounts/               # App đăng nhập giảng viên
-├── students/               # App quản lý sinh viên
-├── attendance/             # App điểm danh realtime
-├── reports/                # App báo cáo thống kê
+├── config/                 # Cấu hình Django (settings, urls, wsgi)
+├── academics/              # Khoa, Ngành, Năm học, Học kỳ
+├── accounts/               # Tài khoản, Giảng viên, phân quyền
+├── students/               # Sinh viên, Lớp sinh hoạt
+├── courses/                # Học phần, Lớp học phần, Đăng ký
+├── schedules/              # Phòng học, Lịch học từng buổi
+├── attendance/             # Buổi điểm danh, Bản ghi điểm danh
+├── notifications/          # Cảnh báo vắng mặt > 20%
+├── reports/                # Thống kê, xuất Excel báo cáo
 ├── recognition/            # Module AI nhận diện khuôn mặt
-│   ├── face_detector.py    # Phát hiện khuôn mặt
-│   ├── face_encoder.py     # Encode khuôn mặt → vector
-│   └── face_matcher.py     # So khớp khuôn mặt
-├── templates/              # HTML templates
+│   ├── face_detector.py    # Phát hiện khuôn mặt từ frame
+│   ├── face_encoder.py     # Encode ảnh SV → vector 128 chiều
+│   ├── face_matcher.py     # So khớp khuôn mặt realtime
+│   └── utils.py            # Load/save encodings.pkl
+├── templates/              # HTML templates (base.html + từng app)
 ├── static/                 # CSS, JS, hình ảnh tĩnh
-├── media/                  # Ảnh upload (không commit)
+├── media/                  # Ảnh upload (không commit lên Git)
 │   ├── student_photos/     # Ảnh khuôn mặt sinh viên
 │   └── encodings/          # File encodings.pkl
 ├── .env                    # Biến môi trường (không commit)
@@ -161,6 +166,215 @@ face_attendance/
 ├── manage.py
 └── requirements.txt
 ```
+
+---
+
+## 🗄️ Cấu Trúc Database
+
+Hệ thống gồm **10 bảng** chia thành 7 app, theo đúng thứ tự phụ thuộc.
+
+### academics — Học thuật cốt lõi
+
+**Faculty** (Khoa)
+| Field | Kiểu dữ liệu | Ràng buộc | Mô tả |
+|---|---|---|---|
+| id | AutoField | PK | Django tự tạo |
+| code | CharField(10) | UNIQUE, NOT NULL | Mã khoa — VD: CNTT |
+| name | CharField(100) | NOT NULL | Tên khoa |
+
+**Department** (Ngành)
+| Field | Kiểu dữ liệu | Ràng buộc | Mô tả |
+|---|---|---|---|
+| id | AutoField | PK | |
+| faculty_id | ForeignKey | FK → Faculty | Thuộc khoa nào |
+| code | CharField(10) | UNIQUE | Mã ngành — VD: KTPM |
+| name | CharField(100) | NOT NULL | Tên ngành |
+
+**AcademicYear** (Năm học)
+| Field | Kiểu dữ liệu | Ràng buộc | Mô tả |
+|---|---|---|---|
+| id | AutoField | PK | |
+| name | CharField(20) | UNIQUE | VD: 2024-2025 |
+| start_date | DateField | NOT NULL | Ngày bắt đầu |
+| end_date | DateField | NOT NULL | Ngày kết thúc |
+| is_active | BooleanField | default=False | Năm học hiện tại |
+
+**Semester** (Học kỳ)
+| Field | Kiểu dữ liệu | Ràng buộc | Mô tả |
+|---|---|---|---|
+| id | AutoField | PK | |
+| academic_year_id | ForeignKey | FK → AcademicYear | |
+| semester_num | IntegerField | NOT NULL | 1=HK1, 2=HK2, 3=HK Hè |
+| start_date | DateField | NOT NULL | |
+| end_date | DateField | NOT NULL | |
+| is_active | BooleanField | default=False | |
+> UNIQUE TOGETHER: (academic_year, semester_num)
+
+---
+
+### accounts — Tài khoản người dùng
+
+**Teacher** (Giảng viên — mở rộng User Django)
+| Field | Kiểu dữ liệu | Ràng buộc | Mô tả |
+|---|---|---|---|
+| id | AutoField | PK | |
+| user_id | OneToOneField | FK → User, UNIQUE | 1 tài khoản = 1 GV |
+| department_id | ForeignKey | FK → Department | Giảng dạy ngành nào |
+| teacher_id | CharField(20) | UNIQUE | Mã giảng viên |
+| phone | CharField(15) | blank=True | |
+| avatar | ImageField | null=True | Ảnh đại diện |
+
+---
+
+### students — Sinh viên
+
+**StudentClass** (Lớp sinh hoạt)
+| Field | Kiểu dữ liệu | Ràng buộc | Mô tả |
+|---|---|---|---|
+| id | AutoField | PK | |
+| department_id | ForeignKey | FK → Department | Thuộc ngành nào |
+| class_code | CharField(20) | UNIQUE | VD: DHKTPM17A |
+| class_name | CharField(50) | NOT NULL | Tên lớp |
+| intake_year | IntegerField | NOT NULL | Năm nhập học |
+
+**Student** (Sinh viên)
+| Field | Kiểu dữ liệu | Ràng buộc | Mô tả |
+|---|---|---|---|
+| id | AutoField | PK | |
+| student_class_id | ForeignKey | FK → StudentClass | Lớp sinh hoạt |
+| student_id | CharField(20) | UNIQUE | MSSV |
+| full_name | CharField(100) | NOT NULL | Họ tên đầy đủ |
+| date_of_birth | DateField | null=True | Ngày sinh |
+| email | EmailField | blank=True | |
+| phone | CharField(15) | blank=True | |
+| photo | ImageField | null=True | **Ảnh khuôn mặt để encode** |
+| is_active | BooleanField | default=True | Đang học hay đã nghỉ |
+| created_at | DateTimeField | auto_now_add | Ngày tạo hồ sơ |
+
+---
+
+### courses — Học phần & Lớp học phần
+
+**Course** (Học phần / Môn học)
+| Field | Kiểu dữ liệu | Ràng buộc | Mô tả |
+|---|---|---|---|
+| id | AutoField | PK | |
+| department_id | ForeignKey | FK → Department | |
+| course_code | CharField(20) | UNIQUE | VD: DHKTPM001 |
+| course_name | CharField(200) | NOT NULL | Tên học phần |
+| credits | IntegerField | default=3 | Số tín chỉ |
+| description | TextField | blank=True | |
+
+**CourseClass** (Lớp học phần)
+| Field | Kiểu dữ liệu | Ràng buộc | Mô tả |
+|---|---|---|---|
+| id | AutoField | PK | |
+| course_id | ForeignKey | FK → Course | |
+| semester_id | ForeignKey | FK → Semester | |
+| teacher_id | ForeignKey | FK → Teacher | Giảng viên phụ trách |
+| class_code | CharField(30) | NOT NULL | VD: DHKTPM17A_HP1 |
+| max_students | IntegerField | default=40 | Sĩ số tối đa |
+| total_sessions | IntegerField | default=15 | Tổng số buổi học |
+> UNIQUE TOGETHER: (course, semester, class_code)
+
+**Enrollment** (Đăng ký học phần)
+| Field | Kiểu dữ liệu | Ràng buộc | Mô tả |
+|---|---|---|---|
+| id | AutoField | PK | |
+| course_class_id | ForeignKey | FK → CourseClass | |
+| student_id | ForeignKey | FK → Student | |
+| enrolled_at | DateTimeField | auto_now_add | Ngày đăng ký |
+| is_active | BooleanField | default=True | Còn học hay đã hủy |
+> UNIQUE TOGETHER: (course_class, student)
+
+---
+
+### schedules — Lịch học
+
+**Room** (Phòng học)
+| Field | Kiểu dữ liệu | Ràng buộc | Mô tả |
+|---|---|---|---|
+| id | AutoField | PK | |
+| room_code | CharField(20) | UNIQUE | VD: A101 |
+| building | CharField(50) | blank=True | Tòa nhà |
+| capacity | IntegerField | default=40 | Sức chứa |
+| has_camera | BooleanField | default=False | Có camera điểm danh |
+
+**Schedule** (Lịch học từng buổi)
+| Field | Kiểu dữ liệu | Ràng buộc | Mô tả |
+|---|---|---|---|
+| id | AutoField | PK | |
+| course_class_id | ForeignKey | FK → CourseClass | |
+| room_id | ForeignKey | FK → Room, null=True | |
+| day_of_week | IntegerField | NOT NULL | 2=Thứ 2 ... 8=CN |
+| start_period | IntegerField | NOT NULL | Tiết bắt đầu (1-15) |
+| end_period | IntegerField | NOT NULL | Tiết kết thúc (1-15) |
+| date | DateField | NOT NULL | Ngày học cụ thể |
+| session_number | IntegerField | NOT NULL | Buổi thứ mấy (1-15) |
+> UNIQUE TOGETHER: (course_class, date)
+
+---
+
+### attendance — Điểm danh
+
+**AttendanceSession** (Buổi điểm danh)
+| Field | Kiểu dữ liệu | Ràng buộc | Mô tả |
+|---|---|---|---|
+| id | AutoField | PK | |
+| course_class_id | ForeignKey | FK → CourseClass | |
+| schedule_id | OneToOneField | FK → Schedule, null=True | |
+| created_by_id | ForeignKey | FK → User | GV tạo buổi này |
+| started_at | DateTimeField | auto_now_add | Bắt đầu lúc mấy giờ |
+| ended_at | DateTimeField | null=True | Kết thúc lúc mấy giờ |
+| status | CharField(10) | default=open | open / closed |
+| note | TextField | blank=True | |
+
+**AttendanceRecord** (Bản ghi điểm danh từng SV)
+| Field | Kiểu dữ liệu | Ràng buộc | Mô tả |
+|---|---|---|---|
+| id | AutoField | PK | |
+| session_id | ForeignKey | FK → AttendanceSession | |
+| student_id | ForeignKey | FK → Student | |
+| status | CharField(10) | default=absent | present / absent / late |
+| method | CharField(10) | default=face | face / manual |
+| confidence | FloatField | default=0.0 | Độ chính xác 0.0 → 1.0 |
+| timestamp | DateTimeField | null=True | Thời điểm nhận diện |
+| note | CharField(200) | blank=True | |
+> UNIQUE TOGETHER: (session, student) — mỗi SV chỉ 1 bản ghi / buổi
+
+---
+
+### notifications — Cảnh báo
+
+**Notification** (Cảnh báo vắng mặt)
+| Field | Kiểu dữ liệu | Ràng buộc | Mô tả |
+|---|---|---|---|
+| id | AutoField | PK | |
+| student_id | ForeignKey | FK → Student | |
+| course_class_id | ForeignKey | FK → CourseClass | |
+| noti_type | CharField(20) | NOT NULL | absent_warning / absent_danger |
+| absent_count | IntegerField | NOT NULL | Số buổi vắng |
+| total_sessions | IntegerField | NOT NULL | Tổng số buổi đã học |
+| absent_percent | FloatField | NOT NULL | Tỉ lệ vắng (%) |
+| is_read | BooleanField | default=False | GV đã đọc chưa |
+| created_at | DateTimeField | auto_now_add | |
+
+---
+
+### Quan hệ giữa các bảng
+
+| Quan hệ | Loại | Ghi chú |
+|---|---|---|
+| Faculty → Department | 1-N | 1 khoa có nhiều ngành |
+| AcademicYear → Semester | 1-N | 1 năm học tối đa 3 học kỳ |
+| Department → StudentClass | 1-N | 1 ngành có nhiều lớp sinh hoạt |
+| StudentClass → Student | 1-N | 1 lớp có nhiều sinh viên |
+| User → Teacher | 1-1 | 1 tài khoản = 1 giảng viên |
+| Course → CourseClass | 1-N | 1 học phần mở nhiều lớp / học kỳ |
+| CourseClass ↔ Student | N-N | Qua bảng Enrollment |
+| CourseClass → Schedule | 1-N | 1 lớp HP có tối đa 15 buổi lịch |
+| Schedule → AttendanceSession | 1-1 | 1 buổi lịch = 1 buổi điểm danh |
+| AttendanceSession → AttendanceRecord | 1-N | Mỗi SV 1 bản ghi / buổi |
 
 ---
 
@@ -218,7 +432,7 @@ face_attendance/
 
 ## 👥 Thành Viên Nhóm
 
-| Họ tên | MSSV | Vai trò |
+| Họ tên |
 |---|---|---|
 | Nguyễn Văn Nhuận |
 | Vũ Hoàng |
