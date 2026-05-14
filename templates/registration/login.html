@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}EduFace - Chào Mừng Trở Lại{% endblock %}
+
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="login-page">
+    <div class="login-container">
+        <div class="illustration-section">
+            <img src="{% static 'images/background-login.png' %}" alt="Minh hoạ khuôn viên" class="illustration-img">
+        </div>
+
+        <div class="form-section">
+            <div class="header-content">
+                <div class="brand-logo">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="#1a6b3c" stroke-width="2" />
+                        <path d="M8 14c1.5 1.5 6.5 1.5 8 0" stroke="#1a6b3c" stroke-width="2" stroke-linecap="round" />
+                        <circle cx="9" cy="10" r="1" fill="#1a6b3c" />
+                        <circle cx="15" cy="10" r="1" fill="#1a6b3c" />
+                    </svg>
+                    <span class="brand-name">EduFace</span>
+                </div>
+                <h1 class="welcome-text">Chào Mừng Trở Lại</h1>
+                <p class="sub-text">Đăng nhập để tiếp tục quản lý điểm danh</p>
+            </div>
+
+            <form method="POST" class="auth-form">
+                {% csrf_token %}
+
+                {% if form.errors %}
+                <div class="error-alert">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <span>Tên đăng nhập hoặc mật khẩu không đúng. Vui lòng thử lại.</span>
+                </div>
+                {% endif %}
+
+                <div class="input-group">
+                    <label for="id_username">TÊN ĐĂNG NHẬP HOẶC EMAIL</label>
+                    <div class="input-field">
+                        <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        <input type="text" id="id_username" name="username" placeholder="Nhập email của bạn" required
+                            autocomplete="username">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="id_password">MẬT KHẨU</label>
+                    <div class="input-field">
+                        <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        <input type="password" id="id_password" name="password" placeholder="••••••••" required
+                            autocomplete="current-password">
+                    </div>
+                </div>
+
+                <div class="form-footer">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="remember_me" name="remember_me">
+                        <span class="checkmark"></span>
+                        Ghi nhớ đăng nhập
+                    </label>
+                    <a href="#" class="forgot-pw">Quên mật khẩu?</a>
+                </div>
+
+                <button type="submit" class="btn-primary" id="btn-login">Đăng Nhập</button>
+            </form>
+
+            <p class="power-text">ĐƯỢC HỖ TRỢ BỞI NHẬN DIỆN KHUÔN MẶT AI</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -58,7 +58,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / 'templates'],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -122,4 +122,17 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = "static/"
+# ===================== STATIC FILES =====================
+STATIC_URL = '/static/'
+
+# Thư mục static ở mức project
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',           # 
+]
+
+# Sau khi đăng nhập, chuyển về trang chủ
+LOGIN_REDIRECT_URL = '/'
+LOGIN_URL = '/login/'
+
+# Default primary key field type
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

@@ -1,3 +1,6 @@
 from django.shortcuts import render
 
-# Create your views here.
+
+def home(request):
+    """Trang chủ giới thiệu hệ thống EduFace."""
+    return render(request, 'dashboards/home.html')
