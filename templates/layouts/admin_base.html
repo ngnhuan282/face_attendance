@@ -1,0 +1,128 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}EduFace Quản Lý{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/global.css' %}">
+    <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+<div class="admin-shell">
+
+    <!-- ==================== SIDEBAR ==================== -->
+    <aside class="sidebar" id="sidebar">
+        <!-- Logo -->
+        <a href="{% url 'dashboard' %}" class="sidebar-logo">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="#fff" stroke-width="2"/>
+                <path d="M8 14c1.5 1.5 6.5 1.5 8 0" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="9" cy="10" r="1" fill="#fff"/>
+                <circle cx="15" cy="10" r="1" fill="#fff"/>
+            </svg>
+            <span class="sidebar-logo-name">EduFace</span>
+        </a>
+
+        <!-- Navigation -->
+        <nav class="sidebar-nav">
+            <div class="sidebar-nav-label">Tổng Quan</div>
+            <a href="{% url 'dashboard' %}" class="sidebar-link {% if active_menu == 'dashboard' %}active{% endif %}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                    <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                </svg>
+                Dashboard
+            </a>
+
+            <div class="sidebar-nav-label">Quản Lý</div>
+            <a href="{% url 'accounts:list' %}" class="sidebar-link {% if active_menu == 'accounts' %}active{% endif %}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+                Tài Khoản
+            </a>
+            <a href="{% url 'students:list' %}" class="sidebar-link {% if active_menu == 'students' %}active{% endif %}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                Sinh Viên
+            </a>
+            <a href="#" class="sidebar-link {% if active_menu == 'attendance' %}active{% endif %}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 11 12 14 22 4"/>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                </svg>
+                Điểm Danh
+            </a>
+
+            <div class="sidebar-nav-label">Phân Tích</div>
+            <a href="#" class="sidebar-link {% if active_menu == 'reports' %}active{% endif %}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="20" x2="18" y2="10"/>
+                    <line x1="12" y1="20" x2="12" y2="4"/>
+                    <line x1="6" y1="20" x2="6" y2="14"/>
+                </svg>
+                Báo Cáo
+            </a>
+        </nav>
+
+        <!-- User info + Logout -->
+        <div class="sidebar-footer">
+            <div class="sidebar-user">
+                <div class="sidebar-avatar">
+                    {{ request.user.username|first|upper }}
+                </div>
+                <div class="sidebar-user-info">
+                    <div class="sidebar-username">{{ request.user.get_full_name|default:request.user.username }}</div>
+                    <div class="sidebar-role">{% if request.user.is_superuser %}Quản Trị Viên{% else %}Giảng Viên{% endif %}</div>
+                </div>
+            </div>
+            <form action="{% url 'logout' %}" method="post" style="display: inline; width: 100%;">
+                {% csrf_token %}
+                <button type="submit" class="sidebar-logout" style="width: 100%; border: none; background: none; cursor: pointer; text-align: left; font-family: inherit;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    Đăng Xuất
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- ==================== MAIN AREA ==================== -->
+    <div class="admin-main">
+        <!-- Topbar -->
+        <header class="admin-topbar">
+            <div class="topbar-left">
+                <div class="topbar-title">{% block page_title %}Dashboard{% endblock %}</div>
+                <div class="topbar-breadcrumb">EduFace / {% block breadcrumb %}Tổng Quan{% endblock %}</div>
+            </div>
+            <div class="topbar-right">
+                <div class="topbar-avatar" title="{{ request.user.username }}">
+                    {{ request.user.username|first|upper }}
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <main class="admin-content">
+            {% block page_content %}{% endblock %}
+        </main>
+    </div>
+
+</div>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

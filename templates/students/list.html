@@ -1,0 +1,227 @@
+{% extends 'layouts/admin_base.html' %}
+
+{% block title %}EduFace - Quản Lý Sinh Viên{% endblock %}
+{% block page_title %}Quản Lý Sinh Viên{% endblock %}
+{% block breadcrumb %}Quản Lý / Sinh Viên{% endblock %}
+
+{% block page_content %}
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-value">1,248</div>
+            <div class="stat-label">Tổng Sinh Viên</div>
+            <div class="stat-change up">↑ 24 sinh viên mới</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 7l9-4 9 4"/><line x1="12" y1="7" x2="12" y2="20"/></svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-value">1,156</div>
+            <div class="stat-label">Đã Đăng Ký Khuôn Mặt</div>
+            <div class="stat-change up">92.6% tổng số</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon orange">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-value">92</div>
+            <div class="stat-label">Chưa Đăng Ký</div>
+            <div class="stat-change down">↓ Cần cập nhật</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon purple">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-value">24</div>
+            <div class="stat-label">Lớp Học</div>
+        </div>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="table-card">
+    <div class="table-card-header">
+        <div>
+            <div class="table-card-title">Danh Sách Sinh Viên</div>
+        </div>
+        <div class="table-toolbar">
+            <div class="search-input-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input class="search-input" type="text" placeholder="Tìm mã SV, họ tên...">
+            </div>
+            <select class="filter-select">
+                <option value="">Tất cả khoa</option>
+                <option>Khoa CNTT</option>
+                <option>Khoa KTPM</option>
+                <option>Khoa HTTT</option>
+                <option>Khoa MMT</option>
+            </select>
+            <select class="filter-select">
+                <option value="">Tất cả lớp</option>
+                <option>CNTT-K22A</option>
+                <option>CNTT-K22B</option>
+                <option>KTPM-K22A</option>
+            </select>
+            <a href="#" class="btn-primary" style="padding:8px 16px;font-size:13px;gap:6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Thêm Sinh Viên
+            </a>
+        </div>
+    </div>
+
+    <div style="overflow-x:auto;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Mã Sinh Viên</th>
+                    <th>Họ Tên</th>
+                    <th>Lớp</th>
+                    <th>Khoa</th>
+                    <th>Giới Tính</th>
+                    <th>Khuôn Mặt</th>
+                    <th>Trạng Thái</th>
+                    <th>Hành Động</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="font-weight:600;color:var(--text-dark);font-family:monospace;">SV220001</td>
+                    <td>
+                        <div class="cell-user">
+                            <div class="cell-avatar">NA</div>
+                            <div><div class="cell-name">Nguyễn Văn An</div><div class="cell-sub">20/03/2003</div></div>
+                        </div>
+                    </td>
+                    <td>CNTT-K22A</td>
+                    <td>Khoa CNTT</td>
+                    <td>Nam</td>
+                    <td><span class="badge badge-green"><span class="badge-dot"></span>Đã Đăng Ký</span></td>
+                    <td><span class="badge badge-green"><span class="badge-dot"></span>Hoạt Động</span></td>
+                    <td>
+                        <div class="action-btns">
+                            <a href="#" class="btn-action btn-action-view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Xem</a>
+                            <a href="#" class="btn-action btn-action-edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Sửa</a>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight:600;color:var(--text-dark);font-family:monospace;">SV220002</td>
+                    <td>
+                        <div class="cell-user">
+                            <div class="cell-avatar">TB</div>
+                            <div><div class="cell-name">Trần Thị Bình</div><div class="cell-sub">15/07/2003</div></div>
+                        </div>
+                    </td>
+                    <td>CNTT-K22A</td>
+                    <td>Khoa CNTT</td>
+                    <td>Nữ</td>
+                    <td><span class="badge badge-green"><span class="badge-dot"></span>Đã Đăng Ký</span></td>
+                    <td><span class="badge badge-green"><span class="badge-dot"></span>Hoạt Động</span></td>
+                    <td>
+                        <div class="action-btns">
+                            <a href="#" class="btn-action btn-action-view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Xem</a>
+                            <a href="#" class="btn-action btn-action-edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Sửa</a>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight:600;color:var(--text-dark);font-family:monospace;">SV220045</td>
+                    <td>
+                        <div class="cell-user">
+                            <div class="cell-avatar">LH</div>
+                            <div><div class="cell-name">Lê Quốc Hùng</div><div class="cell-sub">08/11/2002</div></div>
+                        </div>
+                    </td>
+                    <td>KTPM-K22A</td>
+                    <td>Khoa KTPM</td>
+                    <td>Nam</td>
+                    <td><span class="badge badge-orange"><span class="badge-dot"></span>Chưa Đăng Ký</span></td>
+                    <td><span class="badge badge-green"><span class="badge-dot"></span>Hoạt Động</span></td>
+                    <td>
+                        <div class="action-btns">
+                            <a href="#" class="btn-action btn-action-view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Xem</a>
+                            <a href="#" class="btn-action btn-action-edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Sửa</a>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight:600;color:var(--text-dark);font-family:monospace;">SV220103</td>
+                    <td>
+                        <div class="cell-user">
+                            <div class="cell-avatar">PM</div>
+                            <div><div class="cell-name">Phạm Thị Mai</div><div class="cell-sub">25/01/2003</div></div>
+                        </div>
+                    </td>
+                    <td>HTTT-K22A</td>
+                    <td>Khoa HTTT</td>
+                    <td>Nữ</td>
+                    <td><span class="badge badge-green"><span class="badge-dot"></span>Đã Đăng Ký</span></td>
+                    <td><span class="badge badge-gray"><span class="badge-dot"></span>Nghỉ Học</span></td>
+                    <td>
+                        <div class="action-btns">
+                            <a href="#" class="btn-action btn-action-view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Xem</a>
+                            <a href="#" class="btn-action btn-action-edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Sửa</a>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight:600;color:var(--text-dark);font-family:monospace;">SV210088</td>
+                    <td>
+                        <div class="cell-user">
+                            <div class="cell-avatar">VD</div>
+                            <div><div class="cell-name">Vũ Minh Đức</div><div class="cell-sub">12/05/2002</div></div>
+                        </div>
+                    </td>
+                    <td>MMT-K21A</td>
+                    <td>Khoa MMT</td>
+                    <td>Nam</td>
+                    <td><span class="badge badge-green"><span class="badge-dot"></span>Đã Đăng Ký</span></td>
+                    <td><span class="badge badge-green"><span class="badge-dot"></span>Hoạt Động</span></td>
+                    <td>
+                        <div class="action-btns">
+                            <a href="#" class="btn-action btn-action-view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Xem</a>
+                            <a href="#" class="btn-action btn-action-edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Sửa</a>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight:600;color:var(--text-dark);font-family:monospace;">SV220167</td>
+                    <td>
+                        <div class="cell-user">
+                            <div class="cell-avatar">HN</div>
+                            <div><div class="cell-name">Hoàng Thị Ngân</div><div class="cell-sub">30/09/2003</div></div>
+                        </div>
+                    </td>
+                    <td>CNTT-K22B</td>
+                    <td>Khoa CNTT</td>
+                    <td>Nữ</td>
+                    <td><span class="badge badge-orange"><span class="badge-dot"></span>Chưa Đăng Ký</span></td>
+                    <td><span class="badge badge-green"><span class="badge-dot"></span>Hoạt Động</span></td>
+                    <td>
+                        <div class="action-btns">
+                            <a href="#" class="btn-action btn-action-view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Xem</a>
+                            <a href="#" class="btn-action btn-action-edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Sửa</a>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="table-card-footer">
+        <span>Hiển thị 1–6 trong 1,248 sinh viên</span>
+        <span>Trang 1 / 208</span>
+    </div>
+</div>
+
+{% endblock %}

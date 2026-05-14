@@ -1,37 +1,19 @@
-/* ==========================================
-   EduFace Login Page - CSS
-   Designed to match the provided mockup
-   ========================================== */
+/* ============================================================
+   EduFace - Login Page CSS
+   Chỉ chứa style đặc thù của trang đăng nhập.
+   Các style dùng chung đã được định nghĩa trong global.css.
+   ============================================================ */
 
-:root {
-    --primary-green: #1a6b3c;
-    --primary-green-dark: #145530;
-    --text-dark: #111827;
-    --text-medium: #374151;
-    --text-light: #6b7280;
-    --text-lighter: #9ca3af;
-    --border-color: #d1d5db;
-    --border-focus: #1a6b3c;
-    --bg-input: #f9fafb;
-    --bg-white: #ffffff;
-    --shadow-card: 0 20px 60px rgba(0, 0, 0, 0.12);
-}
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
+/* Override body cho trang login: nền xám + canh giữa */
 body {
     background-color: #eef0f2;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* Wrapper toàn trang */
 .login-page {
     width: 100%;
     display: flex;
@@ -42,7 +24,7 @@ body {
 }
 
 /* ==========================================
-   Main card container
+   Card container chính
    ========================================== */
 .login-container {
     display: flex;
@@ -50,13 +32,13 @@ body {
     width: 1000px;
     max-width: 100%;
     min-height: 620px;
-    border-radius: 20px;
+    border-radius: var(--radius-lg);
     overflow: hidden;
     box-shadow: var(--shadow-card);
 }
 
 /* ==========================================
-   Left illustration section
+   Cột trái - ảnh minh họa
    ========================================== */
 .illustration-section {
     flex: 1;
@@ -69,11 +51,10 @@ body {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    display: block;
 }
 
 /* ==========================================
-   Right form section
+   Cột phải - form
    ========================================== */
 .form-section {
     flex: 1;
@@ -81,25 +62,17 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    background: #fff;
+    background: var(--bg-white);
 }
 
-/* ==========================================
-   Brand logo & header
-   ========================================== */
+/* Header */
 .brand-logo {
-    display: flex;
-    align-items: center;
     justify-content: center;
-    gap: 10px;
     margin-bottom: 20px;
 }
 
 .brand-name {
-    color: var(--primary-green);
     font-size: 28px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
 }
 
 .welcome-text {
@@ -119,147 +92,19 @@ body {
     text-align: center;
 }
 
-/* ==========================================
-   Error alert
-   ========================================== */
-.error-alert {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    color: #dc2626;
-    padding: 10px 14px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 500;
-    margin-bottom: 16px;
-}
-
-/* ==========================================
-   Form inputs
-   ========================================== */
+/* Form wrapper */
 .auth-form {
     width: 100%;
 }
 
-.input-group {
-    margin-bottom: 16px;
-}
-
-.input-group label {
-    display: block;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--text-medium);
-    margin-bottom: 7px;
-    letter-spacing: 0.6px;
-    text-transform: uppercase;
-}
-
-.input-field {
-    position: relative;
-}
-
-.input-field input {
-    width: 100%;
-    padding: 12px 14px 12px 42px;
-    border: 1.5px solid var(--border-color);
-    border-radius: 8px;
-    background: var(--bg-input);
-    font-size: 14px;
-    font-family: inherit;
-    color: var(--text-dark);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-    outline: none;
-}
-
-.input-field input::placeholder {
-    color: var(--text-lighter);
-}
-
-.input-field input:focus {
-    border-color: var(--border-focus);
-    background: #fff;
-    box-shadow: 0 0 0 3px rgba(26, 107, 60, 0.1);
-}
-
-.field-icon {
-    position: absolute;
-    left: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 16px;
-    height: 16px;
-    color: #9ca3af;
-    pointer-events: none;
-    transition: color 0.2s ease;
-}
-
-.input-field:focus-within .field-icon {
-    color: var(--primary-green);
-}
-
-/* ==========================================
-   Form footer (remember me + forgot password)
-   ========================================== */
+/* Footer row: remember me + forgot password */
 .form-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-size: 13px;
-    margin-bottom: 22px;
     margin-top: 4px;
-}
-
-/* Custom Checkbox */
-.checkbox-container {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    color: var(--text-medium);
-    font-size: 13px;
-    font-weight: 400;
-    user-select: none;
-    position: relative;
-}
-
-.checkbox-container input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    border: 1.5px solid var(--border-color);
-    border-radius: 4px;
-    appearance: none;
-    -webkit-appearance: none;
-    background: var(--bg-input);
-    cursor: pointer;
-    position: relative;
-    flex-shrink: 0;
-    transition: border-color 0.2s, background 0.2s;
-}
-
-.checkbox-container input[type="checkbox"]:checked {
-    background: var(--primary-green);
-    border-color: var(--primary-green);
-}
-
-.checkbox-container input[type="checkbox"]:checked::after {
-    content: '';
-    position: absolute;
-    top: 1px;
-    left: 4px;
-    width: 5px;
-    height: 9px;
-    border: 2px solid white;
-    border-top: none;
-    border-left: none;
-    transform: rotate(45deg);
-}
-
-.checkbox-container .checkmark {
-    display: none;
-    /* hidden - using native input style above */
+    margin-bottom: 22px;
 }
 
 .forgot-pw {
@@ -267,7 +112,7 @@ body {
     text-decoration: none;
     font-weight: 600;
     font-size: 13px;
-    transition: color 0.2s ease;
+    transition: color var(--transition-fast);
 }
 
 .forgot-pw:hover {
@@ -275,42 +120,15 @@ body {
     text-decoration: underline;
 }
 
-/* ==========================================
-   Buttons
-   ========================================== */
-.btn-primary {
-    background-color: var(--primary-green);
-    color: white;
-    border: none;
+/* Login button - full width override */
+.auth-form .btn-primary {
     width: 100%;
     padding: 14px;
-    border-radius: 8px;
     font-size: 15px;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
     margin-bottom: 8px;
-    letter-spacing: 0.3px;
-    transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
-    box-shadow: 0 4px 14px rgba(26, 107, 60, 0.3);
 }
 
-.btn-primary:hover {
-    background-color: var(--primary-green-dark);
-    box-shadow: 0 6px 20px rgba(26, 107, 60, 0.4);
-    transform: translateY(-1px);
-}
-
-.btn-primary:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(26, 107, 60, 0.3);
-}
-
-
-
-/* ==========================================
-   Footer text
-   ========================================== */
+/* Footer powered-by text */
 .power-text {
     text-align: center;
     margin-top: 28px;
@@ -326,9 +144,8 @@ body {
 @media (max-width: 768px) {
     .login-container {
         flex-direction: column;
-        width: 100%;
         min-height: auto;
-        border-radius: 16px;
+        border-radius: var(--radius-md);
     }
 
     .illustration-section {

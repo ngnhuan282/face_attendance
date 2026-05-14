@@ -1,31 +1,31 @@
 """
-URL configuration for config project.
+URL configuration for EduFace project.
 """
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from django.contrib.auth import views as auth_views
-from dashboards.views import home
+from dashboards.views import home, dashboard
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    
-    # Login URL
+    path('admin/', admin.site.urls),
+
+    # Auth
     path('login/', auth_views.LoginView.as_view(
         template_name='registration/login.html',
-        redirect_authenticated_user=True
+        redirect_authenticated_user=True,
     ), name='login'),
-    
-    # Logout URL (tự động có khi dùng auth_views)
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
-    
-    # Trang chủ
+
+    # Trang chủ (public)
     path('', home, name='home'),
-    
-    # ========================
-    # Thêm các URL của app sau này ở đây
-    # ========================
-    # path('students/', include('students.urls')),
-    # path('attendance/', include('attendance.urls')),
-    # path('accounts/', include('accounts.urls')),
+
+    # Dashboard (yêu cầu đăng nhập)
+    path('dashboard/', dashboard, name='dashboard'),
+
+    # Quản lý tài khoản
+    path('accounts/', include('accounts.urls')),
+
+    # Quản lý sinh viên
+    path('students/', include('students.urls')),
 ]

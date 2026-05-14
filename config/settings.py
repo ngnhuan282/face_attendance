@@ -130,8 +130,8 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static',           # 
 ]
 
-# Sau khi đăng nhập, chuyển về trang chủ
-LOGIN_REDIRECT_URL = '/'
+# Sau khi đăng nhập, chuyển về dashboard
+LOGIN_REDIRECT_URL = '/dashboard/'
 LOGIN_URL = '/login/'
 
 # Default primary key field type
