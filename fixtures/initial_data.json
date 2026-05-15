@@ -1,0 +1,240 @@
+[
+  {
+    "model": "auth.user",
+    "pk": 1,
+    "fields": {
+      "username": "giangvien1",
+      "is_active": true
+    }
+  },
+  {
+    "model": "academics.faculty",
+    "pk": 1,
+    "fields": {
+      "code": "CNTT",
+      "name": "Công nghệ thông tin",
+      "created_at": "2024-05-15T12:00:00Z",
+      "updated_at": "2024-05-15T12:00:00Z"
+    }
+  },
+  {
+    "model": "academics.department",
+    "pk": 1,
+    "fields": {
+      "faculty": 1,
+      "code": "KTPM",
+      "name": "Kỹ thuật phần mềm",
+      "created_at": "2024-05-15T12:00:00Z",
+      "updated_at": "2024-05-15T12:00:00Z"
+    }
+  },
+  {
+    "model": "accounts.teacher",
+    "pk": 1,
+    "fields": {
+      "user": 1,
+      "department": 1,
+      "teacher_id": "GV001",
+      "phone": "0901234567",
+      "created_at": "2024-05-15T12:00:00Z",
+      "updated_at": "2024-05-15T12:00:00Z"
+    }
+  },
+  {
+    "model": "academics.academicyear",
+    "pk": 1,
+    "fields": {
+      "name": "2024-2025",
+      "start_date": "2024-09-05",
+      "end_date": "2025-06-30",
+      "is_active": true,
+      "created_at": "2024-05-15T12:00:00Z",
+      "updated_at": "2024-05-15T12:00:00Z"
+    }
+  },
+  {
+    "model": "academics.semester",
+    "pk": 1,
+    "fields": {
+      "academic_year": 1,
+      "semester_num": 1,
+      "start_date": "2024-09-05",
+      "end_date": "2025-01-15",
+      "is_active": true,
+      "created_at": "2024-05-15T12:00:00Z",
+      "updated_at": "2024-05-15T12:00:00Z"
+    }
+  },
+  {
+    "model": "students.studentclass",
+    "pk": 1,
+    "fields": {
+      "department": 1,
+      "class_code": "DHKTPM17A",
+      "class_name": "Kỹ thuật phần mềm 17A",
+      "intake_year": 2021
+    }
+  },
+  {
+    "model": "students.studentclass",
+    "pk": 2,
+    "fields": {
+      "department": 1,
+      "class_code": "DHKTPM17B",
+      "class_name": "Kỹ thuật phần mềm 17B",
+      "intake_year": 2021
+    }
+  },
+  {
+    "model": "students.student",
+    "pk": 1,
+    "fields": {
+      "student_class": 1,
+      "student_id": "3121410001",
+      "full_name": "Nguyễn Văn An",
+      "date_of_birth": "2003-05-10",
+      "email": "an.nv@example.com",
+      "phone": "0901234501",
+      "photo": null,
+      "is_active": true,
+      "created_at": "2024-05-15T12:00:00Z"
+    }
+  },
+  {
+    "model": "students.student",
+    "pk": 2,
+    "fields": {
+      "student_class": 1,
+      "student_id": "3121410002",
+      "full_name": "Trần Thị Bích",
+      "date_of_birth": "2003-08-22",
+      "email": "bich.tt@example.com",
+      "phone": "0901234502",
+      "photo": null,
+      "is_active": true,
+      "created_at": "2024-05-15T12:00:00Z"
+    }
+  },
+  {
+    "model": "students.student",
+    "pk": 3,
+    "fields": {
+      "student_class": 1,
+      "student_id": "3121410003",
+      "full_name": "Lê Minh Cường",
+      "date_of_birth": "2002-12-01",
+      "email": "cuong.lm@example.com",
+      "phone": "0901234503",
+      "photo": null,
+      "is_active": true,
+      "created_at": "2024-05-15T12:00:00Z"
+    }
+  },
+  {
+    "model": "students.student",
+    "pk": 4,
+    "fields": {
+      "student_class": 2,
+      "student_id": "3121410004",
+      "full_name": "Phạm Thị Dung",
+      "date_of_birth": "2003-03-15",
+      "email": "dung.pt@example.com",
+      "phone": "0901234504",
+      "photo": null,
+      "is_active": true,
+      "created_at": "2024-05-15T12:00:00Z"
+    }
+  },
+  {
+    "model": "students.student",
+    "pk": 5,
+    "fields": {
+      "student_class": 2,
+      "student_id": "3121410005",
+      "full_name": "Hoàng Văn Em",
+      "date_of_birth": "2003-07-19",
+      "email": "em.hv@example.com",
+      "phone": "0901234505",
+      "photo": null,
+      "is_active": true,
+      "created_at": "2024-05-15T12:00:00Z"
+    }
+  },
+  {
+    "model": "courses.course",
+    "pk": 1,
+    "fields": {
+      "department": 1,
+      "course_code": "DHKTPM001",
+      "course_name": "Nhập môn lập trình",
+      "credits": 3,
+      "description": ""
+    }
+  },
+  {
+    "model": "courses.course",
+    "pk": 2,
+    "fields": {
+      "department": 1,
+      "course_code": "DHKTPM002",
+      "course_name": "Lập trình hướng đối tượng",
+      "credits": 3,
+      "description": ""
+    }
+  },
+  {
+    "model": "courses.course",
+    "pk": 3,
+    "fields": {
+      "department": 1,
+      "course_code": "DHKTPM003",
+      "course_name": "Cơ sở dữ liệu",
+      "credits": 3,
+      "description": ""
+    }
+  },
+  {
+    "model": "courses.courseclass",
+    "pk": 1,
+    "fields": {
+      "course": 1,
+      "semester": 1,
+      "teacher": 1,
+      "class_code": "DHKTPM17A_NML",
+      "max_students": 40,
+      "total_sessions": 15
+    }
+  },
+  {
+    "model": "courses.courseclass",
+    "pk": 2,
+    "fields": {
+      "course": 2,
+      "semester": 1,
+      "teacher": 1,
+      "class_code": "DHKTPM17A_OOP",
+      "max_students": 40,
+      "total_sessions": 15
+    }
+  },
+  {
+    "model": "schedules.room",
+    "pk": 1,
+    "fields": {
+      "room_code": "A101",
+      "building": "A",
+      "capacity": 45,
+      "has_camera": true
+    }
+  },
+  {
+    "model": "schedules.room",
+    "pk": 2,
+    "fields": {
+      "room_code": "B203",
+      "building": "B",
+      "capacity": 40,
+      "has_camera": false
+    }
+  }
+]
