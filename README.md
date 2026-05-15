@@ -32,6 +32,8 @@ Tải tại: https://www.python.org/downloads/release/python-3119/
 - Chọn **Windows installer (64-bit)**
 - Tick ✅ **Add Python 3.11 to PATH** trước khi cài
 
+> ⚠️ Lưu ý: nên dùng **Python bản Windows từ python.org**. Nếu bạn đang dùng Python từ MSYS2/MinGW (thường thấy đường dẫn `C:\msys64\...`) thì `pip install Pillow`/một số package sẽ hay lỗi do không có wheel phù hợp.
+
 ### Bước 3 — Tạo và kích hoạt virtual environment
 
 ```bash
