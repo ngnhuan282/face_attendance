@@ -1,0 +1,40 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: face_mysql
+
+    restart: always
+
+    environment:
+      MYSQL_DATABASE: face_attendance
+      MYSQL_USER: face_user
+      MYSQL_PASSWORD: 123456
+      MYSQL_ROOT_PASSWORD: root
+
+    ports:
+      - "3306:3306"
+
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+    command: >
+      --default-authentication-plugin=mysql_native_password
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: face_phpmyadmin
+
+    restart: always
+
+    depends_on:
+      - db
+
+    ports:
+      - "8080:80"
+
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+
+volumes:
+  mysql_data:
