@@ -28,4 +28,7 @@ urlpatterns = [
 
     # Quản lý sinh viên
     path('students/', include('students.urls')),
+
+    # Điểm danh
+    path('attendance/', include('attendance.urls')),
 ]

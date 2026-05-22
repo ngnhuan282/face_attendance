@@ -5,6 +5,7 @@ from PIL import Image
 
 import face_recognition
 import numpy as np
+from django.apps import apps
 
 try:
     from .utils import ENCODINGS_FILE, create_empty_encodings, save_encodings
@@ -20,6 +21,9 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 
 
 def setup_django():
+    if apps.ready:
+        return
+
     import django
 
     django.setup()

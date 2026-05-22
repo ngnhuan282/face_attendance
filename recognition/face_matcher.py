@@ -4,6 +4,7 @@ from typing import Optional, Tuple
 import cv2
 import face_recognition
 import numpy as np
+from PIL import Image
 
 try:
     from .face_detector import FaceDetector, draw_faces, open_webcam
@@ -15,6 +16,9 @@ except ImportError:
 
 def match_face(face_encoding, data, tolerance: float = 0.5) -> Tuple[Optional[str], Optional[float]]:
     known_encodings = data["encodings"]
+    if not known_encodings:
+        return None, None
+
     distances = face_recognition.face_distance(known_encodings, face_encoding)
     best_index = int(np.argmin(distances))
     best_distance = float(distances[best_index])
@@ -25,6 +29,38 @@ def match_face(face_encoding, data, tolerance: float = 0.5) -> Tuple[Optional[st
     student_id = data["student_ids"][best_index]
     name = data["names"][best_index]
     return f"{student_id} - {name}", best_distance
+
+
+def recognize_from_image(image_file, tolerance: float = 0.5):
+    """Recognize the best matching student from one uploaded image/file path."""
+    data = load_encodings()
+    image = np.array(Image.open(image_file).convert("RGB"), dtype=np.uint8)
+    image = np.ascontiguousarray(image, dtype=np.uint8)
+
+    face_locations = face_recognition.face_locations(image, model="hog")
+    face_encodings = face_recognition.face_encodings(image, face_locations)
+
+    matches = []
+    for face_encoding in face_encodings:
+        label, distance = match_face(face_encoding, data, tolerance=tolerance)
+        if not label:
+            continue
+
+        student_id, name = label.split(" - ", 1)
+        matches.append(
+            {
+                "student_id": student_id,
+                "name": name,
+                "label": label,
+                "distance": distance,
+                "confidence": max(0.0, min(1.0, 1.0 - float(distance))),
+            }
+        )
+
+    if not matches:
+        return None
+
+    return min(matches, key=lambda item: item["distance"])
 
 
 def recognize_from_webcam(

@@ -3,6 +3,7 @@ python-dotenv==1.1.0
 
 # Database
 PyMySQL==1.1.1
+cryptography>=42.0.0
 
 # AI / Image processing
 face-recognition==1.3.0
