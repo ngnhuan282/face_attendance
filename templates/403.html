@@ -1,0 +1,230 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>403 – Không Có Quyền | EduFace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f3f4f6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .error-card {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.10);
+            padding: 56px 48px;
+            text-align: center;
+            max-width: 480px;
+            width: 100%;
+            animation: fadeUp 0.4s ease;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .error-icon-wrap {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            background: #fef2f2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 28px;
+        }
+
+        .error-icon-wrap svg {
+            width: 44px;
+            height: 44px;
+            stroke: #ef4444;
+        }
+
+        .error-code {
+            font-size: 72px;
+            font-weight: 800;
+            color: #1a6b3c;
+            line-height: 1;
+            letter-spacing: -3px;
+            margin-bottom: 12px;
+        }
+
+        .error-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 12px;
+        }
+
+        .error-desc {
+            font-size: 14px;
+            color: #6b7280;
+            line-height: 1.6;
+            margin-bottom: 36px;
+        }
+
+        .error-desc strong {
+            color: #374151;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #1a6b3c;
+            color: #fff;
+            text-decoration: none;
+            padding: 11px 22px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            border: none;
+            cursor: pointer;
+            transition: background 0.15s ease, transform 0.15s ease;
+            box-shadow: 0 4px 12px rgba(26,107,60,0.25);
+        }
+
+        .btn-primary:hover {
+            background: #145530;
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #fff;
+            color: #374151;
+            text-decoration: none;
+            padding: 11px 22px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            border: 1.5px solid #e5e7eb;
+            cursor: pointer;
+            transition: border-color 0.15s ease, color 0.15s ease;
+        }
+
+        .btn-outline:hover {
+            border-color: #1a6b3c;
+            color: #1a6b3c;
+        }
+
+        .btn-primary svg, .btn-outline svg {
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid #f3f4f6;
+            margin: 36px 0 24px;
+        }
+
+        .user-info {
+            font-size: 12.5px;
+            color: #9ca3af;
+        }
+
+        .user-info strong {
+            color: #6b7280;
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            margin-bottom: 32px;
+        }
+
+        .brand-name {
+            font-size: 18px;
+            font-weight: 800;
+            color: #1a6b3c;
+            letter-spacing: -0.5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-card">
+        <!-- Brand -->
+        <a href="{% url 'dashboard' %}" class="brand">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="#1a6b3c" stroke-width="2"/>
+                <path d="M8 14c1.5 1.5 6.5 1.5 8 0" stroke="#1a6b3c" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="9" cy="10" r="1" fill="#1a6b3c"/>
+                <circle cx="15" cy="10" r="1" fill="#1a6b3c"/>
+            </svg>
+            <span class="brand-name">EduFace</span>
+        </a>
+
+        <!-- Icon -->
+        <div class="error-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+        </div>
+
+        <div class="error-code">403</div>
+        <h1 class="error-title">Không Có Quyền Truy Cập</h1>
+        <p class="error-desc">
+            Trang này yêu cầu quyền cao hơn vai trò hiện tại của bạn.<br>
+            Vui lòng liên hệ <strong>Quản Trị Viên</strong> nếu bạn cần được cấp quyền.
+        </p>
+
+        <div class="btn-group">
+            <a href="{% url 'dashboard' %}" class="btn-primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                    <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                </svg>
+                Về Dashboard
+            </a>
+            <a href="javascript:history.back()" class="btn-outline">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="15 18 9 12 15 6"/>
+                </svg>
+                Quay Lại
+            </a>
+        </div>
+
+        <hr class="divider">
+        <p class="user-info">
+            Đăng nhập với tư cách: <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+            &nbsp;·&nbsp;
+            Vai trò:
+            <strong>
+                {% if request.is_admin_group %}Quản Trị Viên
+                {% elif request.is_teacher_group %}Giảng Viên
+                {% else %}Chưa phân quyền{% endif %}
+            </strong>
+        </p>
+    </div>
+</body>
+</html>

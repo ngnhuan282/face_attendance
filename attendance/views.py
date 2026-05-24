@@ -11,6 +11,8 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
+from accounts.constants import ADMIN_GROUP_NAME, TEACHER_GROUP_NAME
+from accounts.permissions import group_required
 from courses.models import CourseClass, Enrollment
 from recognition.face_matcher import recognize_from_image
 from schedules.models import Schedule
@@ -71,7 +73,7 @@ def _default_user(request):
     return User.objects.order_by("id").first()
 
 
-@login_required
+@group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
 def attendance_demo(request):
     course_classes = CourseClass.objects.select_related("course", "semester", "teacher").order_by(
         "semester", "class_code"

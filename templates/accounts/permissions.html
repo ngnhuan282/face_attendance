@@ -1,0 +1,566 @@
+{% extends 'layouts/admin_base.html' %}
+{% load static %}
+
+{% block title %}Phân Quyền – EduFace{% endblock %}
+
+{% block page_title %}Phân Quyền{% endblock %}
+{% block breadcrumb %}Hệ Thống / Phân Quyền{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/permissions.css' %}">
+{% endblock %}
+
+{% block page_content %}
+
+<!-- ===== PAGE HEADER ===== -->
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Phân Quyền Hệ Thống</h1>
+        <p class="page-subtitle">Cấu hình quyền truy cập cho từng nhóm vai trò theo từng module</p>
+    </div>
+    <div class="page-header-actions">
+        <button class="btn-outline btn-sm" id="btnResetAll" onclick="resetAll()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/>
+                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+            </svg>
+            Đặt Lại
+        </button>
+        <button class="btn-primary btn-sm" id="btnSave" onclick="savePermissions()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Lưu Phân Quyền
+        </button>
+    </div>
+</div>
+
+<!-- ===== ALERT ===== -->
+<div class="perm-alert perm-alert-success" id="alertSuccess" style="display:none;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="20 6 9 17 4 12"/>
+    </svg>
+    Đã lưu phân quyền thành công!
+</div>
+
+<!-- ===== ROLE SWITCHER ===== -->
+<div class="role-switcher-wrap">
+    <div class="role-switcher-label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/>
+            <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/>
+        </svg>
+        Chọn nhóm vai trò:
+    </div>
+    <div class="role-tabs" id="roleTabs">
+        <button class="role-tab active" data-role="admin" onclick="switchRole(this, 'admin')">
+            <span class="role-dot dot-admin"></span>Quản Trị Viên
+        </button>
+        <button class="role-tab" data-role="teacher" onclick="switchRole(this, 'teacher')">
+            <span class="role-dot dot-teacher"></span>Giảng Viên
+        </button>
+    </div>
+</div>
+
+<!-- ===== PERMISSION TABLE ===== -->
+<div class="perm-card">
+    <div class="perm-card-header">
+        <div class="perm-card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            Ma Trận Phân Quyền
+        </div>
+        <div class="perm-card-meta">
+            <span class="perm-role-badge" id="currentRoleBadge">Quản Trị Viên</span>
+        </div>
+    </div>
+
+    <!-- Column headers legend -->
+    <div class="perm-legend">
+        <div class="legend-item">
+            <span class="legend-dot dot-view"></span> Xem
+        </div>
+        <div class="legend-item">
+            <span class="legend-dot dot-add"></span> Thêm
+        </div>
+        <div class="legend-item">
+            <span class="legend-dot dot-edit"></span> Sửa
+        </div>
+        <div class="legend-item">
+            <span class="legend-dot dot-delete"></span> Xóa
+        </div>
+    </div>
+
+    <div class="perm-table-wrap">
+        <table class="perm-table" id="permTable">
+            <thead>
+                <tr>
+                    <th class="col-module">Module</th>
+                    <th class="col-action">
+                        <div class="col-header-wrap">
+                            <span class="col-icon col-icon-view">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </span>
+                            <span>Xem</span>
+                            <button class="col-select-all" title="Chọn tất cả cột Xem" onclick="toggleColumn('view')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><polyline points="9 12 12 15 16 9"/></svg>
+                            </button>
+                        </div>
+                    </th>
+                    <th class="col-action">
+                        <div class="col-header-wrap">
+                            <span class="col-icon col-icon-add">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                            </span>
+                            <span>Thêm</span>
+                            <button class="col-select-all" title="Chọn tất cả cột Thêm" onclick="toggleColumn('add')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><polyline points="9 12 12 15 16 9"/></svg>
+                            </button>
+                        </div>
+                    </th>
+                    <th class="col-action">
+                        <div class="col-header-wrap">
+                            <span class="col-icon col-icon-edit">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                            </span>
+                            <span>Sửa</span>
+                            <button class="col-select-all" title="Chọn tất cả cột Sửa" onclick="toggleColumn('edit')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><polyline points="9 12 12 15 16 9"/></svg>
+                            </button>
+                        </div>
+                    </th>
+                    <th class="col-action">
+                        <div class="col-header-wrap">
+                            <span class="col-icon col-icon-delete">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                            </span>
+                            <span>Xóa</span>
+                            <button class="col-select-all" title="Chọn tất cả cột Xóa" onclick="toggleColumn('delete')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><polyline points="9 12 12 15 16 9"/></svg>
+                            </button>
+                        </div>
+                    </th>
+                    <th class="col-action col-all">
+                        <div class="col-header-wrap">
+                            <span>Tất Cả</span>
+                        </div>
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="permTableBody">
+                <!-- Rows will be rendered by JS -->
+            </tbody>
+        </table>
+    </div>
+
+    <div class="perm-card-footer">
+        <div class="perm-summary" id="permSummary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span id="permSummaryText">Đang tải...</span>
+        </div>
+        <div class="perm-footer-actions">
+            <button class="btn-link" onclick="selectAll()">Chọn tất cả</button>
+            <span class="divider-dot">·</span>
+            <button class="btn-link" onclick="deselectAll()">Bỏ chọn tất cả</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== QUICK INFO CARDS ===== -->
+<div class="info-grid">
+    <div class="info-card info-card-tip">
+        <div class="info-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div>
+            <div class="info-card-title">Lưu ý</div>
+            <p class="info-card-text">Quyền <strong>Thêm / Sửa / Xóa</strong> sẽ tự động bao gồm quyền <strong>Xem</strong>.</p>
+        </div>
+    </div>
+    <div class="info-card info-card-warn">
+        <div class="info-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div>
+            <div class="info-card-title">Cảnh báo</div>
+            <p class="info-card-text">Thay đổi phân quyền có hiệu lực <strong>ngay lập tức</strong> sau khi lưu.</p>
+        </div>
+    </div>
+    <div class="info-card info-card-note">
+        <div class="info-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div>
+            <div class="info-card-title">Bảo mật</div>
+            <p class="info-card-text"><strong>Quản Trị Viên</strong> luôn có toàn quyền và không thể bị giới hạn.</p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ============================================================
+   DATA: Module definitions
+   ============================================================ */
+const MODULES = [
+    {
+        group: 'Quản Lý Chính',
+        items: [
+            { id: 'accounts',    label: 'Tài Khoản',    icon: 'user',       desc: 'Quản lý người dùng và tài khoản hệ thống' },
+            { id: 'students',    label: 'Sinh Viên',    icon: 'users',      desc: 'Thông tin hồ sơ và danh sách sinh viên' },
+            { id: 'attendance',  label: 'Điểm Danh',   icon: 'check',      desc: 'Ghi nhận và xem lịch sử điểm danh' },
+        ]
+    },
+    {
+        group: 'Học Vụ',
+        items: [
+            { id: 'courses',     label: 'Môn Học',      icon: 'book',       desc: 'Danh sách và thông tin môn học' },
+            { id: 'schedules',   label: 'Lịch Học',     icon: 'calendar',   desc: 'Thời khóa biểu và lịch giảng dạy' },
+            { id: 'academics',   label: 'Học Kỳ',       icon: 'layer',      desc: 'Quản lý năm học và học kỳ' },
+        ]
+    },
+    {
+        group: 'Phân Tích & Hệ Thống',
+        items: [
+            { id: 'reports',     label: 'Báo Cáo',      icon: 'bar-chart',  desc: 'Thống kê và xuất báo cáo' },
+            { id: 'recognition', label: 'Nhận Diện',    icon: 'camera',     desc: 'Cấu hình AI nhận diện khuôn mặt' },
+            { id: 'permissions', label: 'Phân Quyền',   icon: 'lock',       desc: 'Quản lý vai trò và quyền truy cập' },
+            { id: 'notifications',label: 'Thông Báo',   icon: 'bell',       desc: 'Gửi và quản lý thông báo hệ thống' },
+        ]
+    },
+];
+
+/* ============================================================
+   DATA: Default permissions per role
+   ============================================================ */
+const DEFAULT_PERMS = {
+    admin: {
+        accounts:      { view:true,  add:true,  edit:true,  delete:true  },
+        students:      { view:true,  add:true,  edit:true,  delete:true  },
+        attendance:    { view:true,  add:true,  edit:true,  delete:true  },
+        courses:       { view:true,  add:true,  edit:true,  delete:true  },
+        schedules:     { view:true,  add:true,  edit:true,  delete:true  },
+        academics:     { view:true,  add:true,  edit:true,  delete:true  },
+        reports:       { view:true,  add:true,  edit:true,  delete:true  },
+        recognition:   { view:true,  add:true,  edit:true,  delete:true  },
+        permissions:   { view:true,  add:true,  edit:true,  delete:true  },
+        notifications: { view:true,  add:true,  edit:true,  delete:true  },
+    },
+    teacher: {
+        accounts:      { view:false, add:false, edit:false, delete:false },
+        students:      { view:true,  add:false, edit:true,  delete:false },
+        attendance:    { view:true,  add:true,  edit:true,  delete:false },
+        courses:       { view:true,  add:false, edit:false, delete:false },
+        schedules:     { view:true,  add:false, edit:false, delete:false },
+        academics:     { view:true,  add:false, edit:false, delete:false },
+        reports:       { view:true,  add:false, edit:false, delete:false },
+        recognition:   { view:true,  add:false, edit:false, delete:false },
+        permissions:   { view:false, add:false, edit:false, delete:false },
+        notifications: { view:true,  add:true,  edit:false, delete:false },
+    },
+};
+
+const ROLE_LABELS = {
+    admin:   'Quản Trị Viên',
+    teacher: 'Giảng Viên',
+};
+
+/* Deep clone helper */
+function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
+
+/* State */
+let currentRole = 'admin';
+let permState = deepClone(DEFAULT_PERMS);
+
+/* ============================================================
+   SVG ICONS
+   ============================================================ */
+const ICONS = {
+    'user':      '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+    'users':     '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+    'check':     '<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
+    'book':      '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+    'calendar':  '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+    'layer':     '<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>',
+    'bar-chart': '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+    'camera':    '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
+    'lock':      '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+    'bell':      '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
+};
+
+/* ============================================================
+   RENDER TABLE
+   ============================================================ */
+function renderTable() {
+    const tbody = document.getElementById('permTableBody');
+    tbody.innerHTML = '';
+    const rp = permState[currentRole];
+
+    MODULES.forEach(group => {
+        // Group header row
+        const groupRow = document.createElement('tr');
+        groupRow.className = 'perm-group-row';
+        groupRow.innerHTML = `<td colspan="6" class="perm-group-label">${group.group}</td>`;
+        tbody.appendChild(groupRow);
+
+        // Module rows
+        group.items.forEach(mod => {
+            const p = rp[mod.id];
+            const row = document.createElement('tr');
+            row.className = 'perm-row';
+            row.setAttribute('data-module', mod.id);
+
+            const allChecked = p.view && p.add && p.edit && p.delete;
+            const someChecked = p.view || p.add || p.edit || p.delete;
+
+            row.innerHTML = `
+                <td class="col-module">
+                    <div class="mod-info">
+                        <div class="mod-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                ${ICONS[mod.icon] || ''}
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="mod-name">${mod.label}</div>
+                            <div class="mod-desc">${mod.desc}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="col-action" data-action="view">
+                    ${renderCheckbox(mod.id, 'view', p.view)}
+                </td>
+                <td class="col-action" data-action="add">
+                    ${renderCheckbox(mod.id, 'add', p.add)}
+                </td>
+                <td class="col-action" data-action="edit">
+                    ${renderCheckbox(mod.id, 'edit', p.edit)}
+                </td>
+                <td class="col-action" data-action="delete">
+                    ${renderCheckbox(mod.id, 'delete', p.delete)}
+                </td>
+                <td class="col-action col-all">
+                    <label class="perm-check perm-check-all" title="Chọn/bỏ tất cả quyền cho module này">
+                        <input type="checkbox"
+                               id="chk-all-${mod.id}"
+                               ${allChecked ? 'checked' : ''}
+                               ${someChecked && !allChecked ? 'data-indeterminate="true"' : ''}
+                               onchange="toggleRow('${mod.id}', this.checked)">
+                        <span class="perm-check-box perm-check-box-all"></span>
+                    </label>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    });
+
+    // Fix indeterminate states
+    document.querySelectorAll('[data-indeterminate="true"]').forEach(el => {
+        el.indeterminate = true;
+    });
+
+    updateSummary();
+}
+
+function renderCheckbox(moduleId, action, checked) {
+    const colorMap = { view: 'view', add: 'add', edit: 'edit', delete: 'delete' };
+    return `
+        <label class="perm-check" title="${actionLabel(action)} quyền ${action} cho module này">
+            <input type="checkbox"
+                   id="chk-${moduleId}-${action}"
+                   data-module="${moduleId}"
+                   data-action="${action}"
+                   ${checked ? 'checked' : ''}
+                   onchange="onCheckChange('${moduleId}', '${action}', this.checked)">
+            <span class="perm-check-box perm-check-box-${colorMap[action]}"></span>
+        </label>
+    `;
+}
+
+function actionLabel(action) {
+    return { view: 'Xem', add: 'Thêm', edit: 'Sửa', delete: 'Xóa' }[action] || action;
+}
+
+/* ============================================================
+   INTERACTION HANDLERS
+   ============================================================ */
+function onCheckChange(moduleId, action, checked) {
+    permState[currentRole][moduleId][action] = checked;
+
+    // If enabling add/edit/delete → also enable view
+    if (checked && action !== 'view') {
+        permState[currentRole][moduleId].view = true;
+        const viewChk = document.getElementById(`chk-${moduleId}-view`);
+        if (viewChk) viewChk.checked = true;
+    }
+
+    // If disabling view → also disable others
+    if (!checked && action === 'view') {
+        ['add', 'edit', 'delete'].forEach(a => {
+            permState[currentRole][moduleId][a] = false;
+            const chk = document.getElementById(`chk-${moduleId}-${a}`);
+            if (chk) chk.checked = false;
+        });
+    }
+
+    updateRowAllChk(moduleId);
+    updateSummary();
+
+    // Row highlight animation
+    const row = document.querySelector(`tr[data-module="${moduleId}"]`);
+    if (row) {
+        row.classList.add('perm-row-flash');
+        setTimeout(() => row.classList.remove('perm-row-flash'), 600);
+    }
+}
+
+function updateRowAllChk(moduleId) {
+    const p = permState[currentRole][moduleId];
+    const allChk = document.getElementById(`chk-all-${moduleId}`);
+    if (!allChk) return;
+    const all = p.view && p.add && p.edit && p.delete;
+    const some = p.view || p.add || p.edit || p.delete;
+    allChk.checked = all;
+    allChk.indeterminate = some && !all;
+}
+
+function toggleRow(moduleId, checked) {
+    ['view', 'add', 'edit', 'delete'].forEach(action => {
+        permState[currentRole][moduleId][action] = checked;
+        const chk = document.getElementById(`chk-${moduleId}-${action}`);
+        if (chk) chk.checked = checked;
+    });
+    updateSummary();
+
+    const row = document.querySelector(`tr[data-module="${moduleId}"]`);
+    if (row) {
+        row.classList.add('perm-row-flash');
+        setTimeout(() => row.classList.remove('perm-row-flash'), 600);
+    }
+}
+
+function toggleColumn(action) {
+    const rp = permState[currentRole];
+    const allChecked = Object.values(rp).every(p => p[action]);
+    const newVal = !allChecked;
+
+    Object.keys(rp).forEach(moduleId => {
+        rp[moduleId][action] = newVal;
+
+        // Cascade: enabling add/edit/delete → enable view
+        if (newVal && action !== 'view') rp[moduleId].view = true;
+        // Cascade: disabling view → disable others
+        if (!newVal && action === 'view') {
+            ['add','edit','delete'].forEach(a => { rp[moduleId][a] = false; });
+        }
+    });
+
+    renderTable();
+}
+
+function selectAll() {
+    const rp = permState[currentRole];
+    Object.keys(rp).forEach(mid => {
+        rp[mid] = { view:true, add:true, edit:true, delete:true };
+    });
+    renderTable();
+}
+
+function deselectAll() {
+    const rp = permState[currentRole];
+    Object.keys(rp).forEach(mid => {
+        rp[mid] = { view:false, add:false, edit:false, delete:false };
+    });
+    renderTable();
+}
+
+function resetAll() {
+    permState[currentRole] = deepClone(DEFAULT_PERMS[currentRole]);
+    renderTable();
+    showToast('Đã đặt lại về mặc định.');
+}
+
+/* ============================================================
+   ROLE SWITCH
+   ============================================================ */
+function switchRole(btn, role) {
+    currentRole = role;
+
+    // Update tab UI
+    document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+
+    // Update badge
+    document.getElementById('currentRoleBadge').textContent = ROLE_LABELS[role];
+    document.getElementById('currentRoleBadge').className = `perm-role-badge badge-role-${role}`;
+
+    renderTable();
+}
+
+/* ============================================================
+   SUMMARY
+   ============================================================ */
+function updateSummary() {
+    const rp = permState[currentRole];
+    let total = 0, granted = 0;
+    Object.values(rp).forEach(p => {
+        Object.values(p).forEach(v => {
+            total++;
+            if (v) granted++;
+        });
+    });
+    document.getElementById('permSummaryText').textContent =
+        `Đang cấu hình: ${ROLE_LABELS[currentRole]} — ${granted}/${total} quyền được cấp`;
+}
+
+/* ============================================================
+   SAVE (UI demo)
+   ============================================================ */
+function savePermissions() {
+    const btn = document.getElementById('btnSave');
+    btn.disabled = true;
+    btn.innerHTML = `
+        <svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+        </svg>
+        Đang lưu...
+    `;
+
+    setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            Lưu Phân Quyền
+        `;
+        const alert = document.getElementById('alertSuccess');
+        alert.style.display = 'flex';
+        alert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        setTimeout(() => { alert.style.display = 'none'; }, 3500);
+    }, 900);
+}
+
+function showToast(msg) {
+    const alert = document.getElementById('alertSuccess');
+    alert.querySelector('span') ? null : null;
+    alert.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        ${msg}
+    `;
+    alert.style.display = 'flex';
+    setTimeout(() => { alert.style.display = 'none'; }, 2500);
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', () => {
+    renderTable();
+});
+</script>
+{% endblock %}
