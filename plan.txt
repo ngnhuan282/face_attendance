@@ -1,0 +1,316 @@
+HE THONG DIEM DANH SINH VIEN
+BANG NHAN DIEN KHUON MAT
+
+KE HOACH THUC HIEN 4 TUAN
+Mon hoc: Ngon ngu lap trinh Python  
+Nhom 4 thanh vien  |  Framework: Django  |  AI: face_recognition + OpenCV
+
+1. Tong quan du an
+
+1.1. Mo ta he thong
+He thong diem danh sinh vien bang nhan dien khuon mat la ung dung web xay dung tren Django, cho phep giang vien diem danh tu dong thong qua webcam. He thong nhan dien khuon mat sinh vien realtime, ghi nhan ket qua vao co so du lieu va tao bao cao chuyen can theo tung lop hoc phan.
+Tinh nang chinh:
+Nhan dien khuon mat realtime qua webcam (face_recognition + OpenCV)
+Quan ly sinh vien, hoc phan, lop hoc phan theo mo hinh truong dai hoc
+Giang vien chon lop va bat dau diem danh chi voi vai thao tac
+Canh bao tu dong khi sinh vien vang > 20% tong so buoi
+Xuat bao cao Excel mau sac truc quan
+1.2. Cong nghe su dung
+
+---TABLE---
+Tang | Cong nghe | Muc dich
+AI / Xu ly anh | face_recognition + OpenCV | Nhan dien khuon mat, xu ly video realtime
+Backend | Django 4.2 + MySQL 8.0 | Web framework, quan ly du lieu
+Frontend | HTML/CSS + Bootstrap 5 | Giao dien nguoi dung, hien thi video stream
+Bao cao | pandas + openpyxl | Thong ke, xuat Excel
+Moi truong | Python 3.11 + virtualenv + MySQL Workbench | Chay on dinh tren Windows
+-----------
+
+2. Cac module he thong
+
+He thong gom 8 Django app va 1 module AI doc lap. Cac app duoc phan cong cho tung thanh vien de lam viec song song hieu qua.
+
+
+---TABLE---
+App / Module | Tên | Chức năng chính | Trạng thái
+accounts/ | Quan ly tai khoan | Dang nhap/xuat giang vien, phan quyen Admin/GV | Co san — mo rong
+academics/ | Hoc thuat cot loi | Khoa, Nganh, Nam hoc, Hoc ky — nen tang cho toan he thong | Tao moi
+students/ | Quan ly sinh vien | Ho so SV, upload anh khuon mat, lop sinh hoat | Co san — mo rong
+courses/ | Hoc phan & Lop HP | Hoc phan, Lop hoc phan, dang ky SV, gan giang vien | Tao moi
+schedules/ | Thoi khoa bieu | Lich hoc theo tuan, phong hoc, tiet hoc (1-15) | Tao moi
+attendance/ | Diem danh realtime | Webcam nhan dien khuon mat, ghi ket qua tung buoi | Co san — mo rong
+notifications/ | Canh bao chuyen can | Canh bao tu dong khi SV vang > 20% so buoi | Tao moi
+reports/ | Bao cao & Thong ke | Ti le chuyen can, xuat Excel, loc theo hoc ky | Co san — mo rong
+recognition/ | AI Module (khong phai app) | face_detector, face_encoder, face_matcher — tach rieng de test doc lap | AI Core
+-----------
+Can viet va migrate theo dung thu tu sau de tranh loi ForeignKey:
+Buoc 1: academics/models.py — Faculty, Department, AcademicYear, Semester
+Buoc 2: accounts/models.py — Teacher (lien ket voi Department)
+Buoc 3: students/models.py — Student (lien ket voi Department, Semester)
+Buoc 4: courses/models.py — Course, CourseClass (lien ket voi Semester, Teacher)
+Buoc 5: schedules/models.py — Schedule (lien ket voi CourseClass)
+Buoc 6: attendance/models.py — AttendanceSession, AttendanceRecord
+Buoc 7: notifications/models.py — Notification (lien ket voi Student, CourseClass)
+
+
+---TABLE---
+Sau khi viet xong moi app, chay: python manage.py makemigrations && python manage.py migrate. Khong doi viet het roi migrate mot lan.
+-----------
+
+3. Ke hoach 4 tuan
+
+Uu tien tuyet doi: AI nhan dien khuon mat phai chay duoc truoc. Giao dien dep lam sau. Khong dao nguoc thu tu nay.
+
+
+---TABLE---
+Vai trò | Tuần 1 | Tuần 2 | Tuần 3 | Tuần 4
+Nguoi 1 — Module: Diem danh | Cai face_recognition, viet recognition/, test webcam | attendance/: tich hop AI, tao buoi diem danh, auto-encode | attendance/: livestream, bounding box, hoan thien giao dien | Test AI edge cases, fix loi, chuan bi trinh bay
+Nguoi 2 — Module: Sinh vien | Viet models academics + accounts, cai MySQL, phan quyen | students/: CRUD SV + lop sinh hoat, accounts/: dang nhap + phan quyen | students/: chi tiet SV, import CSV, kiem tra phan quyen day du | Test module, backup MySQL, chuan bi data demo
+Nguoi 3 — Module: Hoc phan | Dung base.html, layout Bootstrap, trang dang nhap chung | courses/: CRUD hoc phan + lop HP + Enrollment, schedules/: lich hoc | courses/: chi tiet lop HP, schedules/: TKB dang bang theo tuan | Test module, quay video demo, ho tro lam slide
+Nguoi 4 — Module: Bao cao | Viet models students + courses + schedules + attendance + notifications | reports/: tinh chuyen can + bao cao co ban, notifications/: canh bao tu dong | reports/: xuat Excel to mau, notifications/: hoan thien, lich su diem danh SV | Test module, viet bao cao do an, lam slide + tap Q&A
+-----------
+
+TUẦN 01  —  Nen tang AI + Co so du lieu
+Trọng tâm: Chay duoc nhan dien khuon mat tren webcam — muc tieu duy nhat cua tuan 1
+
+Milestone cuoi tuan:
+
+---TABLE---
+Nguoi 1 demo: mo webcam → dua mat vao → console in dung ten. Nguoi 2 chay migrate khong loi.
+-----------
+Nguoi 1 - AI / Camera
+
+---TABLE---
+Công việc | Chi tiết | Phụ trách
+Cai va test face_recognition + OpenCV | Chay thu nhan dien khuon mat tu anh tinh truoc, sau do thu webcam | Nguoi 1
+Viet face_encoder.py | Doc anh SV → encode thanh vector 128 chieu → luu vao encodings.pkl | Nguoi 1
+Viet face_detector.py + face_matcher.py | Mo webcam → detect khuon mat → so khop → in ten ra console | Nguoi 1
+Chuan bi 30-50 anh test | Chup anh ca thanh vien nhom nhieu goc do, anh sang khac nhau | Nguoi 1
+-----------
+Nguoi 2 - Backend
+
+---TABLE---
+Công việc | Chi tiết | Phụ trách
+Cai MySQL Server + mysqlclient | Cai MySQL 8.0, tao database face_attendance, user, phan quyen. Toan nhom cung dung chung 1 MySQL server hoac moi nguoi cai local | Nguoi 2
+Cau hinh settings.py ket noi MySQL | DATABASE ENGINE mysqldb, HOST, PORT 3306, NAME, USER, PASSWORD lay tu file .env | Nguoi 2
+Viet models.py cho academics + accounts | Faculty, Department, AcademicYear, Semester, Teacher — chay makemigrations sau khi MySQL ket noi thanh cong | Nguoi 2
+Cau hinh Django Groups phan quyen | Tao 2 group Admin / GiangVien, viet middleware kiem tra quyen trong view | Nguoi 2
+-----------
+Nguoi 3 - Frontend
+
+---TABLE---
+Công việc | Chi tiết | Phụ trách
+Dung base.html + layout chung | Navbar, sidebar, Bootstrap 5 — tat ca trang khac ke thua tu day | Nguoi 3
+Trang dang nhap giang vien | Dung Django built-in auth, thiet ke form login don gian | Nguoi 3
+-----------
+Nguoi 4 - Data / Bao cao
+
+---TABLE---
+Công việc | Chi tiết | Phụ trách
+Viet models.py cho students + courses | Student, StudentClass, Course, CourseClass, Enrollment — quan he SV va lop HP | Nguoi 4
+Viet models.py cho schedules + attendance + notifications | Room, Schedule, AttendanceSession, AttendanceRecord, Notification | Nguoi 4
+Chay makemigrations + migrate len MySQL | Kiem tra 10 bang tao thanh cong trong MySQL Workbench, them du lieu mau: hoc ky, mon hoc, SV | Nguoi 4
+-----------
+Luu y:
+
+---TABLE---
+Tuan 1 co 2 viec kho: (1) Cai face_recognition + dlib, (2) Cai MySQL va ket noi Django thanh cong. Ca nhom nen ngoi cung lam 2 buoi dau de dam bao moi may deu chay duoc.
+-----------
+
+TUẦN 02  —  Moi nguoi lam module cua minh (Models + Views + Templates)
+Trọng tâm: Tu tuan nay moi nguoi so huu hoan toan 1 module: viet views, forms, URLs va template cua module do
+
+Milestone cuoi tuan:
+
+---TABLE---
+Cuoi tuan 2: moi module co chuc nang CRUD co ban chay duoc, co the demo doc lap khong phu thuoc nhau.
+-----------
+Nguoi 1 - AI / Camera
+
+---TABLE---
+Công việc | Chi tiết | Phụ trách
+[Module: attendance/] Tich hop face_matcher vao views.py | attendance/views.py goi face_matcher → nhan ten SV → luu AttendanceRecord vao MySQL | Nguoi 1
+[Module: attendance/] Trang tao buoi diem danh | Chon lop HP → tao AttendanceSession → load danh sach SV cua lop, hien thi giao dien camera | Nguoi 1
+[Module: attendance/] Auto-encode khi them SV moi | Django signal: sau khi upload anh SV → tu dong goi face_encoder → cap nhat encodings.pkl | Nguoi 1
+-----------
+Nguoi 2 
+
+---TABLE---
+Công việc | Chi tiết | Phụ trách
+[Module: students/] CRUD sinh vien day du | Danh sach, them moi (upload anh khuon mat), sua, xoa. Validate MSSV unique | Nguoi 2
+[Module: students/] CRUD lop sinh hoat (StudentClass) | Quan ly lop sinh hoat theo nganh, xem danh sach SV trong lop | Nguoi 2
+[Module: accounts/] Trang dang nhap + phan quyen | Form dang nhap/xuat, phan biet Admin xem tat ca vs GV chi xem lop minh day | Nguoi 2
+-----------
+Nguoi 3 
+
+---TABLE---
+Công việc | Chi tiết | Phụ trách
+[Module: courses/] CRUD hoc phan va lop hoc phan | Course + CourseClass: tao lop HP, gan giang vien, xem danh sach SV da dang ky | Nguoi 3
+[Module: courses/] Quan ly dang ky hoc phan (Enrollment) | Them/xoa SV vao lop HP, import danh sach SV hang loat tu file CSV | Nguoi 3
+[Module: schedules/] CRUD phong hoc va lich hoc | Room + Schedule: tao lich hoc theo tuan, gan phong hoc, tiet bat dau/ket thuc | Nguoi 3
+-----------
+Nguoi 4 
+
+---TABLE---
+Công việc | Chi tiết | Phụ trách
+[Module: reports/] Logic tinh ti le chuyen can | Ham Python tinh % co mat / tong buoi cho tung SV trong tung lop HP | Nguoi 4
+[Module: reports/] Trang bao cao co ban | Bang hien thi ti le chuyen can tung SV theo lop HP, loc theo hoc ky | Nguoi 4
+[Module: notifications/] Logic canh bao vang > 20% | Sau moi buoi diem danh → tu kiem tra nguong → tao Notification neu vuot muc | Nguoi 4
+Viet fixtures du lieu mau + backup MySQL | JSON fixtures: 1 hoc ky, 3 mon hoc, 2 lop HP, 20 SV. Script mysqldump backup hang ngay | Nguoi 4
+-----------
+Luu y:
+
+---TABLE---
+Quy uoc quan trong tu tuan nay: moi nguoi chi sua code trong thu muc module cua minh. Muon dung data cua module khac → import model, khong copy code.
+Git workflow: moi nguoi lam tren branch rieng (feature/attendance, feature/students, feature/courses, feature/reports). Merge vao main cuoi tuan sau khi ca nhom review.
+-----------
+
+TUẦN 03  —  Hoan thien tung module + Ghep toan he thong
+Trọng tâm: Moi module hoan thien day du chuc nang, cuoi tuan ghep lai va test toan bo luong
+
+Milestone cuoi tuan:
+
+---TABLE---
+Luong hoan chinh: dang nhap → chon lop HP → xem lich hoc → bat diem danh bang camera → xem bao cao → xuat Excel.
+-----------
+Nguoi 1
+
+---TABLE---
+Công việc | Chi tiết | Phụ trách
+[Module: attendance/] Livestream webcam len web | MJPEG streaming hien video realtime tren trinh duyet, ve bounding box + ten SV len frame | Nguoi 1
+[Module: attendance/] Giao dien diem danh hoan chinh | Video stream ben trai, danh sach SV ben phai tu update khi nhan dien, nut Ket thuc buoi | Nguoi 1
+[Module: attendance/] Chong diem danh trung + xu ly Unknown | Da diem danh → bo qua lan sau. Khuon mat la → hien Unknown, khong crash app | Nguoi 1
+-----------
+Nguoi 2
+
+---TABLE---
+Công việc | Chi tiết | Phụ trách
+[Module: students/] Trang chi tiet sinh vien | Thong tin ca nhan + lich su diem danh toan bo cac mon, ti le chuyen can tong hop | Nguoi 2
+[Module: students/] Import CSV sinh vien hang loat | Upload file CSV → parse → tao nhieu Student cung luc, bao loi dong nao sai dinh dang | Nguoi 2
+[Module: accounts/] Kiem tra phan quyen day du | GV chi thay lop minh day, Admin thay tat ca. Test moi truong hop tuy cap do | Nguoi 2
+-----------
+Nguoi 3 
+
+---TABLE---
+Công việc | Chi tiết | Phụ trách
+[Module: courses/] Trang chi tiet lop hoc phan | Xem danh sach SV, lich su cac buoi da diem danh, ti le co mat toan lop | Nguoi 3
+[Module: schedules/] Giao dien thoi khoa bieu dang bang tuan | Hien thi lich hoc theo tuan, bam vao buoi hoc de xem chi tiet hoac bat dau diem danh | Nguoi 3
+Ho tro ghep module cuoi tuan | Test luong tu chon lop HP → xem lich → bat diem danh, bao loi neu thay van de | Nguoi 3
+-----------
+Nguoi 4 
+
+---TABLE---
+Công việc | Chi tiết | Phụ trách
+[Module: reports/] Bao cao chuyen can hoan chinh | Bang % chuyen can tung SV, bieu do cot theo buoi, loc theo hoc ky / lop HP | Nguoi 4
+[Module: reports/] Xuat Excel bao cao diem danh | openpyxl: moi hang 1 SV, moi cot 1 buoi, to mau xanh/do, them dong tong ket | Nguoi 4
+[Module: notifications/] Hoan thien app canh bao | Trang danh sach SV bi canh bao, badge so chua doc tren navbar, danh dau da doc | Nguoi 4
+[Module: notifications/] Trang lich su diem danh tung SV | GV xem chi tiet tung buoi SV co mat/vang, cho phep sua thu cong khi nhan dien sai | Nguoi 4
+-----------
+Luu y:
+
+---TABLE---
+Cuoi tuan 3 ca nhom ngoi cung ghep module: chay toan bo luong tu dau den cuoi, ghi lai tat ca loi gap de fix o tuan 4.
+Tuan 3 la tuan quan trong nhat — neu tre hay cat tinh nang bao cao/thong bao, uu tien giu nguyen phan diem danh camera la du de demo.
+-----------
+
+TUẦN 04  —  Test module + Sua loi + Demo
+Trọng tâm: Moi nguoi test module cua minh, sau do ca nhom test tich hop, chuan bi thuyet trinh
+
+Milestone cuoi tuan:
+
+---TABLE---
+App chay on dinh, moi nguoi hieu ro module minh lam de trinh bay, co video demo du phong.
+-----------
+Nguoi 1
+
+---TABLE---
+Công việc | Chi tiết | Phụ trách
+[Module: attendance/] Test AI voi du lieu that | Dung khuon mat that cua ca nhom, nhieu dieu kien anh sang, goc do, co/khong deo kinh | Nguoi 1
+[Module: attendance/] Test edge cases + toi uu toc do | 2 nguoi truoc camera cung luc, khuon mat mo, deo khau trang. Giam do tre nhan dien | Nguoi 1
+[Module: attendance/] Fix loi va chuan bi trinh bay | Fix loi crash, ghi chep han che, chuan bi trinh bay phan AI khi thuyet trinh | Nguoi 1
+-----------
+Nguoi 2 
+
+---TABLE---
+Công việc | Chi tiết | Phụ trách
+[Module: students/] Test CRUD va phan quyen | Test toan bo CRUD, kiem tra GV khong xem duoc SV lop khac, Admin xem duoc tat ca | Nguoi 2
+[Module: accounts/] Backup MySQL + chuan bi data demo | mysqldump tao file .sql backup, kiem tra restore, nhap du lieu demo day du cho buoi thuyet trinh | Nguoi 2
+[Module: students/] Chuan bi trinh bay module sinh vien | Ghi chep chuc nang, han che, huong phat trien cua module students va accounts | Nguoi 2
+-----------
+Nguoi 3 
+
+---TABLE---
+Công việc | Chi tiết | Phụ trách
+[Module: courses + schedules/] Test toan bo module | Test CRUD hoc phan, lop HP, lich hoc, dang ky. Kiem tra khong the tao lich trung nhau | Nguoi 3
+Quay video demo du phong | Video 3-5 phut: dang nhap → xem TKB → chon buoi → bat diem danh → xem bao cao | Nguoi 3
+[Module: courses + schedules/] Chuan bi trinh bay | Ghi chep chuc nang, han che, huong phat trien cua module courses va schedules | Nguoi 3
+-----------
+Nguoi 4 
+
+---TABLE---
+Công việc | Chi tiết | Phụ trách
+[Module: reports + notifications/] Test xuat Excel + canh bao | Test xuat Excel nhieu lop, nhieu hoc ky. Kiem tra canh bao tu dong chay dung nguong | Nguoi 4
+Viet bao cao do an | Gioi thieu, cong nghe, kien truc he thong, bang phan cong module, ket qua, huong pt | Nguoi 4
+Lam slide + tap thuyet trinh ca nhom | 10-15 slide. Phan cong: moi nguoi trinh bay module cua minh, chuan bi cau hoi Q&A | Nguoi 4
+-----------
+Luu y:
+
+---TABLE---
+Tuyet doi khong them tinh nang moi o tuan 4. Moi y tuong moi → ghi vao muc Huong phat trien trong bao cao.
+Loi the khi thuyet trinh: moi nguoi trinh bay dung module minh lam → thay hoi sau → tra loi tu tin vi hieu sau nhat phan cua minh.
+-----------
+
+4. Quy tac lam viec cua nhom
+
+
+---TABLE---
+Quy tac | Chi tiet
+Hop nhom | Cuoi moi tuan — review milestone dat duoc, dieu chinh ke hoach neu can
+Git workflow | Moi nguoi lam 1 branch rieng, merge vao main sau khi review cuoi tuan
+Uu tien tuyet doi | AI chay truoc, giao dien dep sau — khong dao nguoc thu tu nay
+Scope freeze | Tu tuan 3 khong them tinh nang moi, chi hoan thien nhung gi da co
+Du lieu test | Chuan bi anh khuon mat tu tuan 1, khong doi den tuan 3 moi thu thap
+Fix loi | Fix loi crash truoc, loi giao dien sau — dam bao app khong crash khi demo
+-----------
+4.1. Cau hinh MySQL cho du an
+Thay the SQLite bang MySQL yeu cau them cac buoc cai dat va cau hinh. Day la huong dan day du de ca nhom dong bo:
+Cai MySQL Server 8.0: https://dev.mysql.com/downloads/mysql/
+Cai MySQL Workbench de quan ly database truc quan
+Cai thu vien Python: pip install mysqlclient
+Neu mysqlclient loi tren Windows: pip install PyMySQL thay the
+
+---TABLE---
+CREATE DATABASE face_attendance CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;CREATE USER 'face_user'@'localhost' IDENTIFIED BY 'matkhau_manh';GRANT ALL PRIVILEGES ON face_attendance.* TO 'face_user'@'localhost';FLUSH PRIVILEGES;
+-----------
+
+---TABLE---
+DB_ENGINE=django.db.backends.mysqlDB_NAME=face_attendanceDB_USER=face_userDB_PASSWORD=matkhau_manhDB_HOST=127.0.0.1DB_PORT=3306
+-----------
+
+---TABLE---
+DATABASES = {    'default': {        'ENGINE': os.getenv('DB_ENGINE'),        'NAME':   os.getenv('DB_NAME'),        'USER':   os.getenv('DB_USER'),        'PASSWORD': os.getenv('DB_PASSWORD'),        'HOST': os.getenv('DB_HOST', '127.0.0.1'),        'PORT': os.getenv('DB_PORT', '3306'),        'OPTIONS': {'charset': 'utf8mb4'},    }}
+-----------
+
+---TABLE---
+# Backupmysqldump -u face_user -p face_attendance > backup.sql# Restoremysql -u face_user -p face_attendance < backup.sql
+Luu y: Moi thanh vien trong nhom can co cung thong tin DB (host, user, password). Neu lam o nha moi nguoi thi moi nguoi cai MySQL local rieng va dung cung file .env. Neu lam chung thi 1 nguoi cai MySQL Server, nhung nguoi con lai ket noi qua IP LAN.
+-----------
+4.2. Cau hoi thuyet trinh can chuan bi
+Tai sao chon face_recognition thay vi cac thu vien khac?
+Do chinh xac nhan dien khuon mat dat bao nhieu phan tram?
+He thong xu ly the nao khi khuon mat khong nhan ra (Unknown)?
+Du lieu sinh vien duoc bao mat nhu the nao?
+Han che cua he thong hien tai la gi? Huong phat trien tiep theo?
+Lam the nao de he thong xu ly nhieu sinh vien truoc camera cung luc?
+
+5. Phan cong thanh vien nhom
+
+
+---TABLE---
+Nguoi | Ho ten | MSSV | Vai tro chinh | App phu trach
+1 | Nguyen Van A | xxxxxxx | Module attendance/ — Diem danh + AI | recognition/
+2 | Tran Thi B | xxxxxxx | Backend / Database | Module students/ + accounts/
+3 | Le Van C | xxxxxxx | Frontend / Giao dien | Module courses/ + schedules/
+4 | Pham Thi D | xxxxxxx | Data / Bao cao | Module reports/ + notifications/
+-----------
+Mon hoc: Ngon ngu lap trinh Python  |  Truong Dai hoc Sai Gon

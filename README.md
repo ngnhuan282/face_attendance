@@ -91,9 +91,16 @@ python -c "import face_recognition; print('face_recognition OK!')"
 Tạo file `.env` trong thư mục gốc (cùng cấp với `manage.py`):
 
 ```env
-SECRET_KEY=your-secret-key-here
+SECRET_KEY= tự random đi
 DEBUG=True
 ALLOWED_HOSTS=127.0.0.1,localhost
+
+# Thêm cấu hình Database vào đây:
+DB_NAME=face_attendance
+DB_USER=root
+DB_PASSWORD=123456
+DB_HOST=127.0.0.1
+DB_PORT=3306
 ```
 
 > 💡 Tạo SECRET_KEY ngẫu nhiên bằng lệnh:

@@ -1,0 +1,86 @@
+{% extends 'layouts/admin_base.html' %}
+
+{% block title %}EduFace - Import Sinh Viên{% endblock %}
+{% block page_title %}Import Sinh Viên Vào Lớp{% endblock %}
+{% block breadcrumb %}Quản Lý / Lớp Học Phần / Import{% endblock %}
+
+{% block page_content %}
+
+<div class="card" style="max-width: 700px;">
+    <div class="card-title">Import Danh Sách Sinh Viên - {{ courseclass.class_code }}</div>
+    
+    <div style="background: #eff6ff; border: 1.5px solid #dbeafe; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+        <div style="font-size: 13px; color: #1d4ed8; font-weight: 500;">
+            <strong>Hướng dẫn:</strong><br>
+            1. Tải file CSV template bên dưới<br>
+            2. Điền danh sách mã sinh viên (student_code) vào cột đầu tiên<br>
+            3. Tải file lên để import
+        </div>
+    </div>
+
+    <div style="margin-bottom: 32px;">
+        <div style="font-size: 13px; font-weight: 600; color: var(--text-dark); margin-bottom: 12px;">
+            📥 Tải Template CSV
+        </div>
+        <a href="data:text/csv;charset=utf-8,student_code%0aSV220001%0aSV220002%0aSV220003" download="students_template.csv" class="btn-secondary" style="padding: 10px 16px; font-size: 13px; text-decoration: none; display: inline-block;">
+            Download Template
+        </a>
+    </div>
+
+    <form method="post" action="" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+            <!-- File Input -->
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label for="csv_file" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                    Chọn File CSV <span style="color: #dc2626;">*</span>
+                </label>
+                <input type="file" name="csv_file" id="csv_file" accept=".csv" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base);" required>
+                <div style="font-size: 11px; color: var(--text-lighter);">
+                    Dạng: CSV (Comma-Separated Values), max 5MB
+                </div>
+            </div>
+
+            <!-- CSV Format Info -->
+            <div style="background: #fafafa; border: 1px solid var(--border-color); border-radius: 8px; padding: 16px;">
+                <div style="font-size: 12px; font-weight: 600; color: var(--text-dark); margin-bottom: 12px;">
+                    Định dạng file CSV:
+                </div>
+                <code style="display: block; background: #f3f4f6; padding: 12px; border-radius: 4px; font-size: 12px; font-family: 'Courier New', monospace; overflow-x: auto;">
+student_code<br>
+SV220001<br>
+SV220002<br>
+SV220003<br>
+                </code>
+                <div style="font-size: 11px; color: var(--text-lighter); margin-top: 8px;">
+                    • Dòng đầu tiên: Tên cột (student_code)<br>
+                    • Các dòng sau: Mã sinh viên<br>
+                    • Mỗi mã sinh viên trên một dòng
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
+                <button type="submit" class="btn-primary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; margin-right: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Import
+                </button>
+                <a href="{% url 'courses:courseclass_detail' courseclass.pk %}" class="btn-secondary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-block;">
+                    Hủy
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <div style="background: #f0fdf4; border: 1.5px solid #dcfce7; border-radius: 8px; padding: 16px; margin-top: 32px;">
+        <div style="font-size: 12px; color: #15803d;">
+            <strong>💡 Mẹo:</strong> Hệ thống sẽ kiểm tra:<br>
+            • Sinh viên tồn tại trong database<br>
+            • Sinh viên chưa đăng ký lớp này<br>
+            • Lớp vẫn còn chỗ trống
+        </div>
+    </div>
+</div>
+
+{% endblock %}

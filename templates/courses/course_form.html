@@ -1,0 +1,74 @@
+{% extends 'layouts/admin_base.html' %}
+
+{% block title %}EduFace - {% if is_edit %}Chỉnh Sửa{% else %}Thêm{% endif %} Học Phần{% endblock %}
+{% block page_title %}{% if is_edit %}Chỉnh Sửa{% else %}Thêm Mới{% endif %} Học Phần{% endblock %}
+{% block breadcrumb %}Quản Lý / Học Phần / {% if is_edit %}Chỉnh Sửa{% else %}Thêm Mới{% endif %}{% endblock %}
+
+{% block page_content %}
+
+<div class="card" style="max-width: 600px;">
+    <div class="card-title">{% if is_edit %}Chỉnh Sửa Học Phần{% else %}Tạo Mới Học Phần{% endif %}</div>
+    
+    <form method="post" action="">
+        {% csrf_token %}
+        
+        <div style="display: grid; gap: 16px;">
+            <!-- Department -->
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label for="department" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                    Ngành <span style="color: #dc2626;">*</span>
+                </label>
+                <select name="department" id="department" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none;" {% if is_edit %}disabled{% endif %} required>
+                    <option value="">-- Chọn Ngành --</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept.id }}" {% if course.department.id == dept.id %}selected{% endif %}>{{ dept.department_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Course Code -->
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label for="course_code" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                    Mã Học Phần <span style="color: #dc2626;">*</span>
+                </label>
+                <input type="text" name="course_code" id="course_code" value="{{ course.course_code }}" placeholder="VD: INT101" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none;" {% if is_edit %}readonly{% endif %} required>
+            </div>
+
+            <!-- Course Name -->
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label for="course_name" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                    Tên Học Phần <span style="color: #dc2626;">*</span>
+                </label>
+                <input type="text" name="course_name" id="course_name" value="{{ course.course_name }}" placeholder="VD: Lập Trình Python" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none;" required>
+            </div>
+
+            <!-- Credits -->
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label for="credits" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                    Tín Chỉ
+                </label>
+                <input type="number" name="credits" id="credits" value="{{ course.credits|default:3 }}" min="1" max="10" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none;">
+            </div>
+
+            <!-- Description -->
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label for="description" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                    Mô Tả
+                </label>
+                <textarea name="description" id="description" placeholder="Nhập mô tả học phần..." style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none; resize: vertical; min-height: 100px;">{{ course.description }}</textarea>
+            </div>
+
+            <!-- Buttons -->
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
+                <button type="submit" class="btn-primary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; text-decoration: none;">
+                    {% if is_edit %}Cập Nhật{% else %}Tạo Mới{% endif %}
+                </button>
+                <a href="{% url 'courses:course_list' %}" class="btn-secondary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-block;">
+                    Hủy
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

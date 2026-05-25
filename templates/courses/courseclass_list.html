@@ -1,0 +1,588 @@
+{% extends 'layouts/admin_base.html' %}
+
+{% block title %}EduFace - Quản Lý Lớp Học Phần{% endblock %}
+{% block page_title %}Quản Lý Lớp Học Phần{% endblock %}
+{% block breadcrumb %}Quản Lý / Lớp Học Phần{% endblock %}
+
+{% block page_content %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 7l9-4 9 4"/><line x1="12" y1="7" x2="12" y2="20"/>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-value">{{ page_obj.paginator.count }}</div>
+            <div class="stat-label">Tổng Lớp Học Phần</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-value">{{ total_enrolled }} / {{ total_capacity }}</div>
+            <div class="stat-label">SV Đăng Ký / Tổng Sĩ Số</div>
+        </div>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="table-card">
+    <div class="table-card-header">
+        <div>
+            <div class="table-card-title">Danh Sách Lớp Học Phần</div>
+        </div>
+        <div class="table-toolbar">
+            <form method="get" style="display: flex; gap: 8px; align-items: center; flex: 1; min-width: 0;">
+                <div class="search-input-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input class="search-input" type="text" name="search" placeholder="Tìm mã lớp hoặc học phần..." value="{{ search_query }}">
+                </div>
+                <select name="semester" class="filter-select">
+                    <option value="">Tất cả học kỳ</option>
+                    {% for sem in semesters %}
+                    <option value="{{ sem.id }}" {% if selected_semester == sem.id|stringformat:'s' %}selected{% endif %}>{{ sem.semester_name }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn-secondary" style="padding: 8px 12px; font-size: 13px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </button>
+            </form>
+            <button type="button" class="btn-primary" style="padding: 8px 16px; font-size: 13px; gap: 6px; cursor: pointer; border: none; text-decoration: none;" onclick="openCourseClassModal()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Thêm Lớp
+            </button>
+        </div>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Mã Lớp</th>
+                    <th>Học Phần</th>
+                    <th>Học Kỳ</th>
+                    <th>Giảng Viên</th>
+                    <th>Sĩ Số / Tối Đa</th>
+                    <th>Buổi Học</th>
+                    <th>Hành Động</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for courseclass in page_obj %}
+                <tr data-courseclass-id="{{ courseclass.pk }}" data-class-code="{{ courseclass.class_code }}" data-course-id="{{ courseclass.course.pk }}" data-course-code="{{ courseclass.course.course_code }}" data-course-name="{{ courseclass.course.course_name }}" data-semester-id="{{ courseclass.semester.pk }}" data-semester-name="{{ courseclass.semester.semester_name }}" data-teacher-id="{{ courseclass.teacher.pk }}" data-max-students="{{ courseclass.max_students }}" data-total-sessions="{{ courseclass.total_sessions }}">
+                    <td style="font-weight: 600; color: var(--text-dark); font-family: monospace;">{{ courseclass.class_code }}</td>
+                    <td>{{ courseclass.course.course_code }}</td>
+                    <td>{{ courseclass.semester.semester_name }}</td>
+                    <td>{{ courseclass.teacher.get_full_name }}</td>
+                    <td style="text-align: center;">{{ courseclass.enrollments.count }} / {{ courseclass.max_students }}</td>
+                    <td style="text-align: center;">{{ courseclass.total_sessions }}</td>
+                    <td>
+                        <div class="action-btns">
+                            <button type="button" class="btn-action btn-action-edit" title="Chỉnh sửa" onclick="openEditCourseClassModal(this)" style="border: none; background: none; cursor: pointer; padding: 5px 10px; border-radius: 6px;">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 13px; height: 13px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            </button>
+                            <button type="button" class="btn-action btn-action-delete" title="Xóa" onclick="openDeleteCourseClassModal(this)" style="border: none; background: none; cursor: pointer; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; color: #dc2626;">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 13px; height: 13px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 32px; color: var(--text-lighter);">
+                        Không có lớp học phần nào
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="table-card-footer" style="justify-content: center;">
+        <div style="display: flex; gap: 8px; align-items: center;">
+            {% if page_obj.has_previous %}
+            <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Về đầu">&laquo;</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Trước">&lsaquo;</a>
+            {% else %}
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&laquo;</span>
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&lsaquo;</span>
+            {% endif %}
+            
+            <span style="font-size: 13px; font-weight: 600; padding: 0 8px;">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+            
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Tiếp">&rsaquo;</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Về cuối">&raquo;</a>
+            {% else %}
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&rsaquo;</span>
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&raquo;</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal Create CourseClass -->
+<div id="courseclassModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center;">
+    <div class="card" style="width: 700px; max-height: 90vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div class="card-title" style="margin: 0;">Thêm Mới Lớp Học Phần</div>
+            <button type="button" onclick="closeCourseClassModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light);">×</button>
+        </div>
+        
+        <form method="post" action="{% url 'courses:courseclass_create' %}" onsubmit="submitCourseClassForm(event)">
+            {% csrf_token %}
+            
+            <div style="display: grid; gap: 16px;">
+                <!-- Course -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="modal_course" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                        Học Phần <span style="color: #dc2626;">*</span>
+                    </label>
+                    <select name="course" id="modal_course" class="select2-modal" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none; width: 100%;" required>
+                        <option value="">-- Chọn Học Phần --</option>
+                        {% for course in courses %}
+                        <option value="{{ course.id }}">{{ course.course_code }} - {{ course.course_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Semester -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="modal_semester" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                        Học Kỳ <span style="color: #dc2626;">*</span>
+                    </label>
+                    <select name="semester" id="modal_semester" class="select2-modal" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none; width: 100%;" required>
+                        <option value="">-- Chọn Học Kỳ --</option>
+                        {% for semester in semesters %}
+                        <option value="{{ semester.id }}">{{ semester.semester_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Teacher -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="modal_teacher" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                        Giảng Viên <span style="color: #dc2626;">*</span>
+                    </label>
+                    <select name="teacher" id="modal_teacher" class="select2-modal" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none; width: 100%;" required>
+                        <option value="">-- Chọn Giảng Viên --</option>
+                        {% for teacher in teachers %}
+                        <option value="{{ teacher.id }}">{{ teacher.get_full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Class Code -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="modal_class_code" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                        Mã Lớp <span style="color: #dc2626;">*</span>
+                    </label>
+                    <input type="text" name="class_code" id="modal_class_code" placeholder="VD: L01" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none;" required>
+                </div>
+
+                <!-- Max Students -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="modal_max_students" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                        Sĩ Số Tối Đa
+                    </label>
+                    <input type="number" name="max_students" id="modal_max_students" value="40" min="1" max="200" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none;">
+                </div>
+
+                <!-- Total Sessions -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="modal_total_sessions" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                        Tổng Số Buổi
+                    </label>
+                    <input type="number" name="total_sessions" id="modal_total_sessions" value="15" min="1" max="30" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none;">
+                </div>
+
+                <!-- Buttons -->
+                <div style="display: flex; gap: 12px; margin-top: 24px;">
+                    <button type="submit" class="btn-primary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; text-decoration: none;">
+                        Tạo Mới
+                    </button>
+                    <button type="button" class="btn-secondary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; text-decoration: none; border: none; cursor: pointer;" onclick="closeCourseClassModal()">
+                        Hủy
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Edit CourseClass -->
+<div id="editCourseclassModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center;">
+    <div class="card" style="width: 700px; max-height: 90vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div class="card-title" style="margin: 0;">Chỉnh Sửa Lớp Học Phần</div>
+            <button type="button" onclick="closeEditCourseClassModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light);">×</button>
+        </div>
+        
+        <form method="post" id="editCourseclassForm" style="display: none;" onsubmit="submitEditCourseClassForm(event)">
+            {% csrf_token %}
+            <input type="hidden" name="courseclass_id" id="edit_courseclass_id">
+            
+            <div style="display: grid; gap: 16px;">
+                <!-- Course (readonly) -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="edit_modal_course_display" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                        Học Phần
+                    </label>
+                    <input type="text" id="edit_modal_course_display" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none; background: #f3f4f6; cursor: not-allowed;" readonly>
+                </div>
+
+                <!-- Semester (readonly) -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="edit_modal_semester_display" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                        Học Kỳ
+                    </label>
+                    <input type="text" id="edit_modal_semester_display" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none; background: #f3f4f6; cursor: not-allowed;" readonly>
+                </div>
+
+                <!-- Teacher -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="edit_modal_teacher" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                        Giảng Viên <span style="color: #dc2626;">*</span>
+                    </label>
+                    <select name="teacher" id="edit_modal_teacher" class="select2-modal" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none; width: 100%;" required>
+                        <option value="">-- Chọn Giảng Viên --</option>
+                        {% for teacher in teachers %}
+                        <option value="{{ teacher.id }}">{{ teacher.get_full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Class Code (readonly on edit) -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="edit_modal_class_code" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                        Mã Lớp <span style="color: #dc2626;">*</span>
+                    </label>
+                    <input type="text" id="edit_modal_class_code" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none; background: #f3f4f6; cursor: not-allowed;" readonly>
+                </div>
+
+                <!-- Max Students -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="edit_modal_max_students" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                        Sĩ Số Tối Đa
+                    </label>
+                    <input type="number" name="max_students" id="edit_modal_max_students" min="1" max="200" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none;">
+                </div>
+
+                <!-- Total Sessions -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="edit_modal_total_sessions" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                        Tổng Số Buổi
+                    </label>
+                    <input type="number" name="total_sessions" id="edit_modal_total_sessions" min="1" max="30" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none;">
+                </div>
+
+                <!-- Buttons -->
+                <div style="display: flex; gap: 12px; margin-top: 24px;">
+                    <button type="submit" class="btn-primary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; text-decoration: none;">
+                        Cập Nhật
+                    </button>
+                    <button type="button" class="btn-secondary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; text-decoration: none; border: none; cursor: pointer;" onclick="closeEditCourseClassModal()">
+                        Hủy
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Delete Confirmation -->
+<div id="deleteCourseclassModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center;">
+    <div class="card" style="max-width: 400px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div class="card-title" style="margin: 0; color: #dc2626;">Xác Nhận Xóa</div>
+            <button type="button" onclick="closeDeleteCourseClassModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light);">×</button>
+        </div>
+        
+        <div style="margin-bottom: 24px; color: var(--text-medium);">
+            Bạn có chắc muốn xóa lớp học phần <strong id="delete_courseclass_name" style="color: var(--text-dark);"></strong> không?
+            <div style="font-size: 12px; color: var(--text-lighter); margin-top: 8px;">Hành động này không thể hoàn tác.</div>
+        </div>
+
+        <div id="delete_error_message" style="display: none; padding: 12px; background: #fee2e2; border: 1.5px solid #fca5a5; border-radius: 6px; margin-bottom: 16px; color: #dc2626; font-size: 13px;"></div>
+
+        <form method="post" id="deleteCourseclassForm" style="display: flex; gap: 12px;" onsubmit="submitDeleteCourseClassForm(event)">
+            {% csrf_token %}
+            <button type="submit" class="btn-primary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; background: #dc2626; flex: 1;">
+                Có, Xóa
+            </button>
+            <button type="button" class="btn-secondary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; text-decoration: none; border: none; cursor: pointer; flex: 1;" onclick="closeDeleteCourseClassModal()">
+                Không, Hủy
+            </button>
+        </form>
+    </div>
+</div>
+
+<style>
+#courseclassModal, #editCourseclassModal, #deleteCourseclassModal {
+    display: none;
+}
+
+#courseclassModal.show, #editCourseclassModal.show, #deleteCourseclassModal.show {
+    display: flex !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--primary-green) !important;
+    box-shadow: 0 0 0 3px rgba(26, 107, 60, 0.1) !important;
+    background: #fff !important;
+}
+
+/* Hide original select when Select2 is initialized */
+select.select2-hidden-accessible {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+/* Customize Select2 styling */
+.select2-container .select2-selection--single {
+    height: 40px !important;
+    border: 1.5px solid var(--border-color, #e5e7eb) !important;
+    border-radius: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    font-size: 13px !important;
+    font-family: var(--font-base) !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    padding-left: 12px !important;
+    padding-right: 24px !important;
+    line-height: normal !important;
+    color: var(--text-dark, #1f2937) !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 38px !important;
+    right: 6px !important;
+}
+
+.select2-container--default.select2-container--focus .select2-selection--single,
+.select2-container--default.select2-container--open .select2-selection--single {
+    border-color: var(--primary-green, #1a6b3c) !important;
+    box-shadow: 0 0 0 3px rgba(26, 107, 60, 0.1) !important;
+    background: #fff !important;
+}
+</style>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+<script>
+// ===== CREATE MODAL =====
+function openCourseClassModal() {
+    const modal = document.getElementById('courseclassModal');
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+    
+    // Reset form
+    document.getElementById('courseclassModal').querySelector('form').reset();
+    
+    // Destroy and re-initialize Select2
+    setTimeout(() => {
+        if ($('#modal_course').hasClass('select2-hidden-accessible')) {
+            $('#modal_course').select2('destroy');
+        }
+        if ($('#modal_semester').hasClass('select2-hidden-accessible')) {
+            $('#modal_semester').select2('destroy');
+        }
+        if ($('#modal_teacher').hasClass('select2-hidden-accessible')) {
+            $('#modal_teacher').select2('destroy');
+        }
+        
+        $('#modal_course, #modal_semester, #modal_teacher').select2({
+            width: '100%',
+            placeholder: '-- Chọn --',
+            allowClear: false,
+            dropdownParent: $('#courseclassModal')
+        });
+    }, 50);
+}
+
+function closeCourseClassModal() {
+    const modal = document.getElementById('courseclassModal');
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+    const form = modal.querySelector('form');
+    if (form) form.reset();
+}
+
+function submitCourseClassForm(event) {
+    // Form will submit normally
+}
+
+// ===== EDIT MODAL =====
+function openEditCourseClassModal(button) {
+    const row = button.closest('tr');
+    const courseclassId = row.dataset.courseclassId;
+    const classCode = row.dataset.classCode;
+    const courseId = row.dataset.courseId;
+    const courseName = row.dataset.courseName;
+    const courseCode = row.dataset.courseCode;
+    const semesterId = row.dataset.semesterId;
+    const semesterName = row.dataset.semesterName;
+    const teacherId = row.dataset.teacherId;
+    const maxStudents = row.dataset.maxStudents;
+    const totalSessions = row.dataset.totalSessions;
+    
+    // Populate form
+    document.getElementById('edit_courseclass_id').value = courseclassId;
+    document.getElementById('edit_modal_course_display').value = `${courseCode} - ${courseName}`;
+    document.getElementById('edit_modal_semester_display').value = semesterName;
+    document.getElementById('edit_modal_class_code').value = classCode;
+    document.getElementById('edit_modal_max_students').value = maxStudents;
+    document.getElementById('edit_modal_total_sessions').value = totalSessions;
+    
+    // Update form action
+    const form = document.getElementById('editCourseclassForm');
+    form.action = `/courses/classes/${courseclassId}/edit/`;
+    form.style.display = 'block';
+    
+    const modal = document.getElementById('editCourseclassModal');
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+    
+    // Destroy and re-initialize Select2 for edit modal (only teacher)
+    setTimeout(() => {
+        if ($('#edit_modal_teacher').hasClass('select2-hidden-accessible')) {
+            $('#edit_modal_teacher').select2('destroy');
+        }
+        
+        // Set teacher value before initializing Select2
+        document.getElementById('edit_modal_teacher').value = teacherId || '';
+        
+        // Initialize Select2 only for teacher
+        $('#edit_modal_teacher').select2({
+            width: '100%',
+            placeholder: '-- Chọn Giảng Viên --',
+            allowClear: false,
+            dropdownParent: $('#editCourseclassModal')
+        });
+        
+        // Trigger change to update selected value display
+        $('#edit_modal_teacher').trigger('change');
+    }, 50);
+}
+
+function closeEditCourseClassModal() {
+    const modal = document.getElementById('editCourseclassModal');
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+}
+
+function submitEditCourseClassForm(event) {
+    // Form will submit normally
+}
+
+// ===== DELETE MODAL =====
+function openDeleteCourseClassModal(button) {
+    const row = button.closest('tr');
+    const courseclassId = row.dataset.courseclassId;
+    const classCode = row.dataset.classCode;
+    
+    document.getElementById('delete_courseclass_name').textContent = classCode;
+    
+    // Update form action
+    const form = document.getElementById('deleteCourseclassForm');
+    form.action = `/courses/classes/${courseclassId}/delete/`;
+    
+    const modal = document.getElementById('deleteCourseclassModal');
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+}
+
+function closeDeleteCourseClassModal() {
+    const modal = document.getElementById('deleteCourseclassModal');
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+}
+
+function submitDeleteCourseClassForm(event) {
+    event.preventDefault();
+    const form = event.target;
+    const courseclassId = form.action.match(/\d+/)[0];
+    
+    // Clear previous error
+    document.getElementById('delete_error_message').style.display = 'none';
+    
+    // Submit via fetch to handle errors gracefully
+    fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || 'Lỗi khi xóa lớp học phần');
+            });
+        }
+        return response.text();
+    })
+    .then(result => {
+        // Success - reload page to show updated list
+        closeDeleteCourseClassModal();
+        setTimeout(() => {
+            window.location.reload();
+        }, 500);
+    })
+    .catch(error => {
+        // Show error message in modal
+        const errorDiv = document.getElementById('delete_error_message');
+        errorDiv.textContent = error.message || 'Lỗi khi xóa lớp học phần';
+        errorDiv.style.display = 'block';
+    });
+}
+
+// ===== EVENT LISTENERS =====
+document.addEventListener('DOMContentLoaded', function() {
+    // Create modal - only close on click on modal background, not form
+    const createModal = document.getElementById('courseclassModal');
+    const createCard = createModal.querySelector('.card');
+    createModal.addEventListener('click', function(event) {
+        if (event.target === createModal) {
+            closeCourseClassModal();
+        }
+    });
+    
+    // Edit modal - only close on click on modal background, not form
+    const editModal = document.getElementById('editCourseclassModal');
+    const editCard = editModal.querySelector('.card');
+    editModal.addEventListener('click', function(event) {
+        if (event.target === editModal) {
+            closeEditCourseClassModal();
+        }
+    });
+    
+    // Delete modal - close on click on background (small modal, safe)
+    const deleteModal = document.getElementById('deleteCourseclassModal');
+    deleteModal.addEventListener('click', function(event) {
+        if (event.target === deleteModal) {
+            closeDeleteCourseClassModal();
+        }
+    });
+});
+</script>
+
+{% endblock %}

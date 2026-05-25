@@ -1,0 +1,595 @@
+{% extends 'layouts/admin_base.html' %}
+
+{% block title %}EduFace - Quản Lý Học Phần{% endblock %}
+{% block page_title %}Quản Lý Học Phần{% endblock %}
+{% block breadcrumb %}Quản Lý / Học Phần{% endblock %}
+
+{% block page_content %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 7l9-4 9 4"/><line x1="12" y1="7" x2="12" y2="20"/>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-value">{{ page_obj.paginator.count }}</div>
+            <div class="stat-label">Tổng Học Phần</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><path d="M8 12l2 2 4-4"/>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-value">{{ courses|length }}</div>
+            <div class="stat-label">Học Phần Hoạt Động</div>
+        </div>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="table-card">
+    <div class="table-card-header">
+        <div>
+            <div class="table-card-title">Danh Sách Học Phần</div>
+        </div>
+        <div class="table-toolbar">
+            <form method="get" style="display: flex; gap: 8px; align-items: center; flex: 1; min-width: 0;">
+                <div class="search-input-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input class="search-input" type="text" name="search" placeholder="Tìm mã hoặc tên học phần..." value="{{ search_query }}">
+                </div>
+                <button type="submit" class="btn-secondary" style="padding: 8px 12px; font-size: 13px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </button>
+            </form>
+            <button type="button" class="btn-primary" style="padding: 8px 16px; font-size: 13px; gap: 6px; cursor: pointer; border: none; text-decoration: none;" onclick="openCourseModal()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Thêm Học Phần
+            </button>
+        </div>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Mã Học Phần</th>
+                    <th>Tên Học Phần</th>
+                    <th>Tín Chỉ</th>
+                    <th>Phòng Ban</th>
+                    <th>Phòng Học</th>
+                    <th>Mô Tả</th>
+                    <th>Hành Động</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for course in page_obj %}
+                <tr data-course-id="{{ course.pk }}" data-course-code="{{ course.course_code }}" data-course-name="{{ course.course_name }}" data-credits="{{ course.credits }}" data-room-id="{{ course.room.pk|default:"" }}" data-description="{{ course.description|default:"" }}" data-department-id="{{ course.department.pk }}">
+                    <td style="font-weight: 600; color: var(--text-dark); font-family: monospace;">{{ course.course_code }}</td>
+                    <td style="font-weight: 500;">{{ course.course_name }}</td>
+                    <td style="text-align: center;">{{ course.credits }}</td>
+                    <td>{{ course.department.code }}</td>
+                    <td>{{ course.room.room_code|default:"—" }}</td>
+                    <td style="font-size: 12px; color: var(--text-medium); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ course.description|default:"—" }}</td>
+                    <td>
+                        <div class="action-btns">
+                            <button type="button" class="btn-action btn-action-edit" title="Chỉnh sửa" onclick="openEditCourseModal(this)" style="border: none; background: none; cursor: pointer; padding: 5px 10px; border-radius: 6px;">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 13px; height: 13px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            </button>
+                            <button type="button" class="btn-action btn-action-delete" title="Xóa" onclick="openDeleteCourseModal(this)" style="border: none; background: none; cursor: pointer; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; color: #dc2626;">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 13px; height: 13px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 32px; color: var(--text-lighter);">
+                        Không có học phần nào
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="table-card-footer" style="justify-content: center;">
+        <div style="display: flex; gap: 8px; align-items: center;">
+            {% if page_obj.has_previous %}
+            <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Về đầu">&laquo;</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Trước">&lsaquo;</a>
+            {% else %}
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&laquo;</span>
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&lsaquo;</span>
+            {% endif %}
+            
+            <span style="font-size: 13px; font-weight: 600; padding: 0 8px;">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+            
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Tiếp">&rsaquo;</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Về cuối">&raquo;</a>
+            {% else %}
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&rsaquo;</span>
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&raquo;</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal Create Course -->
+<div id="courseModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center;">
+    <div class="card" style="width: 700px; max-height: 90vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div class="card-title" style="margin: 0;">Thêm Mới Học Phần</div>
+            <button type="button" onclick="closeCourseModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light);">×</button>
+        </div>
+        
+        <form method="post" action="{% url 'courses:course_create' %}" onsubmit="submitCourseForm(event)">
+            {% csrf_token %}
+            
+            <div style="display: grid; gap: 16px;">
+                <!-- Department -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="modal_department" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                        Phòng Ban <span style="color: #dc2626;">*</span>
+                    </label>
+                    <select name="department" id="modal_department" class="select2-modal" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none; width: 100%;" required>
+                        <option value="">-- Chọn Phòng Ban --</option>
+                        {% for department in departments %}
+                        <option value="{{ department.id }}">{{ department.code }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Course Code -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="modal_course_code" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                        Mã Học Phần <span style="color: #dc2626;">*</span>
+                    </label>
+                    <input type="text" name="course_code" id="modal_course_code" placeholder="VD: INT101" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none;" required>
+                </div>
+
+                <!-- Course Name -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="modal_course_name" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                        Tên Học Phần <span style="color: #dc2626;">*</span>
+                    </label>
+                    <input type="text" name="course_name" id="modal_course_name" placeholder="VD: Lập Trình Python" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none;" required>
+                </div>
+
+                <!-- Credits -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="modal_credits" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                        Tín Chỉ
+                    </label>
+                    <input type="number" name="credits" id="modal_credits" value="3" min="1" max="10" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none;">
+                </div>
+
+                <!-- Room -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="modal_room" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                        Phòng Học
+                    </label>
+                    <select name="room" id="modal_room" class="select2-modal" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none; width: 100%;">
+                        <option value="">-- Chọn Phòng Học --</option>
+                        {% for room in rooms %}
+                        <option value="{{ room.id }}">{{ room.room_code }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Description -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="modal_description" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                        Mô Tả
+                    </label>
+                    <textarea name="description" id="modal_description" placeholder="Nhập mô tả học phần..." style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none; resize: vertical; min-height: 100px;"></textarea>
+                </div>
+
+                <!-- Buttons -->
+                <div style="display: flex; gap: 12px; margin-top: 24px;">
+                    <button type="submit" class="btn-primary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; text-decoration: none;">
+                        Tạo Mới
+                    </button>
+                    <button type="button" class="btn-secondary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; text-decoration: none; border: none; cursor: pointer;" onclick="closeCourseModal()">
+                        Hủy
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Edit Course -->
+<div id="editCourseModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center;">
+    <div class="card" style="width: 700px; max-height: 90vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div class="card-title" style="margin: 0;">Chỉnh Sửa Học Phần</div>
+            <button type="button" onclick="closeEditCourseModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light);">×</button>
+        </div>
+        
+        <form method="post" id="editCourseForm" style="display: none;" onsubmit="submitEditCourseForm(event)">
+            {% csrf_token %}
+            <input type="hidden" name="course_id" id="edit_course_id">
+            
+            <div style="display: grid; gap: 16px;">
+                <!-- Department -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="edit_modal_department" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                        Phòng Ban <span style="color: #dc2626;">*</span>
+                    </label>
+                    <select name="department" id="edit_modal_department" class="select2-modal" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none; width: 100%;" required>
+                        <option value="">-- Chọn Phòng Ban --</option>
+                        {% for department in departments %}
+                        <option value="{{ department.id }}">{{ department.code }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Course Code (readonly on edit) -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="edit_modal_course_code" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                        Mã Học Phần <span style="color: #dc2626;">*</span>
+                    </label>
+                    <input type="text" id="edit_modal_course_code" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none; background: #f3f4f6; cursor: not-allowed;" readonly>
+                </div>
+
+                <!-- Course Name -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="edit_modal_course_name" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                        Tên Học Phần <span style="color: #dc2626;">*</span>
+                    </label>
+                    <input type="text" name="course_name" id="edit_modal_course_name" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none;" required>
+                </div>
+
+                <!-- Credits -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="edit_modal_credits" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                        Tín Chỉ
+                    </label>
+                    <input type="number" name="credits" id="edit_modal_credits" min="1" max="10" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none;">
+                </div>
+
+                <!-- Room -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="edit_modal_room" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                        Phòng Học
+                    </label>
+                    <select name="room" id="edit_modal_room" class="select2-modal" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none; width: 100%;">
+                        <option value="">-- Chọn Phòng Học --</option>
+                        {% for room in rooms %}
+                        <option value="{{ room.id }}">{{ room.room_code }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Description -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="edit_modal_description" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                        Mô Tả
+                    </label>
+                    <textarea name="description" id="edit_modal_description" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none; resize: vertical; min-height: 100px;"></textarea>
+                </div>
+
+                <!-- Buttons -->
+                <div style="display: flex; gap: 12px; margin-top: 24px;">
+                    <button type="submit" class="btn-primary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; text-decoration: none;">
+                        Cập Nhật
+                    </button>
+                    <button type="button" class="btn-secondary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; text-decoration: none; border: none; cursor: pointer;" onclick="closeEditCourseModal()">
+                        Hủy
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Delete Confirmation -->
+<div id="deleteCourseModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center;">
+    <div class="card" style="max-width: 400px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div class="card-title" style="margin: 0; color: #dc2626;">Xác Nhận Xóa</div>
+            <button type="button" onclick="closeDeleteCourseModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light);">×</button>
+        </div>
+        
+        <div style="margin-bottom: 24px; color: var(--text-medium);">
+            Bạn có chắc muốn xóa học phần <strong id="delete_course_name" style="color: var(--text-dark);"></strong> không?
+            <div style="font-size: 12px; color: var(--text-lighter); margin-top: 8px;">Hành động này không thể hoàn tác.</div>
+        </div>
+
+        <div id="delete_error_message" style="display: none; padding: 12px; background: #fee2e2; border: 1.5px solid #fca5a5; border-radius: 6px; margin-bottom: 16px; color: #dc2626; font-size: 13px;"></div>
+
+        <form method="post" id="deleteCourseForm" style="display: flex; gap: 12px;" onsubmit="submitDeleteCourseForm(event)">
+            {% csrf_token %}
+            <button type="submit" class="btn-primary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; background: #dc2626; flex: 1;">
+                Có, Xóa
+            </button>
+            <button type="button" class="btn-secondary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; text-decoration: none; border: none; cursor: pointer; flex: 1;" onclick="closeDeleteCourseModal()">
+                Không, Hủy
+            </button>
+        </form>
+    </div>
+</div>
+
+<style>
+#courseModal, #editCourseModal, #deleteCourseModal {
+    display: none;
+}
+
+#courseModal.show, #editCourseModal.show, #deleteCourseModal.show {
+    display: flex !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--primary-green) !important;
+    box-shadow: 0 0 0 3px rgba(26, 107, 60, 0.1) !important;
+    background: #fff !important;
+}
+
+/* Hide original select when Select2 is initialized */
+select.select2-hidden-accessible {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+/* Tùy chỉnh chiều cao, viền và góc bo của hộp Select2 */
+.select2-container .select2-selection--single {
+    height: 40px !important; /* Cân đối chiều cao bằng với input thường */
+    border: 1.5px solid var(--border-color, #e5e7eb) !important;
+    border-radius: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    font-size: 13px !important;
+    font-family: var(--font-base) !important;
+}
+
+/* Chỉnh khoảng cách chữ bên trong */
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    padding-left: 12px !important;
+    padding-right: 24px !important;
+    line-height: normal !important;
+    color: var(--text-dark, #1f2937) !important;
+}
+
+/* Căn chỉnh lại mũi tên thả xuống */
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 38px !important;
+    right: 6px !important;
+}
+
+/* Thêm hiệu ứng phát sáng (focus) màu xanh giống hệt input của bạn khi click vào */
+.select2-container--default.select2-container--focus .select2-selection--single,
+.select2-container--default.select2-container--open .select2-selection--single {
+    border-color: var(--primary-green, #1a6b3c) !important;
+    box-shadow: 0 0 0 3px rgba(26, 107, 60, 0.1) !important;
+    background: #fff !important;
+}
+</style>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+<script>
+// ===== CREATE MODAL =====
+function openCourseModal() {
+    const modal = document.getElementById('courseModal');
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+    
+    // Reset form
+    document.getElementById('courseModal').querySelector('form').reset();
+    
+    // Destroy and re-initialize Select2
+    setTimeout(() => {
+        // Kiểm tra xem đã khởi tạo Select2 chưa, nếu có rồi mới destroy
+        if ($('#modal_department').hasClass('select2-hidden-accessible')) {
+            $('#modal_department').select2('destroy');
+        }
+        if ($('#modal_room').hasClass('select2-hidden-accessible')) {
+            $('#modal_room').select2('destroy');
+        }
+        
+        // Sau đó mới khởi tạo lại
+        $('#modal_department, #modal_room').select2({
+            width: '100%',
+            placeholder: '-- Chọn --',
+            allowClear: false,
+            dropdownParent: $('#courseModal')
+        });
+    }, 50);
+}
+
+function closeCourseModal() {
+    const modal = document.getElementById('courseModal');
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+    const form = modal.querySelector('form');
+    if (form) form.reset();
+}
+
+function submitCourseForm(event) {
+    // Form will submit normally
+}
+
+function submitEditCourseForm(event) {
+    // Form will submit normally
+}
+
+function submitDeleteCourseForm(event) {
+    event.preventDefault();
+    const form = event.target;
+    const courseId = form.action.match(/\d+/)[0];
+    
+    // Clear previous error
+    document.getElementById('delete_error_message').style.display = 'none';
+    
+    // Submit via fetch to handle errors gracefully
+    fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || 'Loi khi xoa hoc phan');
+            });
+        }
+        return response.text();
+    })
+    .then(result => {
+        // Success - reload page to show updated list
+        closeDeleteCourseModal();
+        setTimeout(() => {
+            window.location.reload();
+        }, 500);
+    })
+    .catch(error => {
+        // Show error message in modal
+        const errorDiv = document.getElementById('delete_error_message');
+        errorDiv.textContent = error.message || 'Loi khi xoa hoc phan';
+        errorDiv.style.display = 'block';
+    });
+}
+
+// ===== EDIT MODAL =====
+function openEditCourseModal(button) {
+    const row = button.closest('tr');
+    const courseId = row.dataset.courseId;
+    const courseName = row.dataset.courseName;
+    const courseCode = row.dataset.courseCode;
+    const credits = row.dataset.credits;
+    const description = row.dataset.description;
+    const departmentId = row.dataset.departmentId;
+    const roomId = row.dataset.roomId;
+    
+    // Populate form
+    document.getElementById('edit_course_id').value = courseId;
+    document.getElementById('edit_modal_course_code').value = courseCode;
+    document.getElementById('edit_modal_course_name').value = courseName;
+    document.getElementById('edit_modal_credits').value = credits;
+    document.getElementById('edit_modal_description').value = description;
+    
+    // Update form action
+    const form = document.getElementById('editCourseForm');
+    form.action = `/courses/${courseId}/edit/`;
+    form.style.display = 'block';
+    
+    const modal = document.getElementById('editCourseModal');
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+    
+    // Destroy and re-initialize Select2 for edit modal
+    setTimeout(() => {
+        // Check if Select2 is initialized before destroying
+        if ($('#edit_modal_department').hasClass('select2-hidden-accessible')) {
+            $('#edit_modal_department').select2('destroy');
+        }
+        if ($('#edit_modal_room').hasClass('select2-hidden-accessible')) {
+            $('#edit_modal_room').select2('destroy');
+        }
+        
+        // Set values before initializing Select2
+        document.getElementById('edit_modal_department').value = departmentId || '';
+        document.getElementById('edit_modal_room').value = roomId || '';
+        
+        // Initialize Select2
+        $('#edit_modal_department, #edit_modal_room').select2({
+            width: '100%',
+            placeholder: '-- Chọn --',
+            allowClear: false,
+            dropdownParent: $('#editCourseModal')
+        });
+        
+        // Trigger change to update selected value display
+        $('#edit_modal_department').trigger('change');
+        $('#edit_modal_room').trigger('change');
+    }, 50);
+}
+
+function closeEditCourseModal() {
+    const modal = document.getElementById('editCourseModal');
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+}
+
+// ===== DELETE MODAL =====
+function openDeleteCourseModal(button) {
+    const row = button.closest('tr');
+    const courseId = row.dataset.courseId;
+    const courseName = row.dataset.courseName;
+    
+    document.getElementById('delete_course_name').textContent = courseName;
+    
+    // Update form action
+    const form = document.getElementById('deleteCourseForm');
+    form.action = `/courses/${courseId}/delete/`;
+    
+    const modal = document.getElementById('deleteCourseModal');
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+}
+
+function closeDeleteCourseModal() {
+    const modal = document.getElementById('deleteCourseModal');
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+}
+
+// ===== EVENT LISTENERS =====
+document.addEventListener('DOMContentLoaded', function() {
+    // Create modal - only close on click on modal background, not form
+    const createModal = document.getElementById('courseModal');
+    const courseCard = createModal.querySelector('.card');
+    createModal.addEventListener('click', function(event) {
+        // Only close if clicking on modal background, not on card/form
+        if (event.target === createModal) {
+            closeCourseModal();
+        }
+    });
+    
+    // Edit modal - only close on click on modal background, not form
+    const editModal = document.getElementById('editCourseModal');
+    const editCard = editModal.querySelector('.card');
+    editModal.addEventListener('click', function(event) {
+        if (event.target === editModal) {
+            closeEditCourseModal();
+        }
+    });
+    
+    // Delete modal - only close on click on modal background, not form
+    const deleteModal = document.getElementById('deleteCourseModal');
+    const deleteCard = deleteModal.querySelector('.card');
+    deleteModal.addEventListener('click', function(event) {
+        if (event.target === deleteModal) {
+            closeDeleteCourseModal();
+        }
+    });
+    
+    // Close on Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeCourseModal();
+            closeEditCourseModal();
+            closeDeleteCourseModal();
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,5 +1,6 @@
 from django.db import models
 from academics.models import Department, Semester
+from schedules.models import Room
 from accounts.models import Teacher
 
 class Course(models.Model):
@@ -9,6 +10,14 @@ class Course(models.Model):
         on_delete=models.PROTECT,
         related_name='courses',
         verbose_name='Ngành'
+    )
+    room = models.ForeignKey(
+        Room,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='courses',
+        verbose_name='Phòng học'
     )
     course_code = models.CharField(max_length=20, unique=True, verbose_name='Mã học phần')
     course_name = models.CharField(max_length=200, verbose_name='Tên học phần')
@@ -58,7 +67,6 @@ class CourseClass(models.Model):
 
 class Enrollment(models.Model):
     """Đăng ký học phần của sinh viên"""
-    from students.models import Student 
 
     course_class = models.ForeignKey(
         CourseClass,

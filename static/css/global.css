@@ -174,6 +174,34 @@ textarea {
     background: var(--primary-green-light);
 }
 
+/* Nút phụ - xám */
+.btn-secondary {
+    background: #f3f4f6;
+    color: var(--text-medium);
+    text-decoration: none;
+    border: 1.5px solid #e5e7eb;
+    padding: 13px 28px;
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    font-weight: 600;
+    font-family: var(--font-base);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+
+.btn-secondary:hover {
+    background: #e5e7eb;
+    border-color: #d1d5db;
+    color: var(--text-dark);
+}
+
+.btn-secondary:active {
+    background: #d1d5db;
+}
+
 /* ==========================================
    SHARED FORM STYLES
    ========================================== */

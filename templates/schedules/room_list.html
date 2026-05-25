@@ -1,0 +1,368 @@
+{% extends 'layouts/admin_base.html' %}
+{% load static %}
+
+{% block title %}Quản Lý Phòng Học{% endblock %}
+{% block page_title %}Danh Sách Phòng Học{% endblock %}
+{% block breadcrumb %}Quản Lý Lịch Học / Phòng Học{% endblock %}
+
+{% block page_content %}
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div class="table-card-title">Danh Sách Phòng Học</div>
+        <div class="table-toolbar">
+            <form method="get" style="display: flex; gap: 8px; align-items: center;">
+                <div class="search-input-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input class="search-input" type="text" name="search" placeholder="Tìm mã phòng, tòa nhà..." value="{{ search_query }}">
+                </div>
+                <button type="submit" class="btn-secondary" style="padding: 8px 12px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </button>
+            </form>
+            <button type="button" class="btn-primary" style="padding: 8px 16px; gap: 6px; cursor: pointer;" onclick="openRoomModal()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Thêm Phòng
+            </button>
+        </div>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Mã Phòng</th>
+                    <th>Tòa Nhà</th>
+                    <th>Sức Chứa</th>
+                    <th>Camera</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for room in page_obj %}
+                <tr data-room-id="{{ room.id }}" 
+                    data-room-code="{{ room.room_code }}" 
+                    data-building="{{ room.building }}" 
+                    data-capacity="{{ room.capacity }}" 
+                    data-has-camera="{{ room.has_camera|yesno:'true,false' }}">
+                    <td style="font-weight: 600; color: var(--text-dark);">{{ room.room_code }}</td>
+                    <td>{{ room.building|default:"--" }}</td>
+                    <td>{{ room.capacity }}</td>
+                    <td>
+                        {% if room.has_camera %}
+                        <span style="color: var(--primary-green); font-weight: 600;">Có</span>
+                        {% else %}
+                        <span style="color: var(--text-light);">Không</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" class="btn-secondary" style="padding: 6px; border: none; background: none; color: var(--primary-green); cursor: pointer;" onclick="openEditRoomModal(this)" title="Sửa">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            </button>
+                            <button type="button" class="btn-secondary" style="padding: 6px; border: none; background: none; color: var(--accent-red); cursor: pointer;" onclick="openDeleteRoomModal('{{ room.id }}', '{{ room.room_code }}')" title="Xóa">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 30px; color: var(--text-light);">
+                        Không tìm thấy phòng học nào.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="table-card-footer" style="justify-content: center;">
+        <div style="display: flex; gap: 8px; align-items: center;">
+            {% if page_obj.has_previous %}
+            <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-weight: bold; text-decoration: none;">&laquo;</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-weight: bold; text-decoration: none;">&lsaquo;</a>
+            {% else %}
+            <span class="btn-secondary" style="padding: 6px 12px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&laquo;</span>
+            <span class="btn-secondary" style="padding: 6px 12px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&lsaquo;</span>
+            {% endif %}
+            
+            <span style="font-size: 13px; font-weight: 600; padding: 0 8px;">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+            
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-weight: bold; text-decoration: none;">&rsaquo;</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-weight: bold; text-decoration: none;">&raquo;</a>
+            {% else %}
+            <span class="btn-secondary" style="padding: 6px 12px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&rsaquo;</span>
+            <span class="btn-secondary" style="padding: 6px 12px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&raquo;</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal Thêm Phòng Học -->
+<div id="roomModal" class="modal-overlay">
+    <div class="card" style="width: 500px; padding: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <div class="card-title" style="margin: 0;">Thêm Phòng Học Mới</div>
+            <button type="button" onclick="closeRoomModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light); line-height: 1;">×</button>
+        </div>
+
+        <form method="post" action="{% url 'schedules:room_create' %}" id="createRoomForm" onsubmit="submitRoomForm(event)">
+            {% csrf_token %}
+            <div id="create_error_message" style="display: none; padding: 12px; background: #fee2e2; border: 1px solid #fca5a5; border-radius: 6px; margin-bottom: 16px; color: #dc2626; font-size: 13px;"></div>
+            
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Mã phòng <span style="color: red;">*</span></label>
+                <input type="text" name="room_code" required class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Tòa nhà</label>
+                <input type="text" name="building" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;" placeholder="VD: Tòa A">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Sức chứa</label>
+                <input type="number" name="capacity" value="40" min="1" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px;">
+                    <input type="checkbox" name="has_camera" style="width: 16px; height: 16px; accent-color: var(--primary-green);">
+                    <span>Phòng có trang bị Camera điểm danh</span>
+                </label>
+            </div>
+            
+            <div style="display: flex; gap: 12px;">
+                <button type="button" class="btn-secondary" style="flex: 1; padding: 10px; border-radius: 6px;" onclick="closeRoomModal()">Hủy</button>
+                <button type="submit" class="btn-primary" style="flex: 1; padding: 10px; border-radius: 6px;">Lưu Phòng Học</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Sửa Phòng Học -->
+<div id="editRoomModal" class="modal-overlay">
+    <div class="card" style="width: 500px; padding: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <div class="card-title" style="margin: 0;">Sửa Phòng Học</div>
+            <button type="button" onclick="closeEditRoomModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light); line-height: 1;">×</button>
+        </div>
+
+        <form method="post" action="" id="editRoomForm" onsubmit="submitEditRoomForm(event)">
+            {% csrf_token %}
+            <div id="edit_error_message" style="display: none; padding: 12px; background: #fee2e2; border: 1px solid #fca5a5; border-radius: 6px; margin-bottom: 16px; color: #dc2626; font-size: 13px;"></div>
+            
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Mã phòng <span style="color: red;">*</span></label>
+                <input type="text" name="room_code" id="edit_room_code" required class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Tòa nhà</label>
+                <input type="text" name="building" id="edit_building" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Sức chứa</label>
+                <input type="number" name="capacity" id="edit_capacity" min="1" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px;">
+                    <input type="checkbox" name="has_camera" id="edit_has_camera" style="width: 16px; height: 16px; accent-color: var(--primary-green);">
+                    <span>Phòng có trang bị Camera điểm danh</span>
+                </label>
+            </div>
+            
+            <div style="display: flex; gap: 12px;">
+                <button type="button" class="btn-secondary" style="flex: 1; padding: 10px; border-radius: 6px;" onclick="closeEditRoomModal()">Hủy</button>
+                <button type="submit" class="btn-primary" style="flex: 1; padding: 10px; border-radius: 6px;">Lưu Thay Đổi</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Xóa -->
+<div id="deleteRoomModal" class="modal-overlay">
+    <div class="card" style="width: 400px; padding: 24px; text-align: center;">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: #fee2e2; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <h3 style="margin: 0 0 8px; font-size: 18px; color: var(--text-dark);">Xác nhận xóa phòng học</h3>
+        <p style="margin: 0 0 24px; color: var(--text-medium); font-size: 14px;">Bạn có chắc chắn muốn xóa phòng học <strong id="delete_room_name"></strong>? Hành động này không thể hoàn tác.</p>
+        
+        <div id="delete_error_message" style="display: none; padding: 12px; background: #fee2e2; border: 1px solid #fca5a5; border-radius: 6px; margin-bottom: 16px; color: #dc2626; font-size: 13px;"></div>
+        
+        <form id="deleteRoomForm" method="post" onsubmit="submitDeleteRoomForm(event)">
+            {% csrf_token %}
+            <div style="display: flex; gap: 12px;">
+                <button type="button" class="btn-secondary" style="flex: 1; padding: 10px;" onclick="closeDeleteRoomModal()">Hủy</button>
+                <button type="submit" class="btn-primary" style="flex: 1; padding: 10px; background: #dc2626;">Có, Xóa</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+</style>
+
+<script>
+function openRoomModal() {
+    document.getElementById('roomModal').classList.add('show');
+    document.getElementById('createRoomForm').reset();
+    document.getElementById('create_error_message').style.display = 'none';
+}
+
+function closeRoomModal() {
+    document.getElementById('roomModal').classList.remove('show');
+}
+
+function openEditRoomModal(btn) {
+    const tr = btn.closest('tr');
+    const id = tr.dataset.roomId;
+    
+    document.getElementById('edit_room_code').value = tr.dataset.roomCode;
+    document.getElementById('edit_building').value = tr.dataset.building;
+    document.getElementById('edit_capacity').value = tr.dataset.capacity;
+    document.getElementById('edit_has_camera').checked = tr.dataset.hasCamera === 'true';
+    
+    document.getElementById('editRoomForm').action = `/schedules/rooms/${id}/edit/`;
+    document.getElementById('edit_error_message').style.display = 'none';
+    document.getElementById('editRoomModal').classList.add('show');
+}
+
+function closeEditRoomModal() {
+    document.getElementById('editRoomModal').classList.remove('show');
+}
+
+function openDeleteRoomModal(id, name) {
+    document.getElementById('delete_room_name').textContent = name;
+    document.getElementById('deleteRoomForm').action = `/schedules/rooms/${id}/delete/`;
+    document.getElementById('delete_error_message').style.display = 'none';
+    document.getElementById('deleteRoomModal').classList.add('show');
+}
+
+function closeDeleteRoomModal() {
+    document.getElementById('deleteRoomModal').classList.remove('show');
+}
+
+function submitRoomForm(e) {
+    e.preventDefault();
+    const form = e.target;
+    const errorDiv = document.getElementById('create_error_message');
+    const btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    
+    fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(res => {
+        if (!res.ok) {
+            return res.json().then(data => { throw new Error(data.error); });
+        }
+        if (res.redirected) {
+            window.location.href = res.url;
+            return;
+        }
+        return res.json();
+    })
+    .then(data => {
+        if (data && data.success) {
+            window.location.href = "?page=999999";
+        }
+    })
+    .catch(err => {
+        errorDiv.textContent = err.message || 'Lỗi hệ thống';
+        errorDiv.style.display = 'block';
+        btn.disabled = false;
+    });
+}
+
+function submitEditRoomForm(e) {
+    e.preventDefault();
+    const form = e.target;
+    const errorDiv = document.getElementById('edit_error_message');
+    const btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    
+    fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(res => {
+        if (!res.ok) {
+            return res.json().then(data => { throw new Error(data.error); });
+        }
+        if (res.redirected) {
+            window.location.href = res.url;
+            return;
+        }
+    })
+    .catch(err => {
+        errorDiv.textContent = err.message || 'Lỗi hệ thống';
+        errorDiv.style.display = 'block';
+        btn.disabled = false;
+    });
+}
+
+function submitDeleteRoomForm(e) {
+    e.preventDefault();
+    const form = e.target;
+    const errorDiv = document.getElementById('delete_error_message');
+    const btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    
+    fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(res => {
+        if (!res.ok) {
+            return res.json().then(data => { throw new Error(data.error); });
+        }
+        return res.json();
+    })
+    .then(data => {
+        if (data && data.success) {
+            window.location.reload();
+        }
+    })
+    .catch(err => {
+        errorDiv.textContent = err.message || 'Lỗi hệ thống';
+        errorDiv.style.display = 'block';
+        btn.disabled = false;
+    });
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        closeRoomModal();
+        closeEditRoomModal();
+        closeDeleteRoomModal();
+    }
+});
+
+document.addEventListener('click', e => {
+    if (e.target.id === 'roomModal') closeRoomModal();
+    if (e.target.id === 'editRoomModal') closeEditRoomModal();
+    if (e.target.id === 'deleteRoomModal') closeDeleteRoomModal();
+});
+</script>
+{% endblock %}

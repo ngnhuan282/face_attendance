@@ -1,0 +1,92 @@
+{% extends 'layouts/admin_base.html' %}
+
+{% block title %}EduFace - {% if is_edit %}Chỉnh Sửa{% else %}Thêm{% endif %} Lớp Học Phần{% endblock %}
+{% block page_title %}{% if is_edit %}Chỉnh Sửa{% else %}Thêm Mới{% endif %} Lớp Học Phần{% endblock %}
+{% block breadcrumb %}Quản Lý / Lớp Học Phần / {% if is_edit %}Chỉnh Sửa{% else %}Thêm Mới{% endif %}{% endblock %}
+
+{% block page_content %}
+
+<div class="card" style="max-width: 600px;">
+    <div class="card-title">{% if is_edit %}Chỉnh Sửa Lớp Học Phần{% else %}Tạo Mới Lớp Học Phần{% endif %}</div>
+    
+    <form method="post" action="">
+        {% csrf_token %}
+        
+        <div style="display: grid; gap: 16px;">
+            <!-- Course -->
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label for="course" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                    Học Phần <span style="color: #dc2626;">*</span>
+                </label>
+                <select name="course" id="course" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none;" {% if is_edit %}disabled{% endif %} required>
+                    <option value="">-- Chọn Học Phần --</option>
+                    {% for course in courses %}
+                    <option value="{{ course.id }}" {% if courseclass.course.id == course.id %}selected{% endif %}>{{ course.course_code }} — {{ course.course_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Semester -->
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label for="semester" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                    Học Kỳ <span style="color: #dc2626;">*</span>
+                </label>
+                <select name="semester" id="semester" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none;" {% if is_edit %}disabled{% endif %} required>
+                    <option value="">-- Chọn Học Kỳ --</option>
+                    {% for semester in semesters %}
+                    <option value="{{ semester.id }}" {% if courseclass.semester.id == semester.id %}selected{% endif %}>{{ semester.semester_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Teacher -->
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label for="teacher" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                    Giảng Viên <span style="color: #dc2626;">*</span>
+                </label>
+                <select name="teacher" id="teacher" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none;" required>
+                    <option value="">-- Chọn Giảng Viên --</option>
+                    {% for teacher in teachers %}
+                    <option value="{{ teacher.id }}" {% if courseclass.teacher.id == teacher.id %}selected{% endif %}>{{ teacher.get_full_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Class Code -->
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label for="class_code" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                    Mã Lớp <span style="color: #dc2626;">*</span>
+                </label>
+                <input type="text" name="class_code" id="class_code" value="{{ courseclass.class_code }}" placeholder="VD: INT101.01" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none;" {% if is_edit %}readonly{% endif %} required>
+            </div>
+
+            <!-- Max Students -->
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label for="max_students" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                    Sĩ Số Tối Đa
+                </label>
+                <input type="number" name="max_students" id="max_students" value="{{ courseclass.max_students|default:40 }}" min="1" max="100" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none;">
+            </div>
+
+            <!-- Total Sessions -->
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label for="total_sessions" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                    Tổng Số Buổi
+                </label>
+                <input type="number" name="total_sessions" id="total_sessions" value="{{ courseclass.total_sessions|default:15 }}" min="1" max="50" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none;">
+            </div>
+
+            <!-- Buttons -->
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
+                <button type="submit" class="btn-primary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; text-decoration: none;">
+                    {% if is_edit %}Cập Nhật{% else %}Tạo Mới{% endif %}
+                </button>
+                <a href="{% url 'courses:courseclass_list' %}" class="btn-secondary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-block;">
+                    Hủy
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

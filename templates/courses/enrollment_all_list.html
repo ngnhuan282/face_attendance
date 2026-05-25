@@ -1,0 +1,575 @@
+{% extends 'layouts/admin_base.html' %}
+
+{% block title %}EduFace - Đăng Ký Học Phần{% endblock %}
+{% block page_title %}Quản Lý Đăng Ký Học Phần{% endblock %}
+{% block breadcrumb %}Quản Lý / Đăng Ký HP{% endblock %}
+
+{% block page_content %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-value">{{ total_enrollments }}</div>
+            <div class="stat-label">Tổng Đăng Ký</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-value">{{ active_enrollments }}</div>
+            <div class="stat-label">Đang Hoạt Động</div>
+        </div>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="table-card">
+    <div class="table-card-header">
+        <div>
+            <div class="table-card-title">Danh Sách Đăng Ký Học Phần</div>
+        </div>
+        <div class="table-toolbar">
+            <form method="get" style="display: flex; gap: 8px; align-items: center; flex: 1; min-width: 0;">
+                <div class="search-input-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input class="search-input" type="text" name="search" placeholder="Tìm MSSV, tên SV, mã lớp..." value="{{ search_query }}">
+                </div>
+                <button type="submit" class="btn-secondary" style="padding: 8px 12px; font-size: 13px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </button>
+            </form>
+            <div style="position: relative; display: inline-block;" id="excelDropdownContainer">
+                <button type="button" class="btn-secondary" style="padding: 8px 16px; font-size: 13px; gap: 6px; cursor: pointer; border: 1.5px solid var(--border-color); background: white; text-decoration: none; display: flex; align-items: center;" onclick="toggleExcelDropdown()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                    Excel
+                </button>
+                <div id="excelDropdown" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: white; border: 1.5px solid var(--border-color); border-radius: 6px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); z-index: 50; min-width: 150px; overflow: hidden;">
+                    <a href="{% url 'courses:enrollment_export_all' %}{% if search_query %}?search={{ search_query }}{% endif %}" style="display: block; padding: 10px 16px; color: var(--text-dark); text-decoration: none; font-size: 13px; border-bottom: 1px solid var(--border-color);">Xuất Excel</a>
+                    <button type="button" onclick="openImportModal()" style="display: block; width: 100%; text-align: left; padding: 10px 16px; color: var(--text-dark); background: none; border: none; font-size: 13px; cursor: pointer;">Nhập Excel</button>
+                </div>
+            </div>
+            <button type="button" class="btn-primary" style="padding: 8px 16px; font-size: 13px; gap: 6px; cursor: pointer; border: none; text-decoration: none;" onclick="openEnrollmentModal()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Thêm Đăng Ký
+            </button>
+        </div>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>MSSV</th>
+                    <th>Sinh Viên</th>
+                    <th>Mã Lớp</th>
+                    <th>Học Phần</th>
+                    <th>Học Kỳ</th>
+                    <th>Trạng Thái</th>
+                    <th>Hành Động</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for enrollment in page_obj %}
+                <tr>
+                    <td style="font-weight: 600; color: var(--text-dark); font-family: monospace;">{{ enrollment.student.student_id }}</td>
+                    <td style="font-weight: 500;">{{ enrollment.student.full_name }}</td>
+                    <td style="font-weight: 600; font-family: monospace;">{{ enrollment.course_class.class_code }}</td>
+                    <td>{{ enrollment.course_class.course.course_name }}</td>
+                    <td>{{ enrollment.course_class.semester }}</td>
+                    <td>
+                        {% if enrollment.is_active %}
+                        <span style="display: inline-flex; align-items: center; padding: 4px 8px; background: #dcfce7; color: #166534; border-radius: 4px; font-size: 11px; font-weight: 600;">Hoạt Động</span>
+                        {% else %}
+                        <span style="display: inline-flex; align-items: center; padding: 4px 8px; background: #f3f4f6; color: #4b5563; border-radius: 4px; font-size: 11px; font-weight: 600;">Đã Hủy</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="action-btns">
+                            <button type="button" class="btn-action btn-action-delete" title="Xóa" onclick="openDeleteEnrollmentModal({{ enrollment.pk }}, '{{ enrollment.student.full_name|escapejs }} - {{ enrollment.course_class.class_code|escapejs }}')" style="border: none; background: none; cursor: pointer; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; color: #dc2626;">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 13px; height: 13px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 32px; color: var(--text-lighter);">
+                        Chưa có dữ liệu đăng ký học phần
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="table-card-footer" style="justify-content: center;">
+        <div style="display: flex; gap: 8px; align-items: center;">
+            {% if page_obj.has_previous %}
+            <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Về đầu">&laquo;</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Trước">&lsaquo;</a>
+            {% else %}
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&laquo;</span>
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&lsaquo;</span>
+            {% endif %}
+            
+            <span style="font-size: 13px; font-weight: 600; padding: 0 8px;">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+            
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Tiếp">&rsaquo;</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Về cuối">&raquo;</a>
+            {% else %}
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&rsaquo;</span>
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&raquo;</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal Create Enrollment -->
+<div id="enrollmentModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center;">
+    <div class="card" style="width: 700px; max-height: 90vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div class="card-title" style="margin: 0;">Thêm Mới Đăng Ký HP</div>
+            <button type="button" onclick="closeEnrollmentModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light);">×</button>
+        </div>
+        
+        <div id="create_error_message" style="display: none; padding: 12px; background: #fee2e2; border: 1.5px solid #fca5a5; border-radius: 6px; margin-bottom: 16px; color: #dc2626; font-size: 13px;"></div>
+        <div id="create_success_message" style="display: none; padding: 12px; background: #dcfce7; border: 1.5px solid #86efac; border-radius: 6px; margin-bottom: 16px; color: #166534; font-size: 13px;"></div>
+
+        <form method="post" action="{% url 'courses:enrollment_add' %}" onsubmit="submitEnrollmentForm(event)">
+            {% csrf_token %}
+            
+            <div style="display: grid; gap: 16px;">
+                <!-- Student -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="modal_student" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                        Sinh Viên <span style="color: #dc2626;">*</span>
+                    </label>
+                    <select name="student_id" id="modal_student" class="select2-modal" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none; width: 100%;" required>
+                        <option value="">-- Chọn Sinh Viên --</option>
+                        {% for student in students %}
+                        <option value="{{ student.id }}">{{ student.student_id }} - {{ student.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Course Class -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="modal_courseclass" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                        Lớp Học Phần <span style="color: #dc2626;">*</span>
+                    </label>
+                    <select name="courseclass_id" id="modal_courseclass" class="select2-modal" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none; width: 100%;" required>
+                        <option value="">-- Chọn Lớp Học Phần --</option>
+                        {% for cls in courseclasses %}
+                        <option value="{{ cls.id }}">{{ cls.class_code }} - {{ cls.course.course_name }} ({{ cls.semester }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Buttons -->
+                <div style="display: flex; gap: 12px; margin-top: 24px;">
+                    <button type="submit" class="btn-primary" id="btn_submit_create" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; text-decoration: none;">
+                        Lưu Đăng Ký
+                    </button>
+                    <button type="button" class="btn-secondary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; text-decoration: none; border: none; cursor: pointer;" onclick="closeEnrollmentModal()">
+                        Đóng
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Delete Confirmation -->
+<div id="deleteEnrollmentModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center;">
+    <div class="card" style="max-width: 400px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div class="card-title" style="margin: 0; color: #dc2626;">Xác Nhận Hủy Đăng Ký</div>
+            <button type="button" onclick="closeDeleteEnrollmentModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light);">×</button>
+        </div>
+        
+        <div style="margin-bottom: 24px; color: var(--text-medium);">
+            Bạn có chắc muốn hủy đăng ký của <strong id="delete_enrollment_name" style="color: var(--text-dark);"></strong> không?
+            <div style="font-size: 12px; color: var(--text-lighter); margin-top: 8px;">Hành động này không thể hoàn tác.</div>
+        </div>
+
+        <div id="delete_error_message" style="display: none; padding: 12px; background: #fee2e2; border: 1.5px solid #fca5a5; border-radius: 6px; margin-bottom: 16px; color: #dc2626; font-size: 13px;"></div>
+
+        <form method="post" id="deleteEnrollmentForm" style="display: flex; gap: 12px;" onsubmit="submitDeleteEnrollmentForm(event)">
+            {% csrf_token %}
+            <button type="submit" class="btn-primary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; background: #dc2626; flex: 1;">
+                Có, Xóa
+            </button>
+            <button type="button" class="btn-secondary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; text-decoration: none; border: none; cursor: pointer; flex: 1;" onclick="closeDeleteEnrollmentModal()">
+                Không, Hủy
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Import Excel -->
+<div id="importModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center;">
+    <div class="card" style="width: 500px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div class="card-title" style="margin: 0;">Nhập Danh Sách (Excel/CSV)</div>
+            <button type="button" onclick="closeImportModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light);">×</button>
+        </div>
+        
+        <div style="margin-bottom: 20px; font-size: 13px; color: var(--text-medium); line-height: 1.5;">
+            Vui lòng chuẩn bị file Excel/CSV chứa 2 cột bắt buộc:<br>
+            <strong>MSSV</strong> (Mã sinh viên) và <strong>Mã Lớp HP</strong> (Mã lớp học phần).
+        </div>
+
+        <div id="import_error_message" style="display: none; padding: 12px; background: #fee2e2; border: 1.5px solid #fca5a5; border-radius: 6px; margin-bottom: 16px; color: #dc2626; font-size: 13px; max-height: 150px; overflow-y: auto; white-space: pre-wrap;"></div>
+        <div id="import_success_message" style="display: none; padding: 12px; background: #dcfce7; border: 1.5px solid #86efac; border-radius: 6px; margin-bottom: 16px; color: #166534; font-size: 13px;"></div>
+
+        <form method="post" action="{% url 'courses:enrollment_import_all' %}" enctype="multipart/form-data" id="importForm" onsubmit="submitImportForm(event)">
+            {% csrf_token %}
+            <div style="margin-bottom: 20px;">
+                <input type="file" name="csv_file" accept=".csv" required style="width: 100%; padding: 10px; border: 1.5px dashed var(--border-color); border-radius: 6px; cursor: pointer; font-family: var(--font-base); font-size: 13px;">
+            </div>
+            
+            <div style="display: flex; gap: 12px;">
+                <button type="submit" class="btn-primary" id="btn_submit_import" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; flex: 1;">
+                    Bắt Đầu Nhập
+                </button>
+                <button type="button" class="btn-secondary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; flex: 1;" onclick="closeImportModal()">
+                    Đóng
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+#enrollmentModal, #deleteEnrollmentModal {
+    display: none;
+}
+
+#enrollmentModal.show, #deleteEnrollmentModal.show {
+    display: flex !important;
+}
+
+input:focus,
+select:focus {
+    border-color: var(--primary-green) !important;
+    box-shadow: 0 0 0 3px rgba(26, 107, 60, 0.1) !important;
+    background: #fff !important;
+}
+
+select.select2-hidden-accessible {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+.select2-container .select2-selection--single {
+    height: 40px !important;
+    border: 1.5px solid var(--border-color, #e5e7eb) !important;
+    border-radius: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    font-size: 13px !important;
+    font-family: var(--font-base) !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    padding-left: 12px !important;
+    padding-right: 24px !important;
+    line-height: normal !important;
+    color: var(--text-dark, #1f2937) !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 38px !important;
+    right: 6px !important;
+}
+
+.select2-container--default.select2-container--focus .select2-selection--single,
+.select2-container--default.select2-container--open .select2-selection--single {
+    border-color: var(--primary-green, #1a6b3c) !important;
+    box-shadow: 0 0 0 3px rgba(26, 107, 60, 0.1) !important;
+    background: #fff !important;
+}
+</style>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+<script>
+// ===== CREATE MODAL =====
+function openEnrollmentModal() {
+    const modal = document.getElementById('enrollmentModal');
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+    
+    document.getElementById('create_error_message').style.display = 'none';
+    document.getElementById('create_success_message').style.display = 'none';
+    
+    // Reset form
+    document.getElementById('enrollmentModal').querySelector('form').reset();
+    
+    // Destroy and re-initialize Select2
+    setTimeout(() => {
+        if ($('#modal_student').hasClass('select2-hidden-accessible')) {
+            $('#modal_student').select2('destroy');
+        }
+        if ($('#modal_courseclass').hasClass('select2-hidden-accessible')) {
+            $('#modal_courseclass').select2('destroy');
+        }
+        
+        $('#modal_student, #modal_courseclass').select2({
+            width: '100%',
+            placeholder: '-- Chọn --',
+            allowClear: false,
+            dropdownParent: $('#enrollmentModal')
+        });
+    }, 50);
+}
+
+function closeEnrollmentModal() {
+    const modal = document.getElementById('enrollmentModal');
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+}
+
+function submitEnrollmentForm(event) {
+    event.preventDefault();
+    const form = event.target;
+    const errorDiv = document.getElementById('create_error_message');
+    const successDiv = document.getElementById('create_success_message');
+    const submitBtn = document.getElementById('btn_submit_create');
+    
+    errorDiv.style.display = 'none';
+    successDiv.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Đang lưu...';
+    
+    fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || 'Lỗi khi thêm đăng ký');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            successDiv.textContent = data.message || 'Thêm đăng ký thành công!';
+            successDiv.style.display = 'block';
+            setTimeout(() => {
+                const url = new URL(window.location.href);
+                url.searchParams.set('page', '999999');
+                window.location.href = url.toString();
+            }, 1000);
+        }
+    })
+    .catch(error => {
+        errorDiv.textContent = error.message || 'Lỗi khi thêm đăng ký';
+        errorDiv.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Lưu Đăng Ký';
+    });
+}
+
+// ===== DELETE MODAL =====
+function openDeleteEnrollmentModal(enrollmentId, displayName) {
+    document.getElementById('delete_enrollment_name').textContent = displayName;
+    
+    const form = document.getElementById('deleteEnrollmentForm');
+    form.action = `/courses/enrollments/${enrollmentId}/remove/`;
+    
+    const modal = document.getElementById('deleteEnrollmentModal');
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+}
+
+function closeDeleteEnrollmentModal() {
+    const modal = document.getElementById('deleteEnrollmentModal');
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+}
+
+function submitDeleteEnrollmentForm(event) {
+    event.preventDefault();
+    const form = event.target;
+    const errorDiv = document.getElementById('delete_error_message');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    
+    errorDiv.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Đang xóa...';
+    
+    fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || 'Lỗi khi xóa đăng ký');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        }
+    })
+    .catch(error => {
+        errorDiv.textContent = error.message || 'Lỗi khi xóa đăng ký';
+        errorDiv.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Có, Xóa';
+    });
+}
+
+// ===== EVENT LISTENERS =====
+document.addEventListener('DOMContentLoaded', function() {
+    const createModal = document.getElementById('enrollmentModal');
+    createModal.addEventListener('click', function(event) {
+        if (event.target === createModal) {
+            closeEnrollmentModal();
+        }
+    });
+    
+    const deleteModal = document.getElementById('deleteEnrollmentModal');
+    deleteModal.addEventListener('click', function(event) {
+        if (event.target === deleteModal) {
+            closeDeleteEnrollmentModal();
+        }
+    });
+    
+    // Close on Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeEnrollmentModal();
+            closeDeleteEnrollmentModal();
+            closeImportModal();
+        }
+    });
+    
+    // Close excel dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        const container = document.getElementById('excelDropdownContainer');
+        const dropdown = document.getElementById('excelDropdown');
+        if (container && !container.contains(event.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+    
+    // Import modal click outside
+    const importModal = document.getElementById('importModal');
+    importModal.addEventListener('click', function(event) {
+        if (event.target === importModal) {
+            closeImportModal();
+        }
+    });
+});
+
+// ===== EXCEL & IMPORT =====
+function toggleExcelDropdown() {
+    const dropdown = document.getElementById('excelDropdown');
+    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+}
+
+function openImportModal() {
+    document.getElementById('excelDropdown').style.display = 'none';
+    const modal = document.getElementById('importModal');
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+    document.getElementById('import_error_message').style.display = 'none';
+    document.getElementById('import_success_message').style.display = 'none';
+    document.getElementById('importForm').reset();
+}
+
+function closeImportModal() {
+    const modal = document.getElementById('importModal');
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+}
+
+function submitImportForm(event) {
+    event.preventDefault();
+    const form = event.target;
+    const errorDiv = document.getElementById('import_error_message');
+    const successDiv = document.getElementById('import_success_message');
+    const submitBtn = document.getElementById('btn_submit_import');
+    
+    errorDiv.style.display = 'none';
+    successDiv.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Đang xử lý...';
+    
+    fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || 'Lỗi khi import file');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            successDiv.textContent = data.message || 'Import thành công!';
+            successDiv.style.display = 'block';
+            
+            // If there are partial errors, show them in the error div too
+            if (data.errors && data.errors.length > 0) {
+                errorDiv.textContent = "Các lỗi xảy ra:\n" + data.errors.join('\n');
+                errorDiv.style.display = 'block';
+            }
+            
+            submitBtn.textContent = 'Đã Xong';
+            
+            // Reload page after a delay to show new data
+            setTimeout(() => {
+                const url = new URL(window.location.href);
+                url.searchParams.set('page', '999999');
+                window.location.href = url.toString();
+            }, data.errors && data.errors.length > 0 ? 3000 : 1500);
+        }
+    })
+    .catch(error => {
+        errorDiv.textContent = error.message || 'Lỗi khi import file';
+        errorDiv.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Bắt Đầu Nhập';
+    });
+}
+</script>
+{% endblock %}

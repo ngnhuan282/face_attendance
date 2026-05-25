@@ -31,4 +31,10 @@ urlpatterns = [
 
     # Điểm danh
     path('attendance/', include('attendance.urls')),
+
+    # Quản lý học phần
+    path('courses/', include('courses.urls')),
+    
+    # Quản lý lịch học và phòng học
+    path('schedules/', include('schedules.urls')),
 ]

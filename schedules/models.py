@@ -1,5 +1,4 @@
 from django.db import models
-from courses.models import CourseClass
 
 class Room(models.Model):
     """Phòng học"""
@@ -25,7 +24,7 @@ class Schedule(models.Model):
     ]
 
     course_class = models.ForeignKey(
-        CourseClass,
+        'courses.CourseClass',
         on_delete=models.CASCADE,
         related_name='schedules',
         verbose_name='Lớp học phần'
