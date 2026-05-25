@@ -386,7 +386,7 @@
   "pk": 10,
   "fields": {
     "department": 1,
-    "room": null,
+    "room": 4,
     "course_code": "INT103",
     "course_name": "He Quan Tri Co So Du Lieu",
     "credits": 3,
@@ -497,6 +497,18 @@
     "semester": 2,
     "teacher": 1,
     "class_code": "INT104.01",
+    "max_students": 40,
+    "total_sessions": 15
+  }
+},
+{
+  "model": "courses.courseclass",
+  "pk": 13,
+  "fields": {
+    "course": 8,
+    "semester": 2,
+    "teacher": 1,
+    "class_code": "32",
     "max_students": 40,
     "total_sessions": 15
   }
@@ -776,7 +788,7 @@
   "pk": 1,
   "fields": {
     "room_code": "A101",
-    "building": "Tòa A",
+    "building": "Tòa D",
     "capacity": 40,
     "has_camera": true
   }
@@ -843,12 +855,22 @@
 },
 {
   "model": "schedules.room",
-  "pk": 8,
+  "pk": 9,
   "fields": {
-    "room_code": "C00",
+    "room_code": "4123",
+    "building": "Tòa C",
+    "capacity": 40,
+    "has_camera": false
+  }
+},
+{
+  "model": "schedules.room",
+  "pk": 10,
+  "fields": {
+    "room_code": "34",
     "building": "Tòa A",
     "capacity": 40,
-    "has_camera": true
+    "has_camera": false
   }
 },
 {
@@ -979,6 +1001,266 @@
     "end_period": 3,
     "date": "2026-05-25",
     "session_number": 3
+  }
+},
+{
+  "model": "schedules.schedule",
+  "pk": 13,
+  "fields": {
+    "course_class": 7,
+    "room": 3,
+    "day_of_week": 7,
+    "start_period": 1,
+    "end_period": 3,
+    "date": "2026-05-09",
+    "session_number": 4
+  }
+},
+{
+  "model": "schedules.schedule",
+  "pk": 14,
+  "fields": {
+    "course_class": 7,
+    "room": 3,
+    "day_of_week": 7,
+    "start_period": 1,
+    "end_period": 3,
+    "date": "2026-05-16",
+    "session_number": 5
+  }
+},
+{
+  "model": "attendance.attendancesession",
+  "pk": 1,
+  "fields": {
+    "course_class": 12,
+    "schedule": 1,
+    "created_by": 2,
+    "started_at": "2026-05-25T13:36:29.060Z",
+    "ended_at": "2026-05-23T15:36:29.059Z",
+    "status": "closed",
+    "note": ""
+  }
+},
+{
+  "model": "attendance.attendancesession",
+  "pk": 2,
+  "fields": {
+    "course_class": 11,
+    "schedule": 5,
+    "created_by": 3,
+    "started_at": "2026-05-25T13:36:29.076Z",
+    "ended_at": "2026-05-23T15:36:29.076Z",
+    "status": "closed",
+    "note": ""
+  }
+},
+{
+  "model": "attendance.attendancesession",
+  "pk": 3,
+  "fields": {
+    "course_class": 7,
+    "schedule": 13,
+    "created_by": 3,
+    "started_at": "2026-05-25T13:36:29.105Z",
+    "ended_at": "2026-05-23T15:36:29.105Z",
+    "status": "closed",
+    "note": ""
+  }
+},
+{
+  "model": "attendance.attendancerecord",
+  "pk": 1,
+  "fields": {
+    "session": 1,
+    "student": 9,
+    "status": "present",
+    "method": "face",
+    "confidence": 81.65212843060996,
+    "timestamp": "2026-05-25T13:58:29.060Z",
+    "note": ""
+  }
+},
+{
+  "model": "attendance.attendancerecord",
+  "pk": 2,
+  "fields": {
+    "session": 1,
+    "student": 10,
+    "status": "present",
+    "method": "face",
+    "confidence": 89.4891436254218,
+    "timestamp": "2026-05-25T14:04:29.060Z",
+    "note": ""
+  }
+},
+{
+  "model": "attendance.attendancerecord",
+  "pk": 3,
+  "fields": {
+    "session": 1,
+    "student": 7,
+    "status": "present",
+    "method": "face",
+    "confidence": 87.65089831331787,
+    "timestamp": "2026-05-25T13:47:29.060Z",
+    "note": ""
+  }
+},
+{
+  "model": "attendance.attendancerecord",
+  "pk": 4,
+  "fields": {
+    "session": 2,
+    "student": 9,
+    "status": "present",
+    "method": "face",
+    "confidence": 80.70539107773367,
+    "timestamp": "2026-05-25T14:06:29.076Z",
+    "note": ""
+  }
+},
+{
+  "model": "attendance.attendancerecord",
+  "pk": 5,
+  "fields": {
+    "session": 2,
+    "student": 10,
+    "status": "late",
+    "method": "face",
+    "confidence": 85.61803211357126,
+    "timestamp": "2026-05-25T13:42:29.076Z",
+    "note": ""
+  }
+},
+{
+  "model": "attendance.attendancerecord",
+  "pk": 6,
+  "fields": {
+    "session": 2,
+    "student": 7,
+    "status": "present",
+    "method": "face",
+    "confidence": 96.95270138616692,
+    "timestamp": "2026-05-25T13:58:29.076Z",
+    "note": ""
+  }
+},
+{
+  "model": "attendance.attendancerecord",
+  "pk": 7,
+  "fields": {
+    "session": 2,
+    "student": 8,
+    "status": "present",
+    "method": "face",
+    "confidence": 91.76349591623078,
+    "timestamp": "2026-05-25T13:51:29.076Z",
+    "note": ""
+  }
+},
+{
+  "model": "attendance.attendancerecord",
+  "pk": 8,
+  "fields": {
+    "session": 2,
+    "student": 6,
+    "status": "present",
+    "method": "face",
+    "confidence": 87.01798377157155,
+    "timestamp": "2026-05-25T14:06:29.076Z",
+    "note": ""
+  }
+},
+{
+  "model": "attendance.attendancerecord",
+  "pk": 9,
+  "fields": {
+    "session": 3,
+    "student": 4,
+    "status": "present",
+    "method": "face",
+    "confidence": 93.37672905554452,
+    "timestamp": "2026-05-25T13:57:29.105Z",
+    "note": ""
+  }
+},
+{
+  "model": "attendance.attendancerecord",
+  "pk": 10,
+  "fields": {
+    "session": 3,
+    "student": 1,
+    "status": "present",
+    "method": "face",
+    "confidence": 95.92263289541346,
+    "timestamp": "2026-05-25T13:41:29.105Z",
+    "note": ""
+  }
+},
+{
+  "model": "attendance.attendancerecord",
+  "pk": 11,
+  "fields": {
+    "session": 3,
+    "student": 3,
+    "status": "absent",
+    "method": "manual",
+    "confidence": 0.0,
+    "timestamp": null,
+    "note": ""
+  }
+},
+{
+  "model": "attendance.attendancerecord",
+  "pk": 12,
+  "fields": {
+    "session": 3,
+    "student": 2,
+    "status": "late",
+    "method": "face",
+    "confidence": 96.89560241876184,
+    "timestamp": "2026-05-25T13:57:29.105Z",
+    "note": ""
+  }
+},
+{
+  "model": "attendance.attendancerecord",
+  "pk": 13,
+  "fields": {
+    "session": 3,
+    "student": 5,
+    "status": "present",
+    "method": "face",
+    "confidence": 93.2508270137535,
+    "timestamp": "2026-05-25T14:02:29.105Z",
+    "note": ""
+  }
+},
+{
+  "model": "attendance.attendancerecord",
+  "pk": 14,
+  "fields": {
+    "session": 3,
+    "student": 7,
+    "status": "absent",
+    "method": "manual",
+    "confidence": 0.0,
+    "timestamp": null,
+    "note": ""
+  }
+},
+{
+  "model": "attendance.attendancerecord",
+  "pk": 15,
+  "fields": {
+    "session": 3,
+    "student": 6,
+    "status": "present",
+    "method": "face",
+    "confidence": 90.02217974990893,
+    "timestamp": "2026-05-25T13:44:29.105Z",
+    "note": ""
   }
 }
 ]
