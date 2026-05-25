@@ -1,0 +1,152 @@
+{% extends 'layouts/admin_base.html' %}
+
+{% block title %}EduFace - Thời Khóa Biểu{% endblock %}
+{% block page_title %}Thời Khóa Biểu{% endblock %}
+{% block breadcrumb %}Quản Lý / Lịch Học / Thời Khóa Biểu{% endblock %}
+
+{% block page_content %}
+
+<div class="card" style="margin-bottom: 24px; padding: 20px;">
+    <form method="get" style="display: flex; gap: 16px; align-items: center; justify-content: space-between;">
+        <div style="display: flex; gap: 16px; align-items: center;">
+            <div style="font-weight: 600; color: var(--text-dark);">Tuần từ:</div>
+            <div style="font-weight: 700; color: var(--primary-blue);">{{ monday|date:"d/m/Y" }}</div>
+            <div style="font-weight: 600; color: var(--text-dark);">Đến:</div>
+            <div style="font-weight: 700; color: var(--primary-blue);">{{ sunday|date:"d/m/Y" }}</div>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <input type="date" name="date" class="form-input" value="{{ target_date }}" style="padding: 8px 12px; width: auto;" onchange="this.form.submit()">
+            <a href="?date={% now 'Y-m-d' %}" class="btn-secondary" style="padding: 8px 16px; text-decoration: none; font-weight: 500;">Tuần Hiện Tại</a>
+        </div>
+    </form>
+</div>
+
+<div class="card" style="padding: 0; overflow-x: auto;">
+    <div style="min-width: 1000px;">
+        <table class="timetable-grid" style="width: 100%; border-collapse: collapse; text-align: center;">
+            <thead>
+                <tr style="background: var(--bg-light); border-bottom: 2px solid var(--border-color);">
+                    <th style="width: 80px; padding: 16px 8px; border-right: 1px solid var(--border-color); color: var(--text-medium); font-weight: 600;">Tiết</th>
+                    {% for day in week_days %}
+                        <th style="padding: 16px 8px; border-right: 1px solid var(--border-color); width: calc((100% - 80px) / 7);">
+                            <div style="font-weight: 700; color: var(--text-dark); margin-bottom: 4px;">{{ day.day_name }}</div>
+                            <div style="font-size: 12px; color: var(--text-light);">{{ day.date|date:"d/m" }}</div>
+                        </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in grid %}
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 12px 8px; border-right: 1px solid var(--border-color); background: var(--bg-light); font-weight: 600; color: var(--text-medium);">
+                        Tiết {{ forloop.counter }}
+                    </td>
+                    {% for schedule in row %}
+                        <td style="padding: 4px; border-right: 1px solid var(--border-color); vertical-align: top; height: 60px;">
+                            {% if schedule %}
+                            <div class="schedule-block" 
+                                 style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 8px; text-align: left; cursor: pointer; height: 100%; transition: all 0.2s;"
+                                 onclick="openScheduleModal('{{ schedule.course_class.class_code|escapejs }}', '{{ schedule.course_class.course.course_name|escapejs }}', '{{ schedule.room.room_code|escapejs }}', '{{ schedule.start_period }}', '{{ schedule.end_period }}', '{{ schedule.pk }}', '{{ schedule.course_class.teacher.user.last_name|escapejs }} {{ schedule.course_class.teacher.user.first_name|escapejs }}')">
+                                <div style="font-size: 11px; font-weight: 700; color: #1d4ed8; margin-bottom: 4px; text-transform: uppercase;">
+                                    {{ schedule.course_class.class_code }}
+                                </div>
+                                <div style="font-size: 13px; font-weight: 600; color: var(--text-dark); margin-bottom: 6px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                                    {{ schedule.course_class.course.course_name }}
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-medium);">
+                                    <div style="display: flex; align-items: center; gap: 4px;">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                                        {{ schedule.room.room_code }}
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 4px;">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                        T{{ schedule.start_period }}-{{ schedule.end_period }}
+                                    </div>
+                                </div>
+                                <div style="font-size: 11px; color: var(--text-medium); margin-top: 4px; border-top: 1px dashed #bfdbfe; padding-top: 4px;">
+                                    GV: {{ schedule.course_class.teacher.user.last_name }} {{ schedule.course_class.teacher.user.first_name }}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Schedule Details Modal -->
+<div id="scheduleDetailModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center;">
+    <div class="card" style="width: 450px; max-height: 90vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div class="card-title" style="margin: 0;">Chi Tiết Buổi Học</div>
+            <button type="button" onclick="closeScheduleModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light);">×</button>
+        </div>
+        
+        <div style="margin-bottom: 24px;">
+            <div style="font-size: 12px; font-weight: 700; color: var(--text-lighter); text-transform: uppercase; margin-bottom: 6px;">Môn Học</div>
+            <div id="modalCourseName" style="font-size: 16px; font-weight: 600; color: var(--text-dark); margin-bottom: 16px;"></div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div>
+                    <div style="font-size: 12px; font-weight: 700; color: var(--text-lighter); text-transform: uppercase; margin-bottom: 6px;">Lớp Học Phần</div>
+                    <div id="modalClassCode" style="font-size: 14px; font-weight: 500; color: var(--text-dark);"></div>
+                </div>
+                <div>
+                    <div style="font-size: 12px; font-weight: 700; color: var(--text-lighter); text-transform: uppercase; margin-bottom: 6px;">Phòng Học</div>
+                    <div id="modalRoomCode" style="font-size: 14px; font-weight: 500; color: var(--text-dark);"></div>
+                </div>
+                <div style="grid-column: span 2;">
+                    <div style="font-size: 12px; font-weight: 700; color: var(--text-lighter); text-transform: uppercase; margin-bottom: 6px;">Giảng Viên</div>
+                    <div id="modalTeacherName" style="font-size: 14px; font-weight: 500; color: var(--text-dark);"></div>
+                </div>
+            </div>
+            
+            <div>
+                <div style="font-size: 12px; font-weight: 700; color: var(--text-lighter); text-transform: uppercase; margin-bottom: 6px;">Thời Gian</div>
+                <div id="modalTime" style="font-size: 14px; font-weight: 500; color: var(--text-dark);"></div>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 12px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+            <a id="btnStartAttendance" href="#" class="btn-primary" style="flex: 1; text-align: center; text-decoration: none; padding: 10px; display: flex; justify-content: center; align-items: center; gap: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                Bắt Đầu Điểm Danh
+            </a>
+            <button type="button" class="btn-secondary" onclick="closeScheduleModal()" style="padding: 10px 24px;">Đóng</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .schedule-block:hover {
+        background: #dbeafe !important;
+        border-color: #93c5fd !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+</style>
+
+<script>
+    function openScheduleModal(classCode, courseName, roomCode, startPeriod, endPeriod, scheduleId, teacherName) {
+        document.getElementById('modalClassCode').textContent = classCode;
+        document.getElementById('modalCourseName').textContent = courseName;
+        document.getElementById('modalRoomCode').textContent = roomCode;
+        document.getElementById('modalTeacherName').textContent = teacherName;
+        document.getElementById('modalTime').textContent = `Tiết ${startPeriod} - ${endPeriod}`;
+        
+        // Cập nhật link Bắt Đầu Điểm Danh (truyền schedule_id)
+        // Hiện tại gán href placeholder. Khi module điểm danh xong, thay đổi URL tương ứng.
+        document.getElementById('btnStartAttendance').href = `#?schedule_id=${scheduleId}`;
+        
+        document.getElementById('scheduleDetailModal').style.display = 'flex';
+    }
+    
+    function closeScheduleModal() {
+        document.getElementById('scheduleDetailModal').style.display = 'none';
+    }
+</script>
+
+{% endblock %}

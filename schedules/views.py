@@ -5,6 +5,7 @@ from django.db import models
 from django.contrib import messages
 from django.core.paginator import Paginator
 from datetime import datetime, timedelta
+from django.utils import timezone
 
 from accounts.constants import ADMIN_GROUP_NAME, TEACHER_GROUP_NAME
 from accounts.permissions import group_required
@@ -287,3 +288,56 @@ def schedule_delete(request, pk):
         return JsonResponse({'success': True, 'message': f'Xóa buổi học ngày {date_str} thành công!'})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+# ======================== TIMETABLE VIEWS ========================
+
+@group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
+def timetable_view(request):
+    """Giao diện Thời Khóa Biểu (Dạng bảng lưới)"""
+    date_str = request.GET.get('date')
+    if date_str:
+        try:
+            target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            target_date = timezone.now().date()
+    else:
+        target_date = timezone.now().date()
+        
+    monday = target_date - timedelta(days=target_date.weekday())
+    sunday = monday + timedelta(days=6)
+    
+    week_days = []
+    for i in range(7):
+        day = monday + timedelta(days=i)
+        week_days.append({
+            'date': day,
+            'day_name': f"Thứ {i+2}" if i < 6 else "Chủ Nhật"
+        })
+        
+    schedules = Schedule.objects.select_related(
+        'course_class', 'course_class__course', 'room', 'course_class__teacher__user'
+    ).filter(
+        date__range=[monday, sunday]
+    )
+    
+    # Phân quyền: Nếu là Giảng Viên thì chỉ xem lịch dạy của mình
+    if hasattr(request.user, 'teacher'):
+        schedules = schedules.filter(course_class__teacher=request.user.teacher)
+    
+    grid = [[None for _ in range(7)] for _ in range(15)]
+    for schedule in schedules:
+        day_idx = (schedule.date - monday).days
+        period_idx = schedule.start_period - 1
+        if 0 <= day_idx < 7 and 0 <= period_idx < 15:
+            grid[period_idx][day_idx] = schedule
+
+    context = {
+        'active_menu': 'timetable',
+        'target_date': target_date.strftime('%Y-%m-%d'),
+        'monday': monday,
+        'sunday': sunday,
+        'week_days': week_days,
+        'grid': grid,
+        'periods': range(1, 16),
+    }
+    return render(request, 'schedules/timetable.html', context)

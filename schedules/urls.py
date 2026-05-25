@@ -15,4 +15,7 @@ urlpatterns = [
     path('schedules/create-bulk/', views.schedule_create_bulk, name='schedule_create_bulk'),
     path('schedules/<int:pk>/edit/', views.schedule_edit, name='schedule_edit'),
     path('schedules/<int:pk>/delete/', views.schedule_delete, name='schedule_delete'),
+    
+    # Timetable URLs
+    path('timetable/', views.timetable_view, name='timetable_view'),
 ]

@@ -86,6 +86,9 @@
                     <td style="text-align: center;">{{ courseclass.total_sessions }}</td>
                     <td>
                         <div class="action-btns">
+                            <a href="{% url 'courses:courseclass_detail' courseclass.pk %}" class="btn-action" title="Xem chi tiết" style="text-decoration: none; border: none; background: none; padding: 5px 10px; border-radius: 6px; color: var(--primary-green); display: inline-flex; align-items: center; justify-content: center;">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            </a>
                             <button type="button" class="btn-action btn-action-edit" title="Chỉnh sửa" onclick="openEditCourseClassModal(this)" style="border: none; background: none; cursor: pointer; padding: 5px 10px; border-radius: 6px;">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 13px; height: 13px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                             </button>

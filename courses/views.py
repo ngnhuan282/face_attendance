@@ -361,9 +361,8 @@ def courseclass_detail(request, pk):
     search_query = request.GET.get('search', '')
     if search_query:
         enrollments = enrollments.filter(
-            models.Q(student__student_code__icontains=search_query) |
-            models.Q(student__first_name__icontains=search_query) |
-            models.Q(student__last_name__icontains=search_query)
+            models.Q(student__student_id__icontains=search_query) |
+            models.Q(student__full_name__icontains=search_query)
         )
     
     # Pagination
@@ -371,12 +370,36 @@ def courseclass_detail(request, pk):
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
     
+    # Attendance Stats
+    from attendance.models import AttendanceSession, AttendanceRecord
+    
+    sessions = AttendanceSession.objects.filter(course_class=courseclass).order_by('-started_at')
+    
+    all_records = AttendanceRecord.objects.filter(session__course_class=courseclass)
+    total_records = all_records.count()
+    total_present = all_records.filter(status='present').count()
+    
+    attendance_rate = 0
+    if total_records > 0:
+        attendance_rate = round((total_present / total_records) * 100, 1)
+        
+    for enrollment in page_obj:
+        student_records = all_records.filter(student=enrollment.student)
+        s_total = student_records.count()
+        s_present = student_records.filter(status='present').count()
+        if s_total > 0:
+            enrollment.attendance_rate = round((s_present / s_total) * 100, 1)
+        else:
+            enrollment.attendance_rate = None
+    
     context = {
         'active_menu': 'courseclasses',
         'courseclass': courseclass,
         'page_obj': page_obj,
         'search_query': search_query,
         'total_enrolled': courseclass.enrollments.filter(is_active=True).count(),
+        'attendance_rate': attendance_rate,
+        'sessions': sessions,
     }
     return render(request, 'courses/courseclass_detail.html', context)
 
