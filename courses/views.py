@@ -171,6 +171,7 @@ def course_delete(request, pk):
     
     try:
         course.delete()
+        messages.success(request, f'Xóa học phần "{course_name}" thành công')
         return JsonResponse({'success': 'Xóa học phần thành công'})
     except ProtectedError:
         return JsonResponse({
@@ -344,7 +345,7 @@ def courseclass_delete(request, pk):
     
     courseclass.delete()
     messages.success(request, f'Xóa lớp học phần "{class_code}" thành công')
-    return redirect('courses:courseclass_list')
+    return JsonResponse({'success': True})
 
 
 # ======================== COURSECLASS DETAIL VIEWS ========================
@@ -488,6 +489,24 @@ def enrollment_add(request):
             'message': f'Thêm {student.full_name} thành công',
             'enrollment_id': enrollment.id
         })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@group_required(ADMIN_GROUP_NAME)
+@require_http_methods(["POST"])
+def enrollment_edit(request, enrollment_id):
+    """Sửa trạng thái đăng ký học phần"""
+    try:
+        enrollment = get_object_or_404(Enrollment, pk=enrollment_id)
+        is_active_str = request.POST.get('is_active')
+        
+        if is_active_str is not None:
+            enrollment.is_active = (is_active_str == 'true')
+            enrollment.save()
+            
+        messages.success(request, f'Cập nhật trạng thái sinh viên {enrollment.student.full_name} thành công')
+        return JsonResponse({'success': True})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 

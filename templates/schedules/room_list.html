@@ -120,7 +120,13 @@
             
             <div class="form-group" style="margin-bottom: 16px;">
                 <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Tòa nhà</label>
-                <input type="text" name="building" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;" placeholder="VD: Tòa A">
+                <select name="building" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; outline: none;">
+                    <option value="Tòa A">Tòa A</option>
+                    <option value="Tòa B">Tòa B</option>
+                    <option value="Tòa C">Tòa C</option>
+                    <option value="Tòa D">Tòa D</option>
+                    <option value="Tòa E">Tòa E</option>
+                </select>
             </div>
             
             <div class="form-group" style="margin-bottom: 16px;">
@@ -162,7 +168,13 @@
             
             <div class="form-group" style="margin-bottom: 16px;">
                 <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Tòa nhà</label>
-                <input type="text" name="building" id="edit_building" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
+                <select name="building" id="edit_building" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; outline: none;">
+                    <option value="Tòa A">Tòa A</option>
+                    <option value="Tòa B">Tòa B</option>
+                    <option value="Tòa C">Tòa C</option>
+                    <option value="Tòa D">Tòa D</option>
+                    <option value="Tòa E">Tòa E</option>
+                </select>
             </div>
             
             <div class="form-group" style="margin-bottom: 16px;">
@@ -283,7 +295,11 @@ function submitRoomForm(e) {
     })
     .then(data => {
         if (data && data.success) {
-            window.location.href = "?page=999999";
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+                window.location.reload();
+            }
         }
     })
     .catch(err => {
@@ -309,9 +325,11 @@ function submitEditRoomForm(e) {
         if (!res.ok) {
             return res.json().then(data => { throw new Error(data.error); });
         }
-        if (res.redirected) {
-            window.location.href = res.url;
-            return;
+        return res.json();
+    })
+    .then(data => {
+        if (data && data.success) {
+            window.location.reload();
         }
     })
     .catch(err => {

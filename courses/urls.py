@@ -22,6 +22,7 @@ urlpatterns = [
     path('classes/<int:courseclass_id>/enrollments/', views.enrollment_list, name='enrollment_list'),
     path('enrollments/add/', views.enrollment_add, name='enrollment_add'),
     path('enrollments/<int:enrollment_id>/remove/', views.enrollment_remove, name='enrollment_remove'),
+    path('enrollments/<int:enrollment_id>/edit/', views.enrollment_edit, name='enrollment_edit'),
     path('enrollments/export/', views.enrollment_export_all, name='enrollment_export_all'),
     path('enrollments/import/', views.enrollment_import_all, name='enrollment_import_all'),
     path('classes/<int:courseclass_id>/enrollments/import/', views.enrollment_import, name='enrollment_import'),

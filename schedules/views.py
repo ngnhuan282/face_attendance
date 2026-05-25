@@ -62,8 +62,7 @@ def room_create(request):
         )
         
         messages.success(request, f'Thêm phòng {room_code} thành công!')
-        from django.urls import reverse
-        return redirect(reverse('schedules:room_list') + '?page=999999')
+        return JsonResponse({'success': True, 'redirect_url': f'?page=999999'})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
@@ -91,7 +90,7 @@ def room_edit(request, pk):
         room.save()
         
         messages.success(request, f'Cập nhật phòng {room_code} thành công!')
-        return redirect('schedules:room_list')
+        return JsonResponse({'success': True})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
@@ -104,6 +103,7 @@ def room_delete(request, pk):
             return JsonResponse({'error': 'Không thể xóa phòng học đang có lịch học'}, status=400)
         
         room.delete()
+        messages.success(request, f'Xóa phòng thành công!')
         return JsonResponse({'success': True, 'message': 'Xóa phòng thành công!'})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
@@ -164,8 +164,11 @@ def schedule_create_bulk(request):
         if not all([courseclass_id, room_id, day_of_week, start_period, end_period, start_date_str, end_date_str]):
             return JsonResponse({'error': 'Vui lòng điền đủ thông tin'}, status=400)
             
-        if start_period >= end_period:
-            return JsonResponse({'error': 'Tiết kết thúc phải lớn hơn tiết bắt đầu'}, status=400)
+        if not (1 <= start_period <= 10) or not (1 <= end_period <= 10):
+            return JsonResponse({'error': 'Tiết học phải từ 1 đến 10'}, status=400)
+            
+        if start_period > end_period:
+            return JsonResponse({'error': 'Tiết kết thúc phải lớn hơn hoặc bằng tiết bắt đầu'}, status=400)
             
         course_class = get_object_or_404(CourseClass, pk=courseclass_id)
         room = get_object_or_404(Room, pk=room_id)
@@ -226,8 +229,7 @@ def schedule_create_bulk(request):
             return JsonResponse({'error': 'Không có buổi học nào được tạo. Có thể do chọn trùng lịch hoặc khoảng thời gian không khớp.'}, status=400)
             
         messages.success(request, f'Tạo thành công {created_count} buổi học!')
-        from django.urls import reverse
-        return redirect(reverse('schedules:schedule_list') + f'?courseclass_id={courseclass_id}&page=999999')
+        return JsonResponse({'success': True, 'redirect_url': f'?courseclass_id={courseclass_id}&page=999999'})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
@@ -245,8 +247,14 @@ def schedule_edit(request, pk):
         if not all([room_id, start_period, end_period, date_str]):
             return JsonResponse({'error': 'Vui lòng điền đủ thông tin'}, status=400)
             
-        if int(start_period) >= int(end_period):
-            return JsonResponse({'error': 'Tiết kết thúc phải lớn hơn tiết bắt đầu'}, status=400)
+        start_period = int(start_period)
+        end_period = int(end_period)
+        
+        if not (1 <= start_period <= 10) or not (1 <= end_period <= 10):
+            return JsonResponse({'error': 'Tiết học phải từ 1 đến 10'}, status=400)
+            
+        if start_period > end_period:
+            return JsonResponse({'error': 'Tiết kết thúc phải lớn hơn hoặc bằng tiết bắt đầu'}, status=400)
             
         date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
         
@@ -274,7 +282,7 @@ def schedule_edit(request, pk):
         schedule.save()
         
         messages.success(request, f'Cập nhật buổi học ngày {date_obj.strftime("%d/%m/%Y")} thành công!')
-        return redirect('schedules:schedule_list')
+        return JsonResponse({'success': True})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
@@ -285,6 +293,7 @@ def schedule_delete(request, pk):
         schedule = get_object_or_404(Schedule, pk=pk)
         date_str = schedule.date.strftime("%d/%m/%Y")
         schedule.delete()
+        messages.success(request, f'Xóa buổi học ngày {date_str} thành công!')
         return JsonResponse({'success': True, 'message': f'Xóa buổi học ngày {date_str} thành công!'})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
@@ -324,11 +333,11 @@ def timetable_view(request):
     if hasattr(request.user, 'teacher'):
         schedules = schedules.filter(course_class__teacher=request.user.teacher)
     
-    grid = [[None for _ in range(7)] for _ in range(15)]
+    grid = [[None for _ in range(7)] for _ in range(10)]
     for schedule in schedules:
         day_idx = (schedule.date - monday).days
         period_idx = schedule.start_period - 1
-        if 0 <= day_idx < 7 and 0 <= period_idx < 15:
+        if 0 <= day_idx < 7 and 0 <= period_idx < 10:
             grid[period_idx][day_idx] = schedule
 
     context = {
@@ -338,6 +347,6 @@ def timetable_view(request):
         'sunday': sunday,
         'week_days': week_days,
         'grid': grid,
-        'periods': range(1, 16),
+        'periods': range(1, 11),
     }
     return render(request, 'schedules/timetable.html', context)

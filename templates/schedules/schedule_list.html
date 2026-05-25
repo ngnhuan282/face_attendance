@@ -178,11 +178,11 @@
                 </div>
                 <div style="flex: 1;">
                     <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Tiết Bắt Đầu <span style="color: red;">*</span></label>
-                    <input type="number" name="start_period" required min="1" max="15" value="1" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
+                    <input type="number" name="start_period" required min="1" max="10" value="1" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
                 </div>
                 <div style="flex: 1;">
                     <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Tiết Kết Thúc <span style="color: red;">*</span></label>
-                    <input type="number" name="end_period" required min="1" max="15" value="3" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
+                    <input type="number" name="end_period" required min="1" max="10" value="3" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
                 </div>
             </div>
             
@@ -224,11 +224,11 @@
             <div style="display: flex; gap: 16px; margin-bottom: 24px;">
                 <div style="flex: 1;">
                     <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Tiết Bắt Đầu <span style="color: red;">*</span></label>
-                    <input type="number" name="start_period" id="edit_start_period" required min="1" max="15" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
+                    <input type="number" name="start_period" id="edit_start_period" required min="1" max="10" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
                 </div>
                 <div style="flex: 1;">
                     <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Tiết Kết Thúc <span style="color: red;">*</span></label>
-                    <input type="number" name="end_period" id="edit_end_period" required min="1" max="15" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
+                    <input type="number" name="end_period" id="edit_end_period" required min="1" max="10" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
                 </div>
             </div>
             
@@ -413,11 +413,16 @@ function submitBulkScheduleForm(e) {
         if (!res.ok) {
             return res.json().then(data => { throw new Error(data.error); });
         }
-        if (res.redirected) {
-            window.location.href = res.url;
-            return;
-        }
         return res.json();
+    })
+    .then(data => {
+        if (data && data.success) {
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+                window.location.reload();
+            }
+        }
     })
     .catch(err => {
         errorDiv.textContent = err.message || 'Lỗi hệ thống';
@@ -442,9 +447,11 @@ function submitEditScheduleForm(e) {
         if (!res.ok) {
             return res.json().then(data => { throw new Error(data.error); });
         }
-        if (res.redirected) {
-            window.location.href = res.url;
-            return;
+        return res.json();
+    })
+    .then(data => {
+        if (data && data.success) {
+            window.location.reload();
         }
     })
     .catch(err => {

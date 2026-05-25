@@ -188,6 +188,67 @@
 
 </div>
 
+<!-- Toast Notifications -->
+{% if messages %}
+<div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;">
+    {% for message in messages %}
+    <div class="toast-message toast-{{ message.tags }}" style="min-width: 280px; max-width: 400px; background: white; border-radius: 8px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); border-left: 4px solid {% if message.tags == 'success' %}#10b981{% elif message.tags == 'error' %}#ef4444{% else %}#3b82f6{% endif %}; overflow: hidden; animation: slideInRight 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;">
+        <div style="padding: 16px; display: flex; align-items: flex-start; justify-content: space-between;">
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <div style="margin-top: 2px;">
+                    {% if message.tags == 'success' %}
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    {% elif message.tags == 'error' %}
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                    {% else %}
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    {% endif %}
+                </div>
+                <div style="font-size: 14px; color: #1e293b; font-weight: 500; line-height: 1.5; padding-right: 8px;">{{ message }}</div>
+            </div>
+            <button onclick="this.closest('.toast-message').style.animation = 'fadeOutRight 0.3s ease forwards'; setTimeout(() => this.closest('.toast-message').remove(), 300)" style="background: none; border: none; cursor: pointer; color: #94a3b8; padding: 2px; margin: 0; display: flex; align-items: center; justify-content: center; transition: color 0.2s;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="toast-progress" style="height: 3px; background: {% if message.tags == 'success' %}#10b981{% elif message.tags == 'error' %}#ef4444{% else %}#3b82f6{% endif %}; width: 100%; animation: shrinkProgress 2s linear forwards;"></div>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    @keyframes slideInRight {
+        from { transform: translateX(120%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes fadeOutRight {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(120%); opacity: 0; }
+    }
+    @keyframes shrinkProgress {
+        from { width: 100%; }
+        to { width: 0%; }
+    }
+    
+    .toast-message button:hover {
+        color: #475569 !important;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const toasts = document.querySelectorAll('.toast-message');
+        toasts.forEach(toast => {
+            setTimeout(() => {
+                toast.style.animation = 'fadeOutRight 0.3s ease forwards';
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 2000);
+        });
+    });
+</script>
+{% endif %}
+
 {% block extra_js %}{% endblock %}
 </body>
 </html>

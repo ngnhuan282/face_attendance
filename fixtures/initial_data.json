@@ -20,7 +20,7 @@
   "pk": 1,
   "fields": {
     "password": "pbkdf2_sha256$600000$ZjZ8V4xKGjpagDvjmhwqlG$mQ0C4yMGJS8Nd0guzOOiNTfk1YmvAuzo/ftrscFFYH0=",
-    "last_login": "2026-05-25T07:26:22.491Z",
+    "last_login": "2026-05-25T13:15:40.813Z",
     "is_superuser": true,
     "username": "admin",
     "first_name": "",
