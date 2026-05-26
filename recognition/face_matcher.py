@@ -63,6 +63,39 @@ def recognize_from_image(image_file, tolerance: float = 0.5):
     return min(matches, key=lambda item: item["distance"])
 
 
+def recognize_faces_in_frame(frame, data=None, tolerance: float = 0.5, detector=None):
+    """Return face locations and aligned recognition matches for one BGR frame."""
+    data = data or load_encodings()
+    detector = detector or FaceDetector()
+    face_locations = detector.detect_faces(frame)
+    if not data.get("encodings"):
+        return face_locations, [None] * len(face_locations)
+
+    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    rgb_frame = np.ascontiguousarray(rgb_frame, dtype=np.uint8)
+    face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
+
+    matches = []
+    for face_encoding in face_encodings:
+        label, distance = match_face(face_encoding, data, tolerance=tolerance)
+        if not label:
+            matches.append(None)
+            continue
+
+        student_id, name = label.split(" - ", 1)
+        matches.append(
+            {
+                "student_id": student_id,
+                "name": name,
+                "label": label,
+                "distance": distance,
+                "confidence": max(0.0, min(1.0, 1.0 - float(distance))),
+            }
+        )
+
+    return face_locations, matches
+
+
 def recognize_from_webcam(
     camera_index: int = 0,
     tolerance: float = 0.5,

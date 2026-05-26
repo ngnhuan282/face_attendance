@@ -1,10 +1,15 @@
 import json
+import logging
+import time
+import unicodedata
+from concurrent.futures import ThreadPoolExecutor
 
+import cv2
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
-from django.http import JsonResponse
+from django.db import IntegrityError, transaction
+from django.http import JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -14,11 +19,20 @@ from django.views.decorators.http import require_http_methods
 from accounts.constants import ADMIN_GROUP_NAME, TEACHER_GROUP_NAME
 from accounts.permissions import group_required
 from courses.models import CourseClass, Enrollment
-from recognition.face_matcher import recognize_from_image
+from recognition.face_detector import FaceDetector, draw_faces, open_webcam
+from recognition.face_matcher import recognize_faces_in_frame, recognize_from_image
+from recognition.utils import load_encodings
 from schedules.models import Schedule
 from students.models import Student
 
 from .models import AttendanceRecord, AttendanceSession
+
+
+STREAM_WIDTH = 640
+STREAM_JPEG_QUALITY = 65
+DETECTION_INTERVAL_SECONDS = 0.1
+RECOGNITION_INTERVAL_SECONDS = 1.5
+logger = logging.getLogger(__name__)
 
 
 def _json_body(request):
@@ -136,6 +150,184 @@ def attendance_demo(request):
             "error_message": error_message,
         },
     )
+
+
+def _resize_stream_frame(frame):
+    height, width = frame.shape[:2]
+    if width <= STREAM_WIDTH:
+        return frame
+
+    target_height = int(height * STREAM_WIDTH / width)
+    return cv2.resize(frame, (STREAM_WIDTH, target_height), interpolation=cv2.INTER_AREA)
+
+
+def _record_face_attendance(session, student, confidence, note):
+    """Mark a student present once, without refreshing an existing check-in."""
+    with transaction.atomic():
+        locked_session = AttendanceSession.objects.select_for_update().get(pk=session.pk)
+        if locked_session.status != "open":
+            return None, False, False
+
+        record, created = AttendanceRecord.objects.select_for_update().get_or_create(
+            session=locked_session,
+            student=student,
+            defaults={
+                "status": "present",
+                "method": "face",
+                "confidence": confidence,
+                "timestamp": timezone.now(),
+                "note": note,
+            },
+        )
+        if created or record.status == "present":
+            return record, created, not created
+
+        record.status = "present"
+        record.method = "face"
+        record.confidence = confidence
+        record.timestamp = timezone.now()
+        record.note = note
+        record.save(update_fields=["status", "method", "confidence", "timestamp", "note"])
+        return record, False, False
+
+
+def _camera_label(student):
+    label = f"{student.student_id} - {student.full_name}"
+    normalized = unicodedata.normalize("NFD", label)
+    return "".join(character for character in normalized if not unicodedata.combining(character)).replace("Đ", "D").replace("đ", "d")
+
+
+def _mark_recognized_students(session, enrolled_students, marked_students, matches):
+    labels = []
+    for match in matches:
+        student = enrolled_students.get(match.get("student_id")) if match else None
+        if not student:
+            labels.append("Unknown")
+            continue
+
+        labels.append(_camera_label(student))
+        if student.student_id not in marked_students:
+            record, _created, _already_present = _record_face_attendance(
+                session,
+                student,
+                match["confidence"],
+                "Auto recognized from MJPEG stream",
+            )
+            if record and record.status == "present":
+                marked_students.add(student.student_id)
+
+    return labels
+
+
+def _stream_frames(webcam, session, data):
+    overlay_detector = FaceDetector()
+    recognition_detector = FaceDetector()
+    enrolled_students = {
+        student.student_id: student
+        for student in Student.objects.filter(
+            enrollments__course_class=session.course_class,
+            enrollments__is_active=True,
+            is_active=True,
+        )
+    }
+    marked_students = set(
+        AttendanceRecord.objects.filter(session=session, status="present").values_list(
+            "student__student_id", flat=True
+        )
+    )
+    face_locations = []
+    labels = []
+    recognition_future = None
+    recognition_started_at = 0.0
+    detection_started_at = 0.0
+    recognition_worker = ThreadPoolExecutor(max_workers=1, thread_name_prefix="attendance-recognition")
+
+    try:
+        while True:
+            ok, frame = webcam.read()
+            if not ok:
+                break
+
+            frame = _resize_stream_frame(frame)
+            now = time.monotonic()
+            if now - detection_started_at >= DETECTION_INTERVAL_SECONDS:
+                latest_locations = overlay_detector.detect_faces(frame)
+                if len(latest_locations) != len(face_locations):
+                    labels = ["Unknown"] * len(latest_locations)
+                face_locations = latest_locations
+                detection_started_at = now
+
+            if recognition_future and recognition_future.done():
+                try:
+                    _recognized_locations, matches = recognition_future.result()
+                    labels = _mark_recognized_students(session, enrolled_students, marked_students, matches)
+                except Exception:
+                    logger.exception("Loi xu ly frame nhan dien cho session %s", session.pk)
+                    labels = ["Unknown"] * len(face_locations)
+                recognition_future = None
+
+            if (
+                recognition_future is None
+                and now - recognition_started_at >= RECOGNITION_INTERVAL_SECONDS
+            ):
+                recognition_future = recognition_worker.submit(
+                    recognize_faces_in_frame,
+                    frame.copy(),
+                    data,
+                    0.5,
+                    recognition_detector,
+                )
+                recognition_started_at = now
+
+            draw_faces(frame, face_locations, labels)
+            encoded, buffer = cv2.imencode(
+                ".jpg",
+                frame,
+                [cv2.IMWRITE_JPEG_QUALITY, STREAM_JPEG_QUALITY],
+            )
+            if not encoded:
+                continue
+
+            yield (
+                b"--frame\r\n"
+                b"Content-Type: image/jpeg\r\n\r\n"
+                + buffer.tobytes()
+                + b"\r\n"
+            )
+    finally:
+        recognition_worker.shutdown(wait=False, cancel_futures=True)
+        webcam.release()
+
+
+@group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
+@require_http_methods(["GET"])
+def video_stream(request, session_id):
+    session = get_object_or_404(
+        AttendanceSession.objects.select_related("course_class"),
+        pk=session_id,
+    )
+    if session.status != "open":
+        return _error("Buoi diem danh da ket thuc.", status=409)
+
+    try:
+        camera_index = int(request.GET.get("camera", 0))
+        data = load_encodings(require_data=False)
+        webcam = open_webcam(camera_index)
+        webcam.set(cv2.CAP_PROP_FRAME_WIDTH, STREAM_WIDTH)
+        webcam.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
+        webcam.set(cv2.CAP_PROP_FPS, 20)
+        webcam.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+    except (TypeError, ValueError) as exc:
+        return _error(f"Khong the bat dau camera: {exc}", status=400)
+    except Exception as exc:
+        return _error(f"Khong the bat dau camera: {exc}", status=503)
+
+    response = StreamingHttpResponse(
+        _stream_frames(webcam, session, data),
+        content_type="multipart/x-mixed-replace; boundary=frame",
+    )
+    response["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    return response
 
 
 @csrf_exempt
@@ -272,6 +464,8 @@ def recognize_attendance(request):
         return _error("Thieu file anh voi field name la image.", status=400)
 
     session = get_object_or_404(AttendanceSession, pk=session_id)
+    if session.status != "open":
+        return _error("Buoi diem danh da ket thuc.", status=409)
 
     try:
         result = recognize_from_image(image_file)
@@ -290,21 +484,19 @@ def recognize_attendance(request):
     if not is_enrolled:
         return _error("Sinh vien nhan dien duoc khong thuoc lop hoc phan nay.", status=400)
 
-    record, created = AttendanceRecord.objects.update_or_create(
-        session=session,
-        student=student,
-        defaults={
-            "status": "present",
-            "method": "face",
-            "confidence": result["confidence"],
-            "timestamp": timezone.now(),
-            "note": "Auto recognized by face_matcher",
-        },
+    record, created, already_present = _record_face_attendance(
+        session,
+        student,
+        result["confidence"],
+        "Auto recognized by face_matcher",
     )
+    if not record:
+        return _error("Buoi diem danh da ket thuc.", status=409)
 
     return _ok(
         {
             "created": created,
+            "already_present": already_present,
             "match": result,
             "record": _record_payload(record),
         },

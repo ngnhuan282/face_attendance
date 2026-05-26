@@ -1,20 +1,28 @@
 {% extends 'layouts/admin_base.html' %}
 
-{% block title %}EduFace - Tạo Buổi Điểm Danh{% endblock %}
-{% block page_title %}Tạo Buổi Điểm Danh{% endblock %}
+{% block title %}EduFace - Điểm Danh Trực Tiếp{% endblock %}
+{% block page_title %}Điểm Danh Trực Tiếp{% endblock %}
 {% block breadcrumb %}Quản Lý / Điểm Danh{% endblock %}
 
 {% block extra_css %}
 <style>
     .attendance-layout {
         display: grid;
-        grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+        gap: 20px;
+        align-items: start;
+    }
+
+    .session-setup {
+        display: grid;
+        grid-template-columns: minmax(560px, 2fr) minmax(250px, 0.85fr);
         gap: 20px;
         align-items: start;
     }
 
     .attendance-form-grid {
         display: grid;
+        grid-template-columns: minmax(260px, 1.3fr) minmax(220px, 1fr) auto;
+        align-items: end;
         gap: 16px;
     }
 
@@ -52,9 +60,19 @@
         resize: vertical;
     }
 
-    .session-panel {
+    .session-workspace {
         display: grid;
+        grid-template-columns: minmax(390px, 0.95fr) minmax(430px, 1.1fr);
         gap: 20px;
+        align-items: start;
+    }
+
+    .session-summary {
+        display: grid;
+        align-content: center;
+        gap: 10px;
+        padding-left: 20px;
+        border-left: 1px solid var(--border-color);
     }
 
     .camera-shell {
@@ -82,8 +100,7 @@
         overflow: hidden;
     }
 
-    .camera-stage video,
-    .camera-stage canvas {
+    .camera-stage img {
         width: 100%;
         height: 100%;
         object-fit: cover;
@@ -111,6 +128,34 @@
         padding: 16px 20px;
         border-top: 1px solid var(--border-color);
         flex-wrap: wrap;
+    }
+
+    .action-group {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .btn-end-session {
+        border: 1px solid #fecaca;
+        color: #b91c1c;
+        background: #fff;
+        border-radius: var(--radius-sm);
+        padding: 10px 16px;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background var(--transition-fast), border-color var(--transition-fast);
+    }
+
+    .btn-end-session:hover:not(:disabled) {
+        background: #fef2f2;
+        border-color: #f87171;
+    }
+
+    .btn-end-session:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
     }
 
     .session-meta {
@@ -143,21 +188,54 @@
         background: #f0fdf4;
     }
 
+    .roster-scroll {
+        max-height: 610px;
+        overflow: auto;
+    }
+
+    .roster-count {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .roster-count strong {
+        color: var(--primary-green);
+        font-size: 20px;
+    }
+
     @media (max-width: 1100px) {
-        .attendance-layout {
+        .session-setup,
+        .session-workspace {
             grid-template-columns: 1fr;
+        }
+
+        .session-summary {
+            padding-left: 0;
+            padding-top: 16px;
+            border-left: none;
+            border-top: 1px solid var(--border-color);
         }
     }
 
     @media (max-width: 768px) {
+        .attendance-form-grid {
+            grid-template-columns: 1fr;
+        }
+
         .camera-actions {
             align-items: stretch;
         }
 
         .camera-actions .btn-primary,
-        .camera-actions .btn-outline {
+        .camera-actions .btn-outline,
+        .camera-actions .btn-end-session {
             width: 100%;
             padding: 12px 16px;
+        }
+
+        .action-group {
+            width: 100%;
         }
     }
 </style>
@@ -165,64 +243,122 @@
 
 {% block page_content %}
 <div class="attendance-layout">
-    <div class="card">
-        <div class="card-title">Buổi Điểm Danh</div>
+    <div class="card session-setup">
+        <div>
+            <div class="card-title">Buổi Điểm Danh</div>
 
-        {% if error_message %}
-            <div class="error-alert">{{ error_message }}</div>
-        {% endif %}
+            {% if error_message %}
+                <div class="error-alert">{{ error_message }}</div>
+            {% endif %}
 
-        <form method="post" class="attendance-form-grid">
-            {% csrf_token %}
-            <div>
-                <label class="field-label" for="courseClass">Lớp học phần</label>
-                <select class="form-control" id="courseClass" name="course_class_id" required>
-                    <option value="">Chọn lớp học phần</option>
-                    {% for course_class in course_classes %}
-                        <option value="{{ course_class.id }}" {% if selected_session and selected_session.course_class_id == course_class.id %}selected{% endif %}>
-                            {{ course_class.class_code }} - {{ course_class.course.course_name }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
-                <label class="field-label" for="sessionNote">Ghi chú</label>
-                <textarea class="form-control" id="sessionNote" name="note">{% if selected_session %}{{ selected_session.note }}{% endif %}</textarea>
-            </div>
-            <button class="btn-primary" type="submit">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-                Tạo Buổi
-            </button>
-        </form>
+            <form method="post" class="attendance-form-grid">
+                {% csrf_token %}
+                <div>
+                    <label class="field-label" for="courseClass">Lớp học phần</label>
+                    <select class="form-control" id="courseClass" name="course_class_id" required>
+                        <option value="">Chọn lớp học phần</option>
+                        {% for course_class in course_classes %}
+                            <option value="{{ course_class.id }}" {% if selected_session and selected_session.course_class_id == course_class.id %}selected{% endif %}>
+                                {{ course_class.class_code }} - {{ course_class.course.course_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="field-label" for="sessionNote">Ghi chú</label>
+                    <textarea class="form-control" id="sessionNote" name="note">{% if selected_session %}{{ selected_session.note }}{% endif %}</textarea>
+                </div>
+                <button class="btn-primary" type="submit">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Tạo Buổi
+                </button>
+            </form>
+        </div>
 
-        {% if selected_session %}
-            <div style="margin-top:20px;border-top:1px solid var(--border-color);padding-top:16px;">
+        <div class="session-summary">
+            {% if selected_session %}
+                <div class="table-card-title">{{ selected_session.course_class.class_code }}</div>
                 <div class="session-meta">
-                    <span class="badge badge-green"><span class="badge-dot"></span>{{ selected_session.get_status_display }}</span>
+                    <span class="badge {% if selected_session.status == 'open' %}badge-green{% else %}badge-gray{% endif %}" id="sessionBadge"><span class="badge-dot"></span><span id="sessionBadgeText">{{ selected_session.get_status_display }}</span></span>
                     <span>ID #{{ selected_session.id }}</span>
                     <span>{{ selected_session.started_at|date:"d/m/Y H:i" }}</span>
                 </div>
-            </div>
-        {% endif %}
+                <div class="capture-status" id="sessionEndedAt">{% if selected_session.ended_at %}Kết thúc: {{ selected_session.ended_at|date:"d/m/Y H:i" }}{% else %}Buổi đang sẵn sàng điểm danh{% endif %}</div>
+            {% else %}
+                <div class="table-card-title">Chưa có buổi đang chọn</div>
+                <div class="capture-status">Tạo buổi để mở camera và theo dõi điểm danh.</div>
+            {% endif %}
+        </div>
     </div>
 
-    <div class="session-panel">
+    {% if selected_session %}
+    <div class="session-workspace">
+        <div class="table-card">
+            <div class="table-card-header">
+                <div>
+                    <div class="table-card-title">Danh Sách Sinh Viên</div>
+                    <div class="capture-status">{{ students|length }} sinh viên trong lớp</div>
+                </div>
+                <div class="roster-count">
+                    <strong id="presentCount">0</strong>
+                    <span class="capture-status">đã có mặt</span>
+                </div>
+            </div>
+            <div class="roster-scroll">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>MSSV</th>
+                            <th>Họ tên</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in student_rows %}
+                            {% with student=row.student record=row.record %}
+                            <tr id="student-row-{{ student.student_id }}" class="{% if record and record.status == 'present' %}is-present{% endif %}" data-present="{% if record and record.status == 'present' %}true{% else %}false{% endif %}">
+                                <td style="font-weight:600;color:var(--text-dark);font-family:monospace;">{{ student.student_id }}</td>
+                                <td>
+                                    <div class="cell-user">
+                                        <div class="cell-avatar">{{ student.full_name|first|upper }}</div>
+                                        <div>
+                                            <div class="cell-name">{{ student.full_name }}</div>
+                                            <div class="cell-sub">{{ student.student_class.class_code }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="attendance-status-cell" data-status-for="{{ student.student_id }}">
+                                    {% if record and record.status == 'present' %}
+                                        <span class="badge badge-green"><span class="badge-dot"></span>Có mặt</span>
+                                    {% else %}
+                                        <span class="badge badge-gray"><span class="badge-dot"></span>Chờ nhận diện</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endwith %}
+                        {% empty %}
+                            <tr>
+                                <td colspan="3"><div class="empty-state">Lớp học phần này chưa có sinh viên đăng ký.</div></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <div class="card camera-shell">
             <div class="camera-header">
                 <div>
                     <div class="table-card-title">Camera Điểm Danh</div>
-                    <div class="capture-status" id="captureStatus">{% if selected_session %}Sẵn sàng{% else %}Chưa có buổi điểm danh{% endif %}</div>
+                    <div class="capture-status" id="captureStatus">{% if selected_session.status == 'closed' %}Buổi điểm danh đã kết thúc{% else %}Sẵn sàng{% endif %}</div>
                 </div>
-                {% if selected_session %}
-                    <span class="badge badge-blue">{{ selected_session.course_class.class_code }}</span>
-                {% endif %}
+                <span class="badge badge-blue">{{ selected_session.course_class.class_code }}</span>
             </div>
             <div class="camera-stage">
-                <video id="cameraVideo" autoplay playsinline hidden></video>
-                <canvas id="cameraCanvas" hidden></canvas>
+                <img id="cameraStream" alt="Livestream camera điểm danh" hidden>
                 <div class="camera-placeholder" id="cameraPlaceholder">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
@@ -232,76 +368,15 @@
                 </div>
             </div>
             <div class="camera-actions">
-                <button class="btn-outline" type="button" id="startCameraBtn" {% if not selected_session %}disabled{% endif %}>Mở Camera</button>
-                <button class="btn-primary" type="button" id="captureBtn" {% if not selected_session %}disabled{% endif %}>Điểm Danh</button>
-            </div>
-        </div>
-
-        <div class="table-card">
-            <div class="table-card-header">
-                <div>
-                    <div class="table-card-title">Danh Sách Sinh Viên</div>
-                    {% if selected_session %}
-                        <div class="capture-status">{{ students|length }} sinh viên trong lớp</div>
-                    {% endif %}
+                <div class="action-group">
+                    <button class="btn-primary" type="button" id="startCameraBtn" {% if selected_session.status == 'closed' %}disabled{% endif %}>Bắt đầu livestream</button>
+                    <button class="btn-outline" type="button" id="stopCameraBtn" disabled>Dừng camera</button>
                 </div>
-            </div>
-            <div style="overflow-x:auto;">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>MSSV</th>
-                            <th>Họ tên</th>
-                            <th>Lớp sinh hoạt</th>
-                            <th>Ảnh</th>
-                            <th>Trạng thái</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in student_rows %}
-                            {% with student=row.student record=row.record %}
-                            <tr id="student-row-{{ student.student_id }}" class="{% if record and record.status == 'present' %}is-present{% endif %}">
-                                <td style="font-weight:600;color:var(--text-dark);font-family:monospace;">{{ student.student_id }}</td>
-                                <td>
-                                    <div class="cell-user">
-                                        <div class="cell-avatar">{{ student.full_name|first|upper }}</div>
-                                        <div>
-                                            <div class="cell-name">{{ student.full_name }}</div>
-                                            <div class="cell-sub">{{ student.email|default:"Chưa có email" }}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>{{ student.student_class.class_code }}</td>
-                                <td>
-                                    {% if student.photo %}
-                                        <span class="badge badge-green"><span class="badge-dot"></span>Đã có</span>
-                                    {% else %}
-                                        <span class="badge badge-orange"><span class="badge-dot"></span>Chưa có</span>
-                                    {% endif %}
-                                </td>
-                                <td class="attendance-status-cell" data-status-for="{{ student.student_id }}">
-                                    {% if record and record.status == 'present' %}
-                                        <span class="badge badge-green"><span class="badge-dot"></span>Có mặt</span>
-                                    {% else %}
-                                        <span class="badge badge-gray"><span class="badge-dot"></span>Chưa điểm danh</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endwith %}
-                        {% empty %}
-                            <tr>
-                                <td colspan="5">
-                                    <div class="empty-state">
-                                        {% if selected_session %}Lớp học phần này chưa có sinh viên đăng ký.{% else %}Chọn lớp học phần để tạo buổi điểm danh.{% endif %}
-                                    </div>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <button class="btn-end-session" type="button" id="endSessionBtn" {% if selected_session.status == 'closed' %}disabled{% endif %}>Kết thúc buổi</button>
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
 {% endblock %}
 
@@ -309,74 +384,129 @@
 {{ session_id_json|json_script:"session-id" }}
 <script>
     const sessionId = JSON.parse(document.getElementById("session-id").textContent);
-    const video = document.getElementById("cameraVideo");
-    const canvas = document.getElementById("cameraCanvas");
+    const streamImage = document.getElementById("cameraStream");
     const placeholder = document.getElementById("cameraPlaceholder");
     const startButton = document.getElementById("startCameraBtn");
-    const captureButton = document.getElementById("captureBtn");
+    const stopButton = document.getElementById("stopCameraBtn");
+    const endButton = document.getElementById("endSessionBtn");
     const statusEl = document.getElementById("captureStatus");
-    let stream = null;
+    const presentCount = document.getElementById("presentCount");
+    const sessionBadge = document.getElementById("sessionBadge");
+    const sessionBadgeText = document.getElementById("sessionBadgeText");
+    const sessionEndedAt = document.getElementById("sessionEndedAt");
+    const streamUrl = sessionId ? "{% if selected_session %}{% url 'attendance:video_stream' selected_session.id %}{% endif %}" : null;
+    const sessionUrl = sessionId ? "{% if selected_session %}{% url 'attendance:session_detail' selected_session.id %}{% endif %}" : null;
+    const recordsUrl = "{% url 'attendance:record_list_create' %}";
+    let recordPoller = null;
+    let streamActive = false;
+    let sessionClosed = {% if selected_session and selected_session.status == "closed" %}true{% else %}false{% endif %};
 
     function setStatus(text) {
-        statusEl.textContent = text;
+        if (statusEl) statusEl.textContent = text;
     }
 
-    async function startCamera() {
+    function updatePresentCount() {
+        if (!presentCount) return;
+        presentCount.textContent = document.querySelectorAll('tr[data-present="true"]').length;
+    }
+
+    function markPresent(record) {
+        const code = record.student_code;
+        const row = document.getElementById(`student-row-${code}`);
+        const statusCell = document.querySelector(`[data-status-for="${code}"]`);
+        if (row) {
+            row.classList.add("is-present");
+            row.dataset.present = "true";
+        }
+        if (statusCell) {
+            statusCell.innerHTML = '<span class="badge badge-green"><span class="badge-dot"></span>Có mặt</span>';
+        }
+        updatePresentCount();
+    }
+
+    async function refreshRecords() {
         if (!sessionId) return;
         try {
-            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-            video.srcObject = stream;
-            video.hidden = false;
-            placeholder.hidden = true;
-            setStatus("Camera đang mở");
+            const response = await fetch(`${recordsUrl}?session_id=${sessionId}`);
+            if (!response.ok) return;
+            const data = await response.json();
+            data.results.filter((record) => record.status === "present").forEach(markPresent);
         } catch (error) {
-            setStatus("Không mở được camera");
+            setStatus("Mất kết nối cập nhật điểm danh");
         }
     }
 
-    async function captureAttendance() {
-        if (!sessionId || !stream) {
-            await startCamera();
-            if (!stream) return;
+    function startCamera() {
+        if (!sessionId || sessionClosed || !streamImage) return;
+        streamActive = true;
+        streamImage.src = `${streamUrl}?ts=${Date.now()}`;
+        streamImage.hidden = false;
+        placeholder.hidden = true;
+        startButton.disabled = true;
+        stopButton.disabled = false;
+        setStatus("Đang livestream và tự động nhận diện");
+        refreshRecords();
+        recordPoller = window.setInterval(refreshRecords, 1500);
+    }
+
+    function stopCamera() {
+        streamActive = false;
+        if (streamImage) {
+            streamImage.removeAttribute("src");
+            streamImage.hidden = true;
         }
+        if (placeholder) placeholder.hidden = false;
+        if (startButton) startButton.disabled = sessionClosed;
+        if (stopButton) stopButton.disabled = true;
+        if (recordPoller) window.clearInterval(recordPoller);
+        recordPoller = null;
+        if (!sessionClosed) setStatus("Camera đã dừng");
+    }
 
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
-        setStatus("Đang nhận diện");
+    async function endSession() {
+        if (!sessionId || sessionClosed) return;
+        if (!window.confirm("Kết thúc buổi điểm danh? Camera sẽ dừng và không ghi nhận thêm sinh viên.")) return;
 
-        canvas.toBlob(async (blob) => {
-            const formData = new FormData();
-            formData.append("session_id", sessionId);
-            formData.append("image", blob, "capture.jpg");
-
-            try {
-                const response = await fetch("{% url 'attendance:recognize_attendance' %}", {
-                    method: "POST",
-                    body: formData,
-                });
-                const data = await response.json();
-
-                if (!response.ok) {
-                    setStatus(data.error || "Không nhận diện được");
-                    return;
-                }
-
-                const code = data.match.student_id;
-                const row = document.getElementById(`student-row-${code}`);
-                const statusCell = document.querySelector(`[data-status-for="${code}"]`);
-                if (row) row.classList.add("is-present");
-                if (statusCell) {
-                    statusCell.innerHTML = '<span class="badge badge-green"><span class="badge-dot"></span>Có mặt</span>';
-                }
-                setStatus(`${data.match.name} - ${(data.record.confidence * 100).toFixed(1)}%`);
-            } catch (error) {
-                setStatus("Lỗi kết nối nhận diện");
+        endButton.disabled = true;
+        setStatus("Đang kết thúc buổi điểm danh");
+        try {
+            const response = await fetch(sessionUrl, {
+                method: "PATCH",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({status: "closed"}),
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || "Không thể kết thúc buổi");
             }
-        }, "image/jpeg", 0.92);
+
+            sessionClosed = true;
+            stopCamera();
+            if (sessionBadge) {
+                sessionBadge.classList.remove("badge-green");
+                sessionBadge.classList.add("badge-gray");
+            }
+            if (sessionBadgeText) sessionBadgeText.textContent = "Đã đóng";
+            if (sessionEndedAt && data.ended_at) {
+                sessionEndedAt.textContent = `Kết thúc: ${new Date(data.ended_at).toLocaleString("vi-VN")}`;
+            }
+            setStatus("Buổi điểm danh đã kết thúc");
+        } catch (error) {
+            endButton.disabled = false;
+            setStatus(error.message || "Không thể kết thúc buổi");
+        }
     }
 
     if (startButton) startButton.addEventListener("click", startCamera);
-    if (captureButton) captureButton.addEventListener("click", captureAttendance);
+    if (stopButton) stopButton.addEventListener("click", stopCamera);
+    if (endButton) endButton.addEventListener("click", endSession);
+    if (streamImage) streamImage.addEventListener("error", () => {
+        if (!streamActive) return;
+        stopCamera();
+        setStatus("Không mở được livestream camera");
+    });
+    window.addEventListener("beforeunload", stopCamera);
+    updatePresentCount();
+    if (sessionId) refreshRecords();
 </script>
 {% endblock %}

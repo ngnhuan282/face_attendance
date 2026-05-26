@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import sys
 from typing import Iterable, List, Tuple
 
 import cv2
@@ -38,7 +39,11 @@ class FaceDetector:
 
 
 def open_webcam(camera_index: int = 0):
-    webcam = cv2.VideoCapture(camera_index)
+    backend = cv2.CAP_DSHOW if sys.platform == "win32" else cv2.CAP_ANY
+    webcam = cv2.VideoCapture(camera_index, backend)
+    if not webcam.isOpened() and backend != cv2.CAP_ANY:
+        webcam.release()
+        webcam = cv2.VideoCapture(camera_index)
     if not webcam.isOpened():
         raise RuntimeError(f"Khong mo duoc webcam index {camera_index}")
     return webcam
