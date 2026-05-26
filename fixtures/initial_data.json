@@ -1,1266 +1,1516 @@
 [
-{
-  "model": "auth.group",
-  "pk": 1,
-  "fields": {
-    "name": "Admin",
-    "permissions": []
+  {
+    "model": "auth.group",
+    "pk": 1,
+    "fields": {
+      "name": "Admin",
+      "permissions": []
+    }
+  },
+  {
+    "model": "auth.group",
+    "pk": 2,
+    "fields": {
+      "name": "GiangVien",
+      "permissions": []
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 1,
+    "fields": {
+      "password": "pbkdf2_sha256$600000$ZjZ8V4xKGjpagDvjmhwqlG$mQ0C4yMGJS8Nd0guzOOiNTfk1YmvAuzo/ftrscFFYH0=",
+      "last_login": "2026-05-25T13:15:40.813Z",
+      "is_superuser": true,
+      "username": "admin",
+      "first_name": "",
+      "last_name": "",
+      "email": "",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2026-05-15T09:27:51.276Z",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 2,
+    "fields": {
+      "password": "pbkdf2_sha256$600000$kgySkNCVQVBSWJKxFZICgQ$C4oD30nQpAM6NM5wLC/AoHaS3qk2V0wO+T+xxzooMe4=",
+      "last_login": null,
+      "is_superuser": false,
+      "username": "gv001",
+      "first_name": "Nguyễn",
+      "last_name": "Văn A",
+      "email": "nguyenvana@edu.vn",
+      "is_staff": false,
+      "is_active": true,
+      "date_joined": "2026-05-25T01:26:33.084Z",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 3,
+    "fields": {
+      "password": "pbkdf2_sha256$600000$OiNNlRxt5qVr5DtT0DOCGk$QW8Zq+bYcPU03pEQuE9AFAMtJsBy7fB9yF/72gH8laE=",
+      "last_login": null,
+      "is_superuser": false,
+      "username": "gv002",
+      "first_name": "Trần",
+      "last_name": "Thị B",
+      "email": "tranthib@edu.vn",
+      "is_staff": false,
+      "is_active": true,
+      "date_joined": "2026-05-25T01:26:33.088Z",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "academics.faculty",
+    "pk": 1,
+    "fields": {
+      "code": "CNTT",
+      "name": "Khoa Công Nghệ Thông Tin",
+      "created_at": "2026-05-25T01:26:33.039Z",
+      "updated_at": "2026-05-25T01:26:33.039Z"
+    }
+  },
+  {
+    "model": "academics.department",
+    "pk": 1,
+    "fields": {
+      "faculty": 1,
+      "code": "CNTT",
+      "name": "Chuyên ngành Công Nghệ Thông Tin",
+      "created_at": "2026-05-25T01:26:33.047Z",
+      "updated_at": "2026-05-25T01:26:33.047Z"
+    }
+  },
+  {
+    "model": "academics.department",
+    "pk": 2,
+    "fields": {
+      "faculty": 1,
+      "code": "TM",
+      "name": "Chuyên ngành Toán Học",
+      "created_at": "2026-05-25T01:32:11.882Z",
+      "updated_at": "2026-05-25T01:32:11.882Z"
+    }
+  },
+  {
+    "model": "academics.department",
+    "pk": 3,
+    "fields": {
+      "faculty": 1,
+      "code": "VL",
+      "name": "Chuyên ngành Vật Lý",
+      "created_at": "2026-05-25T01:32:11.887Z",
+      "updated_at": "2026-05-25T01:32:11.887Z"
+    }
+  },
+  {
+    "model": "academics.department",
+    "pk": 4,
+    "fields": {
+      "faculty": 1,
+      "code": "HH",
+      "name": "Chuyên ngành Hóa Học",
+      "created_at": "2026-05-25T01:32:11.891Z",
+      "updated_at": "2026-05-25T01:32:11.891Z"
+    }
+  },
+  {
+    "model": "academics.academicyear",
+    "pk": 1,
+    "fields": {
+      "name": "2024-2025",
+      "start_date": "2024-09-01",
+      "end_date": "2025-08-31",
+      "is_active": true,
+      "created_at": "2026-05-25T01:26:33.061Z",
+      "updated_at": "2026-05-25T01:26:33.061Z"
+    }
+  },
+  {
+    "model": "academics.semester",
+    "pk": 1,
+    "fields": {
+      "academic_year": 1,
+      "semester_num": 1,
+      "start_date": "2024-09-01",
+      "end_date": "2024-12-31",
+      "is_active": true,
+      "created_at": "2026-05-25T01:26:33.076Z",
+      "updated_at": "2026-05-25T01:26:33.076Z"
+    }
+  },
+  {
+    "model": "academics.semester",
+    "pk": 2,
+    "fields": {
+      "academic_year": 1,
+      "semester_num": 2,
+      "start_date": "2025-01-15",
+      "end_date": "2025-05-31",
+      "is_active": false,
+      "created_at": "2026-05-25T01:26:33.081Z",
+      "updated_at": "2026-05-25T01:26:33.081Z"
+    }
+  },
+  {
+    "model": "accounts.teacher",
+    "pk": 1,
+    "fields": {
+      "user": 2,
+      "department": 1,
+      "teacher_id": "GV001",
+      "phone": "0912345678",
+      "avatar": "",
+      "created_at": "2026-05-25T01:26:34.008Z",
+      "updated_at": "2026-05-25T01:26:34.008Z"
+    }
+  },
+  {
+    "model": "accounts.teacher",
+    "pk": 2,
+    "fields": {
+      "user": 3,
+      "department": 1,
+      "teacher_id": "GV002",
+      "phone": "0987654321",
+      "avatar": "",
+      "created_at": "2026-05-25T01:26:34.013Z",
+      "updated_at": "2026-05-25T01:26:34.013Z"
+    }
+  },
+  {
+    "model": "students.studentclass",
+    "pk": 1,
+    "fields": {
+      "department": 1,
+      "class_code": "DHKTPM22A",
+      "class_name": "Công Nghệ Thông Tin K22A",
+      "intake_year": 2022
+    }
+  },
+  {
+    "model": "students.studentclass",
+    "pk": 2,
+    "fields": {
+      "department": 1,
+      "class_code": "DHKTPM22B",
+      "class_name": "Công Nghệ Thông Tin K22B",
+      "intake_year": 2022
+    }
+  },
+  {
+    "model": "students.student",
+    "pk": 1,
+    "fields": {
+      "student_class": 1,
+      "student_id": "SV220001",
+      "full_name": "Lê Minh Tuấn",
+      "date_of_birth": null,
+      "email": "sv220001@student.edu.vn",
+      "phone": "",
+      "photo": "",
+      "is_active": true,
+      "created_at": "2026-05-25T01:26:34.049Z"
+    }
+  },
+  {
+    "model": "students.student",
+    "pk": 2,
+    "fields": {
+      "student_class": 1,
+      "student_id": "SV220002",
+      "full_name": "Phạm Thu Hằng",
+      "date_of_birth": null,
+      "email": "sv220002@student.edu.vn",
+      "phone": "",
+      "photo": "",
+      "is_active": true,
+      "created_at": "2026-05-25T01:26:34.053Z"
+    }
+  },
+  {
+    "model": "students.student",
+    "pk": 3,
+    "fields": {
+      "student_class": 1,
+      "student_id": "SV220003",
+      "full_name": "Ngô Sỹ Hùng",
+      "date_of_birth": null,
+      "email": "sv220003@student.edu.vn",
+      "phone": "",
+      "photo": "",
+      "is_active": true,
+      "created_at": "2026-05-25T01:26:34.057Z"
+    }
+  },
+  {
+    "model": "students.student",
+    "pk": 4,
+    "fields": {
+      "student_class": 1,
+      "student_id": "SV220004",
+      "full_name": "Đinh Hương Giang",
+      "date_of_birth": null,
+      "email": "sv220004@student.edu.vn",
+      "phone": "",
+      "photo": "",
+      "is_active": true,
+      "created_at": "2026-05-25T01:26:34.061Z"
+    }
+  },
+  {
+    "model": "students.student",
+    "pk": 5,
+    "fields": {
+      "student_class": 1,
+      "student_id": "SV220005",
+      "full_name": "Vũ Đạo Duy",
+      "date_of_birth": null,
+      "email": "sv220005@student.edu.vn",
+      "phone": "",
+      "photo": "",
+      "is_active": true,
+      "created_at": "2026-05-25T01:26:34.065Z"
+    }
+  },
+  {
+    "model": "students.student",
+    "pk": 6,
+    "fields": {
+      "student_class": 2,
+      "student_id": "SV220006",
+      "full_name": "Trương Quỳnh Như",
+      "date_of_birth": null,
+      "email": "sv220006@student.edu.vn",
+      "phone": "",
+      "photo": "",
+      "is_active": true,
+      "created_at": "2026-05-25T01:26:34.068Z"
+    }
+  },
+  {
+    "model": "students.student",
+    "pk": 7,
+    "fields": {
+      "student_class": 2,
+      "student_id": "SV220007",
+      "full_name": "Hoàng Minh Khôi",
+      "date_of_birth": null,
+      "email": "sv220007@student.edu.vn",
+      "phone": "",
+      "photo": "",
+      "is_active": true,
+      "created_at": "2026-05-25T01:26:34.072Z"
+    }
+  },
+  {
+    "model": "students.student",
+    "pk": 8,
+    "fields": {
+      "student_class": 2,
+      "student_id": "SV220008",
+      "full_name": "Tô Thị Ngọc Tuyết",
+      "date_of_birth": null,
+      "email": "sv220008@student.edu.vn",
+      "phone": "",
+      "photo": "",
+      "is_active": true,
+      "created_at": "2026-05-25T01:26:34.075Z"
+    }
+  },
+  {
+    "model": "students.student",
+    "pk": 9,
+    "fields": {
+      "student_class": 2,
+      "student_id": "SV220009",
+      "full_name": "Bùi Anh Tuấn",
+      "date_of_birth": null,
+      "email": "sv220009@student.edu.vn",
+      "phone": "",
+      "photo": "",
+      "is_active": true,
+      "created_at": "2026-05-25T01:26:34.079Z"
+    }
+  },
+  {
+    "model": "students.student",
+    "pk": 10,
+    "fields": {
+      "student_class": 2,
+      "student_id": "SV220010",
+      "full_name": "Đặng Thu Phương",
+      "date_of_birth": null,
+      "email": "sv220010@student.edu.vn",
+      "phone": "",
+      "photo": "",
+      "is_active": true,
+      "created_at": "2026-05-25T01:26:34.082Z"
+    }
+  },
+  {
+    "model": "students.student",
+    "pk": 11,
+    "fields": {
+      "student_class": 1,
+      "student_id": "SV220011",
+      "full_name": "Trần Ngọc Dũng",
+      "date_of_birth": null,
+      "email": "sv220011@student.edu.vn",
+      "phone": "",
+      "photo": "",
+      "is_active": true,
+      "created_at": "2026-05-26T03:15:20.000Z"
+    }
+  },
+  {
+    "model": "students.student",
+    "pk": 12,
+    "fields": {
+      "student_class": 1,
+      "student_id": "SV220012",
+      "full_name": "Hồ Bảo Trâm",
+      "date_of_birth": null,
+      "email": "sv220012@student.edu.vn",
+      "phone": "",
+      "photo": "",
+      "is_active": true,
+      "created_at": "2026-05-26T03:15:20.000Z"
+    }
+  },
+  {
+    "model": "students.student",
+    "pk": 13,
+    "fields": {
+      "student_class": 1,
+      "student_id": "SV220013",
+      "full_name": "Lý Hữu Tài",
+      "date_of_birth": null,
+      "email": "sv220013@student.edu.vn",
+      "phone": "",
+      "photo": "",
+      "is_active": true,
+      "created_at": "2026-05-26T03:15:20.000Z"
+    }
+  },
+  {
+    "model": "students.student",
+    "pk": 14,
+    "fields": {
+      "student_class": 1,
+      "student_id": "SV220014",
+      "full_name": "Nguyễn Thị Lan",
+      "date_of_birth": null,
+      "email": "sv220014@student.edu.vn",
+      "phone": "",
+      "photo": "",
+      "is_active": true,
+      "created_at": "2026-05-26T03:15:20.000Z"
+    }
+  },
+  {
+    "model": "students.student",
+    "pk": 15,
+    "fields": {
+      "student_class": 1,
+      "student_id": "SV220015",
+      "full_name": "Lê Anh Quân",
+      "date_of_birth": null,
+      "email": "sv220015@student.edu.vn",
+      "phone": "",
+      "photo": "",
+      "is_active": true,
+      "created_at": "2026-05-26T03:15:20.000Z"
+    }
+  },
+  {
+    "model": "students.student",
+    "pk": 16,
+    "fields": {
+      "student_class": 2,
+      "student_id": "SV220016",
+      "full_name": "Phan Phương Thảo",
+      "date_of_birth": null,
+      "email": "sv220016@student.edu.vn",
+      "phone": "",
+      "photo": "",
+      "is_active": true,
+      "created_at": "2026-05-26T03:15:20.000Z"
+    }
+  },
+  {
+    "model": "students.student",
+    "pk": 17,
+    "fields": {
+      "student_class": 2,
+      "student_id": "SV220017",
+      "full_name": "Bùi Gia Bảo",
+      "date_of_birth": null,
+      "email": "sv220017@student.edu.vn",
+      "phone": "",
+      "photo": "",
+      "is_active": true,
+      "created_at": "2026-05-26T03:15:20.000Z"
+    }
+  },
+  {
+    "model": "students.student",
+    "pk": 18,
+    "fields": {
+      "student_class": 2,
+      "student_id": "SV220018",
+      "full_name": "Trương Tấn Thành",
+      "date_of_birth": null,
+      "email": "sv220018@student.edu.vn",
+      "phone": "",
+      "photo": "",
+      "is_active": true,
+      "created_at": "2026-05-26T03:15:20.000Z"
+    }
+  },
+  {
+    "model": "students.student",
+    "pk": 19,
+    "fields": {
+      "student_class": 2,
+      "student_id": "SV220019",
+      "full_name": "Vũ Mỹ Hạnh",
+      "date_of_birth": null,
+      "email": "sv220019@student.edu.vn",
+      "phone": "",
+      "photo": "",
+      "is_active": true,
+      "created_at": "2026-05-26T03:15:20.000Z"
+    }
+  },
+  {
+    "model": "students.student",
+    "pk": 20,
+    "fields": {
+      "student_class": 2,
+      "student_id": "SV220020",
+      "full_name": "Đỗ Hải Đăng",
+      "date_of_birth": null,
+      "email": "sv220020@student.edu.vn",
+      "phone": "",
+      "photo": "",
+      "is_active": true,
+      "created_at": "2026-05-26T03:15:20.000Z"
+    }
+  },
+  {
+    "model": "courses.course",
+    "pk": 8,
+    "fields": {
+      "department": 1,
+      "room": 1,
+      "course_code": "INT101",
+      "course_name": "Lap Trinh Python",
+      "credits": 3,
+      "description": "Moi hoc: Lap Trinh Python"
+    }
+  },
+  {
+    "model": "courses.course",
+    "pk": 9,
+    "fields": {
+      "department": 1,
+      "room": 3,
+      "course_code": "INT102",
+      "course_name": "Cau Truc Du Lieu va Giai Thuat",
+      "credits": 3,
+      "description": "Moi hoc: Cau Truc Du Lieu va Giai Thuat"
+    }
+  },
+  {
+    "model": "courses.course",
+    "pk": 10,
+    "fields": {
+      "department": 1,
+      "room": 4,
+      "course_code": "INT103",
+      "course_name": "He Quan Tri Co So Du Lieu",
+      "credits": 3,
+      "description": "Moi hoc: He Quan Tri Co So Du Lieu"
+    }
+  },
+  {
+    "model": "courses.course",
+    "pk": 11,
+    "fields": {
+      "department": 1,
+      "room": null,
+      "course_code": "INT104",
+      "course_name": "Lap Trinh Web",
+      "credits": 3,
+      "description": "Moi hoc: Lap Trinh Web"
+    }
+  },
+  {
+    "model": "courses.course",
+    "pk": 12,
+    "fields": {
+      "department": 1,
+      "room": null,
+      "course_code": "INT105",
+      "course_name": "Cong Nghe Phan Mem",
+      "credits": 3,
+      "description": "Moi hoc: Cong Nghe Phan Mem"
+    }
+  },
+  {
+    "model": "courses.courseclass",
+    "pk": 6,
+    "fields": {
+      "course": 8,
+      "semester": 1,
+      "teacher": 1,
+      "class_code": "INT101.01",
+      "max_students": 40,
+      "total_sessions": 15
+    }
+  },
+  {
+    "model": "courses.courseclass",
+    "pk": 7,
+    "fields": {
+      "course": 9,
+      "semester": 1,
+      "teacher": 2,
+      "class_code": "INT102.01",
+      "max_students": 40,
+      "total_sessions": 15
+    }
+  },
+  {
+    "model": "courses.courseclass",
+    "pk": 8,
+    "fields": {
+      "course": 10,
+      "semester": 1,
+      "teacher": 1,
+      "class_code": "INT103.01",
+      "max_students": 40,
+      "total_sessions": 15
+    }
+  },
+  {
+    "model": "courses.courseclass",
+    "pk": 9,
+    "fields": {
+      "course": 11,
+      "semester": 1,
+      "teacher": 2,
+      "class_code": "INT104.01",
+      "max_students": 40,
+      "total_sessions": 15
+    }
+  },
+  {
+    "model": "courses.courseclass",
+    "pk": 10,
+    "fields": {
+      "course": 12,
+      "semester": 1,
+      "teacher": 1,
+      "class_code": "INT105.01",
+      "max_students": 40,
+      "total_sessions": 15
+    }
+  },
+  {
+    "model": "courses.courseclass",
+    "pk": 11,
+    "fields": {
+      "course": 8,
+      "semester": 1,
+      "teacher": 2,
+      "class_code": "INT101.02",
+      "max_students": 40,
+      "total_sessions": 15
+    }
+  },
+  {
+    "model": "courses.courseclass",
+    "pk": 12,
+    "fields": {
+      "course": 11,
+      "semester": 2,
+      "teacher": 1,
+      "class_code": "INT104.01",
+      "max_students": 40,
+      "total_sessions": 15
+    }
+  },
+  {
+    "model": "courses.courseclass",
+    "pk": 13,
+    "fields": {
+      "course": 8,
+      "semester": 2,
+      "teacher": 1,
+      "class_code": "32",
+      "max_students": 40,
+      "total_sessions": 15
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 1,
+    "fields": {
+      "course_class": 6,
+      "student": 1,
+      "enrolled_at": "2026-05-25T10:13:55.728Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 2,
+    "fields": {
+      "course_class": 6,
+      "student": 2,
+      "enrolled_at": "2026-05-25T10:13:55.733Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 3,
+    "fields": {
+      "course_class": 6,
+      "student": 3,
+      "enrolled_at": "2026-05-25T10:13:55.735Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 4,
+    "fields": {
+      "course_class": 6,
+      "student": 4,
+      "enrolled_at": "2026-05-25T10:13:55.739Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 5,
+    "fields": {
+      "course_class": 6,
+      "student": 5,
+      "enrolled_at": "2026-05-25T10:13:55.742Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 6,
+    "fields": {
+      "course_class": 11,
+      "student": 6,
+      "enrolled_at": "2026-05-25T10:13:55.746Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 7,
+    "fields": {
+      "course_class": 11,
+      "student": 7,
+      "enrolled_at": "2026-05-25T10:13:55.749Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 8,
+    "fields": {
+      "course_class": 11,
+      "student": 8,
+      "enrolled_at": "2026-05-25T10:13:55.752Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 9,
+    "fields": {
+      "course_class": 11,
+      "student": 9,
+      "enrolled_at": "2026-05-25T10:13:55.756Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 10,
+    "fields": {
+      "course_class": 11,
+      "student": 10,
+      "enrolled_at": "2026-05-25T10:13:55.760Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 11,
+    "fields": {
+      "course_class": 7,
+      "student": 1,
+      "enrolled_at": "2026-05-25T10:13:55.763Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 12,
+    "fields": {
+      "course_class": 7,
+      "student": 2,
+      "enrolled_at": "2026-05-25T10:13:55.766Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 13,
+    "fields": {
+      "course_class": 7,
+      "student": 3,
+      "enrolled_at": "2026-05-25T10:13:55.769Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 14,
+    "fields": {
+      "course_class": 7,
+      "student": 4,
+      "enrolled_at": "2026-05-25T10:13:55.772Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 15,
+    "fields": {
+      "course_class": 7,
+      "student": 5,
+      "enrolled_at": "2026-05-25T10:13:55.776Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 16,
+    "fields": {
+      "course_class": 7,
+      "student": 6,
+      "enrolled_at": "2026-05-25T10:13:55.780Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 17,
+    "fields": {
+      "course_class": 7,
+      "student": 7,
+      "enrolled_at": "2026-05-25T10:13:55.783Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 18,
+    "fields": {
+      "course_class": 8,
+      "student": 4,
+      "enrolled_at": "2026-05-25T10:13:55.787Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 19,
+    "fields": {
+      "course_class": 8,
+      "student": 5,
+      "enrolled_at": "2026-05-25T10:13:55.790Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 20,
+    "fields": {
+      "course_class": 8,
+      "student": 6,
+      "enrolled_at": "2026-05-25T10:13:55.793Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 21,
+    "fields": {
+      "course_class": 8,
+      "student": 7,
+      "enrolled_at": "2026-05-25T10:13:55.796Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 22,
+    "fields": {
+      "course_class": 8,
+      "student": 8,
+      "enrolled_at": "2026-05-25T10:13:55.799Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 23,
+    "fields": {
+      "course_class": 8,
+      "student": 9,
+      "enrolled_at": "2026-05-25T10:13:55.803Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 24,
+    "fields": {
+      "course_class": 12,
+      "student": 7,
+      "enrolled_at": "2026-05-25T10:13:55.810Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 25,
+    "fields": {
+      "course_class": 12,
+      "student": 10,
+      "enrolled_at": "2026-05-25T10:13:55.815Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 26,
+    "fields": {
+      "course_class": 12,
+      "student": 9,
+      "enrolled_at": "2026-05-25T10:13:55.819Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 27,
+    "fields": {
+      "course_class": 10,
+      "student": 8,
+      "enrolled_at": "2026-05-25T10:13:55.822Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 28,
+    "fields": {
+      "course_class": 6,
+      "student": 11,
+      "enrolled_at": "2026-05-26T03:15:20.000Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 29,
+    "fields": {
+      "course_class": 6,
+      "student": 12,
+      "enrolled_at": "2026-05-26T03:15:20.000Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 30,
+    "fields": {
+      "course_class": 6,
+      "student": 13,
+      "enrolled_at": "2026-05-26T03:15:20.000Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 31,
+    "fields": {
+      "course_class": 6,
+      "student": 14,
+      "enrolled_at": "2026-05-26T03:15:20.000Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 32,
+    "fields": {
+      "course_class": 6,
+      "student": 15,
+      "enrolled_at": "2026-05-26T03:15:20.000Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 33,
+    "fields": {
+      "course_class": 11,
+      "student": 16,
+      "enrolled_at": "2026-05-26T03:15:20.000Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 34,
+    "fields": {
+      "course_class": 11,
+      "student": 17,
+      "enrolled_at": "2026-05-26T03:15:20.000Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 35,
+    "fields": {
+      "course_class": 11,
+      "student": 18,
+      "enrolled_at": "2026-05-26T03:15:20.000Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 36,
+    "fields": {
+      "course_class": 11,
+      "student": 19,
+      "enrolled_at": "2026-05-26T03:15:20.000Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "courses.enrollment",
+    "pk": 37,
+    "fields": {
+      "course_class": 11,
+      "student": 20,
+      "enrolled_at": "2026-05-26T03:15:20.000Z",
+      "is_active": true
+    }
+  },
+  {
+    "model": "schedules.room",
+    "pk": 1,
+    "fields": {
+      "room_code": "A101",
+      "building": "Tòa D",
+      "capacity": 40,
+      "has_camera": true
+    }
+  },
+  {
+    "model": "schedules.room",
+    "pk": 2,
+    "fields": {
+      "room_code": "A102",
+      "building": "Tòa A",
+      "capacity": 40,
+      "has_camera": true
+    }
+  },
+  {
+    "model": "schedules.room",
+    "pk": 3,
+    "fields": {
+      "room_code": "A201",
+      "building": "Tòa A",
+      "capacity": 35,
+      "has_camera": false
+    }
+  },
+  {
+    "model": "schedules.room",
+    "pk": 4,
+    "fields": {
+      "room_code": "A202",
+      "building": "Tòa A",
+      "capacity": 40,
+      "has_camera": false
+    }
+  },
+  {
+    "model": "schedules.room",
+    "pk": 5,
+    "fields": {
+      "room_code": "B101",
+      "building": "Tòa B",
+      "capacity": 50,
+      "has_camera": true
+    }
+  },
+  {
+    "model": "schedules.room",
+    "pk": 6,
+    "fields": {
+      "room_code": "B102",
+      "building": "Tòa B",
+      "capacity": 40,
+      "has_camera": true
+    }
+  },
+  {
+    "model": "schedules.room",
+    "pk": 7,
+    "fields": {
+      "room_code": "C101",
+      "building": "Tòa C",
+      "capacity": 30,
+      "has_camera": false
+    }
+  },
+  {
+    "model": "schedules.room",
+    "pk": 9,
+    "fields": {
+      "room_code": "4123",
+      "building": "Tòa C",
+      "capacity": 40,
+      "has_camera": false
+    }
+  },
+  {
+    "model": "schedules.room",
+    "pk": 10,
+    "fields": {
+      "room_code": "34",
+      "building": "Tòa A",
+      "capacity": 40,
+      "has_camera": false
+    }
+  },
+  {
+    "model": "schedules.schedule",
+    "pk": 1,
+    "fields": {
+      "course_class": 12,
+      "room": 1,
+      "day_of_week": 2,
+      "start_period": 1,
+      "end_period": 3,
+      "date": "2026-05-04",
+      "session_number": 1
+    }
+  },
+  {
+    "model": "schedules.schedule",
+    "pk": 2,
+    "fields": {
+      "course_class": 12,
+      "room": 1,
+      "day_of_week": 2,
+      "start_period": 1,
+      "end_period": 3,
+      "date": "2026-05-11",
+      "session_number": 2
+    }
+  },
+  {
+    "model": "schedules.schedule",
+    "pk": 3,
+    "fields": {
+      "course_class": 12,
+      "room": 1,
+      "day_of_week": 2,
+      "start_period": 1,
+      "end_period": 3,
+      "date": "2026-05-18",
+      "session_number": 3
+    }
+  },
+  {
+    "model": "schedules.schedule",
+    "pk": 4,
+    "fields": {
+      "course_class": 12,
+      "room": 1,
+      "day_of_week": 2,
+      "start_period": 1,
+      "end_period": 3,
+      "date": "2026-05-25",
+      "session_number": 4
+    }
+  },
+  {
+    "model": "schedules.schedule",
+    "pk": 5,
+    "fields": {
+      "course_class": 11,
+      "room": 1,
+      "day_of_week": 2,
+      "start_period": 1,
+      "end_period": 3,
+      "date": "2026-05-04",
+      "session_number": 1
+    }
+  },
+  {
+    "model": "schedules.schedule",
+    "pk": 6,
+    "fields": {
+      "course_class": 11,
+      "room": 1,
+      "day_of_week": 2,
+      "start_period": 1,
+      "end_period": 3,
+      "date": "2026-05-11",
+      "session_number": 2
+    }
+  },
+  {
+    "model": "schedules.schedule",
+    "pk": 7,
+    "fields": {
+      "course_class": 11,
+      "room": 1,
+      "day_of_week": 2,
+      "start_period": 1,
+      "end_period": 3,
+      "date": "2026-05-18",
+      "session_number": 3
+    }
+  },
+  {
+    "model": "schedules.schedule",
+    "pk": 8,
+    "fields": {
+      "course_class": 11,
+      "room": 1,
+      "day_of_week": 2,
+      "start_period": 1,
+      "end_period": 3,
+      "date": "2026-05-25",
+      "session_number": 4
+    }
+  },
+  {
+    "model": "schedules.schedule",
+    "pk": 10,
+    "fields": {
+      "course_class": 7,
+      "room": 2,
+      "day_of_week": 2,
+      "start_period": 1,
+      "end_period": 3,
+      "date": "2026-05-18",
+      "session_number": 2
+    }
+  },
+  {
+    "model": "schedules.schedule",
+    "pk": 11,
+    "fields": {
+      "course_class": 7,
+      "room": 2,
+      "day_of_week": 2,
+      "start_period": 1,
+      "end_period": 3,
+      "date": "2026-05-25",
+      "session_number": 3
+    }
+  },
+  {
+    "model": "schedules.schedule",
+    "pk": 13,
+    "fields": {
+      "course_class": 7,
+      "room": 3,
+      "day_of_week": 7,
+      "start_period": 1,
+      "end_period": 3,
+      "date": "2026-05-09",
+      "session_number": 4
+    }
+  },
+  {
+    "model": "schedules.schedule",
+    "pk": 14,
+    "fields": {
+      "course_class": 7,
+      "room": 3,
+      "day_of_week": 7,
+      "start_period": 1,
+      "end_period": 3,
+      "date": "2026-05-16",
+      "session_number": 5
+    }
+  },
+  {
+    "model": "attendance.attendancesession",
+    "pk": 1,
+    "fields": {
+      "course_class": 12,
+      "schedule": 1,
+      "created_by": 2,
+      "started_at": "2026-05-25T13:36:29.060Z",
+      "ended_at": "2026-05-23T15:36:29.059Z",
+      "status": "closed",
+      "note": ""
+    }
+  },
+  {
+    "model": "attendance.attendancesession",
+    "pk": 2,
+    "fields": {
+      "course_class": 11,
+      "schedule": 5,
+      "created_by": 3,
+      "started_at": "2026-05-25T13:36:29.076Z",
+      "ended_at": "2026-05-23T15:36:29.076Z",
+      "status": "closed",
+      "note": ""
+    }
+  },
+  {
+    "model": "attendance.attendancesession",
+    "pk": 3,
+    "fields": {
+      "course_class": 7,
+      "schedule": 13,
+      "created_by": 3,
+      "started_at": "2026-05-25T13:36:29.105Z",
+      "ended_at": "2026-05-23T15:36:29.105Z",
+      "status": "closed",
+      "note": ""
+    }
+  },
+  {
+    "model": "attendance.attendancerecord",
+    "pk": 1,
+    "fields": {
+      "session": 1,
+      "student": 9,
+      "status": "present",
+      "method": "face",
+      "confidence": 81.65212843060996,
+      "timestamp": "2026-05-25T13:58:29.060Z",
+      "note": ""
+    }
+  },
+  {
+    "model": "attendance.attendancerecord",
+    "pk": 2,
+    "fields": {
+      "session": 1,
+      "student": 10,
+      "status": "present",
+      "method": "face",
+      "confidence": 89.4891436254218,
+      "timestamp": "2026-05-25T14:04:29.060Z",
+      "note": ""
+    }
+  },
+  {
+    "model": "attendance.attendancerecord",
+    "pk": 3,
+    "fields": {
+      "session": 1,
+      "student": 7,
+      "status": "present",
+      "method": "face",
+      "confidence": 87.65089831331787,
+      "timestamp": "2026-05-25T13:47:29.060Z",
+      "note": ""
+    }
+  },
+  {
+    "model": "attendance.attendancerecord",
+    "pk": 4,
+    "fields": {
+      "session": 2,
+      "student": 9,
+      "status": "present",
+      "method": "face",
+      "confidence": 80.70539107773367,
+      "timestamp": "2026-05-25T14:06:29.076Z",
+      "note": ""
+    }
+  },
+  {
+    "model": "attendance.attendancerecord",
+    "pk": 5,
+    "fields": {
+      "session": 2,
+      "student": 10,
+      "status": "late",
+      "method": "face",
+      "confidence": 85.61803211357126,
+      "timestamp": "2026-05-25T13:42:29.076Z",
+      "note": ""
+    }
+  },
+  {
+    "model": "attendance.attendancerecord",
+    "pk": 6,
+    "fields": {
+      "session": 2,
+      "student": 7,
+      "status": "present",
+      "method": "face",
+      "confidence": 96.95270138616692,
+      "timestamp": "2026-05-25T13:58:29.076Z",
+      "note": ""
+    }
+  },
+  {
+    "model": "attendance.attendancerecord",
+    "pk": 7,
+    "fields": {
+      "session": 2,
+      "student": 8,
+      "status": "present",
+      "method": "face",
+      "confidence": 91.76349591623078,
+      "timestamp": "2026-05-25T13:51:29.076Z",
+      "note": ""
+    }
+  },
+  {
+    "model": "attendance.attendancerecord",
+    "pk": 8,
+    "fields": {
+      "session": 2,
+      "student": 6,
+      "status": "present",
+      "method": "face",
+      "confidence": 87.01798377157155,
+      "timestamp": "2026-05-25T14:06:29.076Z",
+      "note": ""
+    }
+  },
+  {
+    "model": "attendance.attendancerecord",
+    "pk": 9,
+    "fields": {
+      "session": 3,
+      "student": 4,
+      "status": "present",
+      "method": "face",
+      "confidence": 93.37672905554452,
+      "timestamp": "2026-05-25T13:57:29.105Z",
+      "note": ""
+    }
+  },
+  {
+    "model": "attendance.attendancerecord",
+    "pk": 10,
+    "fields": {
+      "session": 3,
+      "student": 1,
+      "status": "present",
+      "method": "face",
+      "confidence": 95.92263289541346,
+      "timestamp": "2026-05-25T13:41:29.105Z",
+      "note": ""
+    }
+  },
+  {
+    "model": "attendance.attendancerecord",
+    "pk": 11,
+    "fields": {
+      "session": 3,
+      "student": 3,
+      "status": "absent",
+      "method": "manual",
+      "confidence": 0.0,
+      "timestamp": null,
+      "note": ""
+    }
+  },
+  {
+    "model": "attendance.attendancerecord",
+    "pk": 12,
+    "fields": {
+      "session": 3,
+      "student": 2,
+      "status": "late",
+      "method": "face",
+      "confidence": 96.89560241876184,
+      "timestamp": "2026-05-25T13:57:29.105Z",
+      "note": ""
+    }
+  },
+  {
+    "model": "attendance.attendancerecord",
+    "pk": 13,
+    "fields": {
+      "session": 3,
+      "student": 5,
+      "status": "present",
+      "method": "face",
+      "confidence": 93.2508270137535,
+      "timestamp": "2026-05-25T14:02:29.105Z",
+      "note": ""
+    }
+  },
+  {
+    "model": "attendance.attendancerecord",
+    "pk": 14,
+    "fields": {
+      "session": 3,
+      "student": 7,
+      "status": "absent",
+      "method": "manual",
+      "confidence": 0.0,
+      "timestamp": null,
+      "note": ""
+    }
+  },
+  {
+    "model": "attendance.attendancerecord",
+    "pk": 15,
+    "fields": {
+      "session": 3,
+      "student": 6,
+      "status": "present",
+      "method": "face",
+      "confidence": 90.02217974990893,
+      "timestamp": "2026-05-25T13:44:29.105Z",
+      "note": ""
+    }
   }
-},
-{
-  "model": "auth.group",
-  "pk": 2,
-  "fields": {
-    "name": "GiangVien",
-    "permissions": []
-  }
-},
-{
-  "model": "auth.user",
-  "pk": 1,
-  "fields": {
-    "password": "pbkdf2_sha256$600000$ZjZ8V4xKGjpagDvjmhwqlG$mQ0C4yMGJS8Nd0guzOOiNTfk1YmvAuzo/ftrscFFYH0=",
-    "last_login": "2026-05-25T13:15:40.813Z",
-    "is_superuser": true,
-    "username": "admin",
-    "first_name": "",
-    "last_name": "",
-    "email": "",
-    "is_staff": true,
-    "is_active": true,
-    "date_joined": "2026-05-15T09:27:51.276Z",
-    "groups": [],
-    "user_permissions": []
-  }
-},
-{
-  "model": "auth.user",
-  "pk": 2,
-  "fields": {
-    "password": "pbkdf2_sha256$600000$kgySkNCVQVBSWJKxFZICgQ$C4oD30nQpAM6NM5wLC/AoHaS3qk2V0wO+T+xxzooMe4=",
-    "last_login": null,
-    "is_superuser": false,
-    "username": "gv001",
-    "first_name": "Nguyễn",
-    "last_name": "Văn A",
-    "email": "nguyenvana@edu.vn",
-    "is_staff": false,
-    "is_active": true,
-    "date_joined": "2026-05-25T01:26:33.084Z",
-    "groups": [],
-    "user_permissions": []
-  }
-},
-{
-  "model": "auth.user",
-  "pk": 3,
-  "fields": {
-    "password": "pbkdf2_sha256$600000$OiNNlRxt5qVr5DtT0DOCGk$QW8Zq+bYcPU03pEQuE9AFAMtJsBy7fB9yF/72gH8laE=",
-    "last_login": null,
-    "is_superuser": false,
-    "username": "gv002",
-    "first_name": "Trần",
-    "last_name": "Thị B",
-    "email": "tranthib@edu.vn",
-    "is_staff": false,
-    "is_active": true,
-    "date_joined": "2026-05-25T01:26:33.088Z",
-    "groups": [],
-    "user_permissions": []
-  }
-},
-{
-  "model": "academics.faculty",
-  "pk": 1,
-  "fields": {
-    "code": "CNTT",
-    "name": "Khoa Công Nghệ Thông Tin",
-    "created_at": "2026-05-25T01:26:33.039Z",
-    "updated_at": "2026-05-25T01:26:33.039Z"
-  }
-},
-{
-  "model": "academics.department",
-  "pk": 1,
-  "fields": {
-    "faculty": 1,
-    "code": "CNTT",
-    "name": "Chuyên ngành Công Nghệ Thông Tin",
-    "created_at": "2026-05-25T01:26:33.047Z",
-    "updated_at": "2026-05-25T01:26:33.047Z"
-  }
-},
-{
-  "model": "academics.department",
-  "pk": 2,
-  "fields": {
-    "faculty": 1,
-    "code": "TM",
-    "name": "Chuyên ngành Toán Học",
-    "created_at": "2026-05-25T01:32:11.882Z",
-    "updated_at": "2026-05-25T01:32:11.882Z"
-  }
-},
-{
-  "model": "academics.department",
-  "pk": 3,
-  "fields": {
-    "faculty": 1,
-    "code": "VL",
-    "name": "Chuyên ngành Vật Lý",
-    "created_at": "2026-05-25T01:32:11.887Z",
-    "updated_at": "2026-05-25T01:32:11.887Z"
-  }
-},
-{
-  "model": "academics.department",
-  "pk": 4,
-  "fields": {
-    "faculty": 1,
-    "code": "HH",
-    "name": "Chuyên ngành Hóa Học",
-    "created_at": "2026-05-25T01:32:11.891Z",
-    "updated_at": "2026-05-25T01:32:11.891Z"
-  }
-},
-{
-  "model": "academics.academicyear",
-  "pk": 1,
-  "fields": {
-    "name": "2024-2025",
-    "start_date": "2024-09-01",
-    "end_date": "2025-08-31",
-    "is_active": true,
-    "created_at": "2026-05-25T01:26:33.061Z",
-    "updated_at": "2026-05-25T01:26:33.061Z"
-  }
-},
-{
-  "model": "academics.semester",
-  "pk": 1,
-  "fields": {
-    "academic_year": 1,
-    "semester_num": 1,
-    "start_date": "2024-09-01",
-    "end_date": "2024-12-31",
-    "is_active": true,
-    "created_at": "2026-05-25T01:26:33.076Z",
-    "updated_at": "2026-05-25T01:26:33.076Z"
-  }
-},
-{
-  "model": "academics.semester",
-  "pk": 2,
-  "fields": {
-    "academic_year": 1,
-    "semester_num": 2,
-    "start_date": "2025-01-15",
-    "end_date": "2025-05-31",
-    "is_active": false,
-    "created_at": "2026-05-25T01:26:33.081Z",
-    "updated_at": "2026-05-25T01:26:33.081Z"
-  }
-},
-{
-  "model": "accounts.teacher",
-  "pk": 1,
-  "fields": {
-    "user": 2,
-    "department": 1,
-    "teacher_id": "GV001",
-    "phone": "0912345678",
-    "avatar": "",
-    "created_at": "2026-05-25T01:26:34.008Z",
-    "updated_at": "2026-05-25T01:26:34.008Z"
-  }
-},
-{
-  "model": "accounts.teacher",
-  "pk": 2,
-  "fields": {
-    "user": 3,
-    "department": 1,
-    "teacher_id": "GV002",
-    "phone": "0987654321",
-    "avatar": "",
-    "created_at": "2026-05-25T01:26:34.013Z",
-    "updated_at": "2026-05-25T01:26:34.013Z"
-  }
-},
-{
-  "model": "students.studentclass",
-  "pk": 1,
-  "fields": {
-    "department": 1,
-    "class_code": "DHKTPM22A",
-    "class_name": "Công Nghệ Thông Tin K22A",
-    "intake_year": 2022
-  }
-},
-{
-  "model": "students.studentclass",
-  "pk": 2,
-  "fields": {
-    "department": 1,
-    "class_code": "DHKTPM22B",
-    "class_name": "Công Nghệ Thông Tin K22B",
-    "intake_year": 2022
-  }
-},
-{
-  "model": "students.student",
-  "pk": 1,
-  "fields": {
-    "student_class": 1,
-    "student_id": "SV220001",
-    "full_name": "Lê Minh Tuấn",
-    "date_of_birth": null,
-    "email": "sv220001@student.edu.vn",
-    "phone": "",
-    "photo": "",
-    "is_active": true,
-    "created_at": "2026-05-25T01:26:34.049Z"
-  }
-},
-{
-  "model": "students.student",
-  "pk": 2,
-  "fields": {
-    "student_class": 1,
-    "student_id": "SV220002",
-    "full_name": "Phạm Thu Hằng",
-    "date_of_birth": null,
-    "email": "sv220002@student.edu.vn",
-    "phone": "",
-    "photo": "",
-    "is_active": true,
-    "created_at": "2026-05-25T01:26:34.053Z"
-  }
-},
-{
-  "model": "students.student",
-  "pk": 3,
-  "fields": {
-    "student_class": 1,
-    "student_id": "SV220003",
-    "full_name": "Ngô Sỹ Hùng",
-    "date_of_birth": null,
-    "email": "sv220003@student.edu.vn",
-    "phone": "",
-    "photo": "",
-    "is_active": true,
-    "created_at": "2026-05-25T01:26:34.057Z"
-  }
-},
-{
-  "model": "students.student",
-  "pk": 4,
-  "fields": {
-    "student_class": 1,
-    "student_id": "SV220004",
-    "full_name": "Đinh Hương Giang",
-    "date_of_birth": null,
-    "email": "sv220004@student.edu.vn",
-    "phone": "",
-    "photo": "",
-    "is_active": true,
-    "created_at": "2026-05-25T01:26:34.061Z"
-  }
-},
-{
-  "model": "students.student",
-  "pk": 5,
-  "fields": {
-    "student_class": 1,
-    "student_id": "SV220005",
-    "full_name": "Vũ Đạo Duy",
-    "date_of_birth": null,
-    "email": "sv220005@student.edu.vn",
-    "phone": "",
-    "photo": "",
-    "is_active": true,
-    "created_at": "2026-05-25T01:26:34.065Z"
-  }
-},
-{
-  "model": "students.student",
-  "pk": 6,
-  "fields": {
-    "student_class": 2,
-    "student_id": "SV220006",
-    "full_name": "Trương Quỳnh Như",
-    "date_of_birth": null,
-    "email": "sv220006@student.edu.vn",
-    "phone": "",
-    "photo": "",
-    "is_active": true,
-    "created_at": "2026-05-25T01:26:34.068Z"
-  }
-},
-{
-  "model": "students.student",
-  "pk": 7,
-  "fields": {
-    "student_class": 2,
-    "student_id": "SV220007",
-    "full_name": "Hoàng Minh Khôi",
-    "date_of_birth": null,
-    "email": "sv220007@student.edu.vn",
-    "phone": "",
-    "photo": "",
-    "is_active": true,
-    "created_at": "2026-05-25T01:26:34.072Z"
-  }
-},
-{
-  "model": "students.student",
-  "pk": 8,
-  "fields": {
-    "student_class": 2,
-    "student_id": "SV220008",
-    "full_name": "Tô Thị Ngọc Tuyết",
-    "date_of_birth": null,
-    "email": "sv220008@student.edu.vn",
-    "phone": "",
-    "photo": "",
-    "is_active": true,
-    "created_at": "2026-05-25T01:26:34.075Z"
-  }
-},
-{
-  "model": "students.student",
-  "pk": 9,
-  "fields": {
-    "student_class": 2,
-    "student_id": "SV220009",
-    "full_name": "Bùi Anh Tuấn",
-    "date_of_birth": null,
-    "email": "sv220009@student.edu.vn",
-    "phone": "",
-    "photo": "",
-    "is_active": true,
-    "created_at": "2026-05-25T01:26:34.079Z"
-  }
-},
-{
-  "model": "students.student",
-  "pk": 10,
-  "fields": {
-    "student_class": 2,
-    "student_id": "SV220010",
-    "full_name": "Đặng Thu Phương",
-    "date_of_birth": null,
-    "email": "sv220010@student.edu.vn",
-    "phone": "",
-    "photo": "",
-    "is_active": true,
-    "created_at": "2026-05-25T01:26:34.082Z"
-  }
-},
-{
-  "model": "courses.course",
-  "pk": 8,
-  "fields": {
-    "department": 1,
-    "room": 1,
-    "course_code": "INT101",
-    "course_name": "Lap Trinh Python",
-    "credits": 3,
-    "description": "Moi hoc: Lap Trinh Python"
-  }
-},
-{
-  "model": "courses.course",
-  "pk": 9,
-  "fields": {
-    "department": 1,
-    "room": 3,
-    "course_code": "INT102",
-    "course_name": "Cau Truc Du Lieu va Giai Thuat",
-    "credits": 3,
-    "description": "Moi hoc: Cau Truc Du Lieu va Giai Thuat"
-  }
-},
-{
-  "model": "courses.course",
-  "pk": 10,
-  "fields": {
-    "department": 1,
-    "room": 4,
-    "course_code": "INT103",
-    "course_name": "He Quan Tri Co So Du Lieu",
-    "credits": 3,
-    "description": "Moi hoc: He Quan Tri Co So Du Lieu"
-  }
-},
-{
-  "model": "courses.course",
-  "pk": 11,
-  "fields": {
-    "department": 1,
-    "room": null,
-    "course_code": "INT104",
-    "course_name": "Lap Trinh Web",
-    "credits": 3,
-    "description": "Moi hoc: Lap Trinh Web"
-  }
-},
-{
-  "model": "courses.course",
-  "pk": 12,
-  "fields": {
-    "department": 1,
-    "room": null,
-    "course_code": "INT105",
-    "course_name": "Cong Nghe Phan Mem",
-    "credits": 3,
-    "description": "Moi hoc: Cong Nghe Phan Mem"
-  }
-},
-{
-  "model": "courses.courseclass",
-  "pk": 6,
-  "fields": {
-    "course": 8,
-    "semester": 1,
-    "teacher": 1,
-    "class_code": "INT101.01",
-    "max_students": 40,
-    "total_sessions": 15
-  }
-},
-{
-  "model": "courses.courseclass",
-  "pk": 7,
-  "fields": {
-    "course": 9,
-    "semester": 1,
-    "teacher": 2,
-    "class_code": "INT102.01",
-    "max_students": 40,
-    "total_sessions": 15
-  }
-},
-{
-  "model": "courses.courseclass",
-  "pk": 8,
-  "fields": {
-    "course": 10,
-    "semester": 1,
-    "teacher": 1,
-    "class_code": "INT103.01",
-    "max_students": 40,
-    "total_sessions": 15
-  }
-},
-{
-  "model": "courses.courseclass",
-  "pk": 9,
-  "fields": {
-    "course": 11,
-    "semester": 1,
-    "teacher": 2,
-    "class_code": "INT104.01",
-    "max_students": 40,
-    "total_sessions": 15
-  }
-},
-{
-  "model": "courses.courseclass",
-  "pk": 10,
-  "fields": {
-    "course": 12,
-    "semester": 1,
-    "teacher": 1,
-    "class_code": "INT105.01",
-    "max_students": 40,
-    "total_sessions": 15
-  }
-},
-{
-  "model": "courses.courseclass",
-  "pk": 11,
-  "fields": {
-    "course": 8,
-    "semester": 1,
-    "teacher": 2,
-    "class_code": "INT101.02",
-    "max_students": 40,
-    "total_sessions": 15
-  }
-},
-{
-  "model": "courses.courseclass",
-  "pk": 12,
-  "fields": {
-    "course": 11,
-    "semester": 2,
-    "teacher": 1,
-    "class_code": "INT104.01",
-    "max_students": 40,
-    "total_sessions": 15
-  }
-},
-{
-  "model": "courses.courseclass",
-  "pk": 13,
-  "fields": {
-    "course": 8,
-    "semester": 2,
-    "teacher": 1,
-    "class_code": "32",
-    "max_students": 40,
-    "total_sessions": 15
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 1,
-  "fields": {
-    "course_class": 6,
-    "student": 1,
-    "enrolled_at": "2026-05-25T10:13:55.728Z",
-    "is_active": true
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 2,
-  "fields": {
-    "course_class": 6,
-    "student": 2,
-    "enrolled_at": "2026-05-25T10:13:55.733Z",
-    "is_active": true
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 3,
-  "fields": {
-    "course_class": 6,
-    "student": 3,
-    "enrolled_at": "2026-05-25T10:13:55.735Z",
-    "is_active": true
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 4,
-  "fields": {
-    "course_class": 6,
-    "student": 4,
-    "enrolled_at": "2026-05-25T10:13:55.739Z",
-    "is_active": true
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 5,
-  "fields": {
-    "course_class": 6,
-    "student": 5,
-    "enrolled_at": "2026-05-25T10:13:55.742Z",
-    "is_active": true
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 6,
-  "fields": {
-    "course_class": 11,
-    "student": 6,
-    "enrolled_at": "2026-05-25T10:13:55.746Z",
-    "is_active": true
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 7,
-  "fields": {
-    "course_class": 11,
-    "student": 7,
-    "enrolled_at": "2026-05-25T10:13:55.749Z",
-    "is_active": true
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 8,
-  "fields": {
-    "course_class": 11,
-    "student": 8,
-    "enrolled_at": "2026-05-25T10:13:55.752Z",
-    "is_active": true
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 9,
-  "fields": {
-    "course_class": 11,
-    "student": 9,
-    "enrolled_at": "2026-05-25T10:13:55.756Z",
-    "is_active": true
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 10,
-  "fields": {
-    "course_class": 11,
-    "student": 10,
-    "enrolled_at": "2026-05-25T10:13:55.760Z",
-    "is_active": true
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 11,
-  "fields": {
-    "course_class": 7,
-    "student": 1,
-    "enrolled_at": "2026-05-25T10:13:55.763Z",
-    "is_active": true
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 12,
-  "fields": {
-    "course_class": 7,
-    "student": 2,
-    "enrolled_at": "2026-05-25T10:13:55.766Z",
-    "is_active": true
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 13,
-  "fields": {
-    "course_class": 7,
-    "student": 3,
-    "enrolled_at": "2026-05-25T10:13:55.769Z",
-    "is_active": true
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 14,
-  "fields": {
-    "course_class": 7,
-    "student": 4,
-    "enrolled_at": "2026-05-25T10:13:55.772Z",
-    "is_active": true
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 15,
-  "fields": {
-    "course_class": 7,
-    "student": 5,
-    "enrolled_at": "2026-05-25T10:13:55.776Z",
-    "is_active": true
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 16,
-  "fields": {
-    "course_class": 7,
-    "student": 6,
-    "enrolled_at": "2026-05-25T10:13:55.780Z",
-    "is_active": true
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 17,
-  "fields": {
-    "course_class": 7,
-    "student": 7,
-    "enrolled_at": "2026-05-25T10:13:55.783Z",
-    "is_active": true
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 18,
-  "fields": {
-    "course_class": 8,
-    "student": 4,
-    "enrolled_at": "2026-05-25T10:13:55.787Z",
-    "is_active": true
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 19,
-  "fields": {
-    "course_class": 8,
-    "student": 5,
-    "enrolled_at": "2026-05-25T10:13:55.790Z",
-    "is_active": true
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 20,
-  "fields": {
-    "course_class": 8,
-    "student": 6,
-    "enrolled_at": "2026-05-25T10:13:55.793Z",
-    "is_active": true
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 21,
-  "fields": {
-    "course_class": 8,
-    "student": 7,
-    "enrolled_at": "2026-05-25T10:13:55.796Z",
-    "is_active": true
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 22,
-  "fields": {
-    "course_class": 8,
-    "student": 8,
-    "enrolled_at": "2026-05-25T10:13:55.799Z",
-    "is_active": true
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 23,
-  "fields": {
-    "course_class": 8,
-    "student": 9,
-    "enrolled_at": "2026-05-25T10:13:55.803Z",
-    "is_active": true
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 24,
-  "fields": {
-    "course_class": 12,
-    "student": 7,
-    "enrolled_at": "2026-05-25T10:13:55.810Z",
-    "is_active": true
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 25,
-  "fields": {
-    "course_class": 12,
-    "student": 10,
-    "enrolled_at": "2026-05-25T10:13:55.815Z",
-    "is_active": true
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 26,
-  "fields": {
-    "course_class": 12,
-    "student": 9,
-    "enrolled_at": "2026-05-25T10:13:55.819Z",
-    "is_active": true
-  }
-},
-{
-  "model": "courses.enrollment",
-  "pk": 27,
-  "fields": {
-    "course_class": 10,
-    "student": 8,
-    "enrolled_at": "2026-05-25T10:13:55.822Z",
-    "is_active": true
-  }
-},
-{
-  "model": "schedules.room",
-  "pk": 1,
-  "fields": {
-    "room_code": "A101",
-    "building": "Tòa D",
-    "capacity": 40,
-    "has_camera": true
-  }
-},
-{
-  "model": "schedules.room",
-  "pk": 2,
-  "fields": {
-    "room_code": "A102",
-    "building": "Tòa A",
-    "capacity": 40,
-    "has_camera": true
-  }
-},
-{
-  "model": "schedules.room",
-  "pk": 3,
-  "fields": {
-    "room_code": "A201",
-    "building": "Tòa A",
-    "capacity": 35,
-    "has_camera": false
-  }
-},
-{
-  "model": "schedules.room",
-  "pk": 4,
-  "fields": {
-    "room_code": "A202",
-    "building": "Tòa A",
-    "capacity": 40,
-    "has_camera": false
-  }
-},
-{
-  "model": "schedules.room",
-  "pk": 5,
-  "fields": {
-    "room_code": "B101",
-    "building": "Tòa B",
-    "capacity": 50,
-    "has_camera": true
-  }
-},
-{
-  "model": "schedules.room",
-  "pk": 6,
-  "fields": {
-    "room_code": "B102",
-    "building": "Tòa B",
-    "capacity": 40,
-    "has_camera": true
-  }
-},
-{
-  "model": "schedules.room",
-  "pk": 7,
-  "fields": {
-    "room_code": "C101",
-    "building": "Tòa C",
-    "capacity": 30,
-    "has_camera": false
-  }
-},
-{
-  "model": "schedules.room",
-  "pk": 9,
-  "fields": {
-    "room_code": "4123",
-    "building": "Tòa C",
-    "capacity": 40,
-    "has_camera": false
-  }
-},
-{
-  "model": "schedules.room",
-  "pk": 10,
-  "fields": {
-    "room_code": "34",
-    "building": "Tòa A",
-    "capacity": 40,
-    "has_camera": false
-  }
-},
-{
-  "model": "schedules.schedule",
-  "pk": 1,
-  "fields": {
-    "course_class": 12,
-    "room": 1,
-    "day_of_week": 2,
-    "start_period": 1,
-    "end_period": 3,
-    "date": "2026-05-04",
-    "session_number": 1
-  }
-},
-{
-  "model": "schedules.schedule",
-  "pk": 2,
-  "fields": {
-    "course_class": 12,
-    "room": 1,
-    "day_of_week": 2,
-    "start_period": 1,
-    "end_period": 3,
-    "date": "2026-05-11",
-    "session_number": 2
-  }
-},
-{
-  "model": "schedules.schedule",
-  "pk": 3,
-  "fields": {
-    "course_class": 12,
-    "room": 1,
-    "day_of_week": 2,
-    "start_period": 1,
-    "end_period": 3,
-    "date": "2026-05-18",
-    "session_number": 3
-  }
-},
-{
-  "model": "schedules.schedule",
-  "pk": 4,
-  "fields": {
-    "course_class": 12,
-    "room": 1,
-    "day_of_week": 2,
-    "start_period": 1,
-    "end_period": 3,
-    "date": "2026-05-25",
-    "session_number": 4
-  }
-},
-{
-  "model": "schedules.schedule",
-  "pk": 5,
-  "fields": {
-    "course_class": 11,
-    "room": 1,
-    "day_of_week": 2,
-    "start_period": 1,
-    "end_period": 3,
-    "date": "2026-05-04",
-    "session_number": 1
-  }
-},
-{
-  "model": "schedules.schedule",
-  "pk": 6,
-  "fields": {
-    "course_class": 11,
-    "room": 1,
-    "day_of_week": 2,
-    "start_period": 1,
-    "end_period": 3,
-    "date": "2026-05-11",
-    "session_number": 2
-  }
-},
-{
-  "model": "schedules.schedule",
-  "pk": 7,
-  "fields": {
-    "course_class": 11,
-    "room": 1,
-    "day_of_week": 2,
-    "start_period": 1,
-    "end_period": 3,
-    "date": "2026-05-18",
-    "session_number": 3
-  }
-},
-{
-  "model": "schedules.schedule",
-  "pk": 8,
-  "fields": {
-    "course_class": 11,
-    "room": 1,
-    "day_of_week": 2,
-    "start_period": 1,
-    "end_period": 3,
-    "date": "2026-05-25",
-    "session_number": 4
-  }
-},
-{
-  "model": "schedules.schedule",
-  "pk": 10,
-  "fields": {
-    "course_class": 7,
-    "room": 2,
-    "day_of_week": 2,
-    "start_period": 1,
-    "end_period": 3,
-    "date": "2026-05-18",
-    "session_number": 2
-  }
-},
-{
-  "model": "schedules.schedule",
-  "pk": 11,
-  "fields": {
-    "course_class": 7,
-    "room": 2,
-    "day_of_week": 2,
-    "start_period": 1,
-    "end_period": 3,
-    "date": "2026-05-25",
-    "session_number": 3
-  }
-},
-{
-  "model": "schedules.schedule",
-  "pk": 13,
-  "fields": {
-    "course_class": 7,
-    "room": 3,
-    "day_of_week": 7,
-    "start_period": 1,
-    "end_period": 3,
-    "date": "2026-05-09",
-    "session_number": 4
-  }
-},
-{
-  "model": "schedules.schedule",
-  "pk": 14,
-  "fields": {
-    "course_class": 7,
-    "room": 3,
-    "day_of_week": 7,
-    "start_period": 1,
-    "end_period": 3,
-    "date": "2026-05-16",
-    "session_number": 5
-  }
-},
-{
-  "model": "attendance.attendancesession",
-  "pk": 1,
-  "fields": {
-    "course_class": 12,
-    "schedule": 1,
-    "created_by": 2,
-    "started_at": "2026-05-25T13:36:29.060Z",
-    "ended_at": "2026-05-23T15:36:29.059Z",
-    "status": "closed",
-    "note": ""
-  }
-},
-{
-  "model": "attendance.attendancesession",
-  "pk": 2,
-  "fields": {
-    "course_class": 11,
-    "schedule": 5,
-    "created_by": 3,
-    "started_at": "2026-05-25T13:36:29.076Z",
-    "ended_at": "2026-05-23T15:36:29.076Z",
-    "status": "closed",
-    "note": ""
-  }
-},
-{
-  "model": "attendance.attendancesession",
-  "pk": 3,
-  "fields": {
-    "course_class": 7,
-    "schedule": 13,
-    "created_by": 3,
-    "started_at": "2026-05-25T13:36:29.105Z",
-    "ended_at": "2026-05-23T15:36:29.105Z",
-    "status": "closed",
-    "note": ""
-  }
-},
-{
-  "model": "attendance.attendancerecord",
-  "pk": 1,
-  "fields": {
-    "session": 1,
-    "student": 9,
-    "status": "present",
-    "method": "face",
-    "confidence": 81.65212843060996,
-    "timestamp": "2026-05-25T13:58:29.060Z",
-    "note": ""
-  }
-},
-{
-  "model": "attendance.attendancerecord",
-  "pk": 2,
-  "fields": {
-    "session": 1,
-    "student": 10,
-    "status": "present",
-    "method": "face",
-    "confidence": 89.4891436254218,
-    "timestamp": "2026-05-25T14:04:29.060Z",
-    "note": ""
-  }
-},
-{
-  "model": "attendance.attendancerecord",
-  "pk": 3,
-  "fields": {
-    "session": 1,
-    "student": 7,
-    "status": "present",
-    "method": "face",
-    "confidence": 87.65089831331787,
-    "timestamp": "2026-05-25T13:47:29.060Z",
-    "note": ""
-  }
-},
-{
-  "model": "attendance.attendancerecord",
-  "pk": 4,
-  "fields": {
-    "session": 2,
-    "student": 9,
-    "status": "present",
-    "method": "face",
-    "confidence": 80.70539107773367,
-    "timestamp": "2026-05-25T14:06:29.076Z",
-    "note": ""
-  }
-},
-{
-  "model": "attendance.attendancerecord",
-  "pk": 5,
-  "fields": {
-    "session": 2,
-    "student": 10,
-    "status": "late",
-    "method": "face",
-    "confidence": 85.61803211357126,
-    "timestamp": "2026-05-25T13:42:29.076Z",
-    "note": ""
-  }
-},
-{
-  "model": "attendance.attendancerecord",
-  "pk": 6,
-  "fields": {
-    "session": 2,
-    "student": 7,
-    "status": "present",
-    "method": "face",
-    "confidence": 96.95270138616692,
-    "timestamp": "2026-05-25T13:58:29.076Z",
-    "note": ""
-  }
-},
-{
-  "model": "attendance.attendancerecord",
-  "pk": 7,
-  "fields": {
-    "session": 2,
-    "student": 8,
-    "status": "present",
-    "method": "face",
-    "confidence": 91.76349591623078,
-    "timestamp": "2026-05-25T13:51:29.076Z",
-    "note": ""
-  }
-},
-{
-  "model": "attendance.attendancerecord",
-  "pk": 8,
-  "fields": {
-    "session": 2,
-    "student": 6,
-    "status": "present",
-    "method": "face",
-    "confidence": 87.01798377157155,
-    "timestamp": "2026-05-25T14:06:29.076Z",
-    "note": ""
-  }
-},
-{
-  "model": "attendance.attendancerecord",
-  "pk": 9,
-  "fields": {
-    "session": 3,
-    "student": 4,
-    "status": "present",
-    "method": "face",
-    "confidence": 93.37672905554452,
-    "timestamp": "2026-05-25T13:57:29.105Z",
-    "note": ""
-  }
-},
-{
-  "model": "attendance.attendancerecord",
-  "pk": 10,
-  "fields": {
-    "session": 3,
-    "student": 1,
-    "status": "present",
-    "method": "face",
-    "confidence": 95.92263289541346,
-    "timestamp": "2026-05-25T13:41:29.105Z",
-    "note": ""
-  }
-},
-{
-  "model": "attendance.attendancerecord",
-  "pk": 11,
-  "fields": {
-    "session": 3,
-    "student": 3,
-    "status": "absent",
-    "method": "manual",
-    "confidence": 0.0,
-    "timestamp": null,
-    "note": ""
-  }
-},
-{
-  "model": "attendance.attendancerecord",
-  "pk": 12,
-  "fields": {
-    "session": 3,
-    "student": 2,
-    "status": "late",
-    "method": "face",
-    "confidence": 96.89560241876184,
-    "timestamp": "2026-05-25T13:57:29.105Z",
-    "note": ""
-  }
-},
-{
-  "model": "attendance.attendancerecord",
-  "pk": 13,
-  "fields": {
-    "session": 3,
-    "student": 5,
-    "status": "present",
-    "method": "face",
-    "confidence": 93.2508270137535,
-    "timestamp": "2026-05-25T14:02:29.105Z",
-    "note": ""
-  }
-},
-{
-  "model": "attendance.attendancerecord",
-  "pk": 14,
-  "fields": {
-    "session": 3,
-    "student": 7,
-    "status": "absent",
-    "method": "manual",
-    "confidence": 0.0,
-    "timestamp": null,
-    "note": ""
-  }
-},
-{
-  "model": "attendance.attendancerecord",
-  "pk": 15,
-  "fields": {
-    "session": 3,
-    "student": 6,
-    "status": "present",
-    "method": "face",
-    "confidence": 90.02217974990893,
-    "timestamp": "2026-05-25T13:44:29.105Z",
-    "note": ""
-  }
-}
 ]

@@ -1,0 +1,157 @@
+{% extends 'layouts/admin_base.html' %}
+
+{% block title %}EduFace - Cảnh Báo Vắng Mặt{% endblock %}
+{% block page_title %}Cảnh Báo Vắng Mặt{% endblock %}
+{% block breadcrumb %}Phân Tích / Cảnh Báo{% endblock %}
+
+{% block page_content %}
+
+<!-- Stat Cards -->
+<div class="stats-grid" style="margin-bottom:20px;">
+    <div class="stat-card">
+        <div class="stat-icon orange">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-value">{{ unread_count }}</div>
+            <div class="stat-label">Chưa Đọc</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon orange">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-value">{{ warning_count }}</div>
+            <div class="stat-label">Cảnh Báo (20–40%)</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon purple">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-value">{{ danger_count }}</div>
+            <div class="stat-label">Nguy Hiểm (≥ 40%)</div>
+        </div>
+    </div>
+</div>
+
+<!-- Bảng cảnh báo -->
+<div class="table-card">
+    <div class="table-card-header">
+        <div class="table-card-title">Danh Sách Cảnh Báo</div>
+        <div class="table-toolbar">
+            <a href="?type=absent_warning"
+               class="btn-action {% if filter_type == 'absent_warning' %}btn-action-edit{% else %}btn-action-view{% endif %}">
+               Cảnh Báo
+            </a>
+            <a href="?type=absent_danger"
+               class="btn-action {% if filter_type == 'absent_danger' %}btn-action-delete{% else %}btn-action-view{% endif %}">
+               Nguy Hiểm
+            </a>
+            <a href="?" class="btn-action btn-action-view">Tất Cả</a>
+            <a href="{% url 'notifications:read_all' %}"
+               class="btn-primary" style="padding:8px 16px;font-size:13px;">
+               Đọc Tất Cả
+            </a>
+        </div>
+    </div>
+
+    <div style="overflow-x:auto;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Sinh Viên</th>
+                    <th>Lớp HP</th>
+                    <th>Học Kỳ</th>
+                    <th style="text-align:center;">Vắng / Tổng</th>
+                    <th style="text-align:center;">Tỉ Lệ Vắng</th>
+                    <th style="text-align:center;">Loại</th>
+                    <th>Thời Điểm</th>
+                    <th style="text-align:center;">Trạng Thái</th>
+                    <th>Hành Động</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for noti in notifications %}
+                <tr style="{% if not noti.is_read %}background:rgba(251,191,36,0.05);{% endif %}">
+                    <td>
+                        <div class="cell-user">
+                            <div class="cell-avatar">{{ noti.student.full_name|first }}</div>
+                            <div>
+                                <div class="cell-name">{{ noti.student.full_name }}</div>
+                                <div class="cell-sub">{{ noti.student.student_id }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="font-family:monospace;font-weight:600;">{{ noti.course_class.class_code }}</td>
+                    <td>{{ noti.course_class.semester }}</td>
+                    <td style="text-align:center;">
+                        <strong style="color:#dc2626;">{{ noti.absent_count }}</strong>
+                        / {{ noti.total_sessions }}
+                    </td>
+                    <td style="text-align:center;">
+                        <span style="font-weight:700;
+                            color:{% if noti.absent_percent >= 40 %}#dc2626{% else %}#d97706{% endif %};">
+                            {{ noti.absent_percent|floatformat:1 }}%
+                        </span>
+                    </td>
+                    <td style="text-align:center;">
+                        {% if noti.noti_type == 'absent_danger' %}
+                            <span class="badge badge-red"><span class="badge-dot"></span>Nguy Hiểm</span>
+                        {% else %}
+                            <span class="badge badge-orange"><span class="badge-dot"></span>Cảnh Báo</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:12px;color:var(--text-light);">
+                        {{ noti.created_at|date:"d/m/Y H:i" }}
+                    </td>
+                    <td style="text-align:center;">
+                        {% if noti.is_read %}
+                            <span class="badge badge-green">Đã Đọc</span>
+                        {% else %}
+                            <span class="badge badge-orange">Chưa Đọc</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if not noti.is_read %}
+                        <a href="{% url 'notifications:read' noti.pk %}"
+                           class="btn-action btn-action-view" style="white-space:nowrap;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            Đánh Dấu Đọc
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" style="text-align:center;padding:48px;color:var(--text-light);">
+                        Không có cảnh báo nào.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="table-card-footer">
+        <span>{{ notifications|length }} cảnh báo</span>
+    </div>
+</div>
+
+{% endblock %}

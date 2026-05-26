@@ -37,4 +37,8 @@ urlpatterns = [
     
     # Quản lý lịch học và phòng học
     path('schedules/', include('schedules.urls')),
+    
+    path('reports/', include('reports.urls')),
+    
+    path('notifications/', include('notifications.urls')),
 ]

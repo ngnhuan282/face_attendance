@@ -1,0 +1,224 @@
+{% extends 'layouts/admin_base.html' %}
+
+{% block title %}EduFace - Báo Cáo {{ course_class.class_code }}{% endblock %}
+{% block page_title %}Báo Cáo Chuyên Cần{% endblock %}
+{% block breadcrumb %}Phân Tích / Báo Cáo / {{ course_class.class_code }}{% endblock %}
+
+{% block page_content %}
+
+<!-- Thông tin lớp HP -->
+<div class="table-card" style="margin-bottom:20px;">
+    <div class="table-card-header">
+        <div>
+            <div class="table-card-title">{{ course_class.class_code }} — {{ course_class.course.course_name }}</div>
+            <div style="font-size:13px;color:var(--text-light);margin-top:4px;">
+                Học kỳ: {{ course_class.semester }} &nbsp;|&nbsp;
+                Giảng viên: {{ course_class.teacher.user.get_full_name|default:course_class.teacher.user.username }}
+            </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+            <a href="{% url 'reports:class' course_class.pk %}?refresh=1"
+               class="btn-primary" style="padding:8px 16px;font-size:13px;gap:6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="23 4 23 10 17 10"/>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                </svg>
+                Tính Lại
+            </a>
+            <a href="{% url 'reports:index' %}?semester={{ course_class.semester.pk }}"
+               class="btn-action btn-action-view" style="padding:8px 14px;">
+                ← Quay Lại
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Stat Cards -->
+<div class="stats-grid" style="margin-bottom:20px;">
+    <div class="stat-card">
+        <div class="stat-icon blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-value">{{ total_students }}</div>
+            <div class="stat-label">Tổng Sinh Viên</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-value">{{ good_count }}</div>
+            <div class="stat-label">Đạt ≥ 80%</div>
+            <div class="stat-change up">Đủ điều kiện dự thi</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon orange">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-value">{{ warning_count }}</div>
+            <div class="stat-label">Cảnh Báo (20–40%)</div>
+            <div class="stat-change down">Vắng nhiều</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon purple">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-value">{{ avg_rate }}%</div>
+            <div class="stat-label">Tỉ Lệ TB Cả Lớp</div>
+        </div>
+    </div>
+</div>
+
+<!-- Bảng chi tiết -->
+<div class="table-card">
+    <div class="table-card-header">
+        <div class="table-card-title">Chi Tiết Chuyên Cần Từng Sinh Viên</div>
+        <div class="table-toolbar">
+            <div class="search-input-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input class="search-input" id="searchInput" type="text" placeholder="Tìm mã SV, họ tên...">
+            </div>
+            <select class="filter-select" id="statusFilter">
+                <option value="">Tất cả trạng thái</option>
+                <option value="good">Đạt (≥ 80%)</option>
+                <option value="warning">Cảnh báo (20–40% vắng)</option>
+                <option value="danger">Nguy hiểm (≥ 40% vắng)</option>
+            </select>
+        </div>
+    </div>
+
+    <div style="overflow-x:auto;">
+        <table class="data-table" id="reportTable">
+            <thead>
+                <tr>
+                    <th>Mã SV</th>
+                    <th>Họ Tên</th>
+                    <th>Lớp Sinh Hoạt</th>
+                    <th style="text-align:center;">Tổng Buổi</th>
+                    <th style="text-align:center;">Có Mặt</th>
+                    <th style="text-align:center;">Đi Trễ</th>
+                    <th style="text-align:center;">Vắng</th>
+                    <th style="text-align:center;">Tỉ Lệ Có Mặt</th>
+                    <th style="text-align:center;">Trạng Thái</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rpt in reports %}
+                {% with absent_pct=rpt.absent_rate attend_pct=rpt.attendance_rate %}
+                <tr class="report-row"
+                    data-name="{{ rpt.student.full_name|lower }}"
+                    data-id="{{ rpt.student.student_id|lower }}"
+                    data-status="{% if absent_pct >= 40 %}danger{% elif absent_pct > 20 %}warning{% else %}good{% endif %}">
+
+                    <td style="font-weight:600;font-family:monospace;color:var(--text-dark);">
+                        {{ rpt.student.student_id }}
+                    </td>
+                    <td>
+                        <div class="cell-user">
+                            <div class="cell-avatar">
+                                {{ rpt.student.full_name|first }}
+                            </div>
+                            <div class="cell-name">{{ rpt.student.full_name }}</div>
+                        </div>
+                    </td>
+                    <td>{{ rpt.student.student_class.class_code }}</td>
+                    <td style="text-align:center;">{{ rpt.total_sessions }}</td>
+                    <td style="text-align:center;color:#16a34a;font-weight:600;">{{ rpt.present_count }}</td>
+                    <td style="text-align:center;color:#d97706;">{{ rpt.late_count }}</td>
+                    <td style="text-align:center;color:#dc2626;font-weight:600;">{{ rpt.absent_count }}</td>
+                    <td style="text-align:center;">
+                        <!-- Progress bar -->
+                        <div style="display:flex;align-items:center;gap:8px;justify-content:center;">
+                            <div style="flex:1;max-width:80px;background:#e5e7eb;border-radius:99px;height:6px;">
+                                <div style="
+                                    width:{{ attend_pct }}%;
+                                    height:6px;
+                                    border-radius:99px;
+                                    background:{% if attend_pct >= 80 %}#22c55e{% elif attend_pct >= 60 %}#f59e0b{% else %}#ef4444{% endif %};
+                                "></div>
+                            </div>
+                            <span style="font-weight:600;min-width:42px;
+                                color:{% if attend_pct >= 80 %}#16a34a{% elif attend_pct >= 60 %}#d97706{% else %}#dc2626{% endif %};">
+                                {{ attend_pct }}%
+                            </span>
+                        </div>
+                    </td>
+                    <td style="text-align:center;">
+                        {% if absent_pct >= 40 %}
+                            <span class="badge badge-red"><span class="badge-dot"></span>Nguy Hiểm</span>
+                        {% elif absent_pct > 20 %}
+                            <span class="badge badge-orange"><span class="badge-dot"></span>Cảnh Báo</span>
+                        {% else %}
+                            <span class="badge badge-green"><span class="badge-dot"></span>Đạt</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endwith %}
+                {% empty %}
+                <tr>
+                    <td colspan="9" style="text-align:center;padding:40px;color:var(--text-light);">
+                        Chưa có dữ liệu điểm danh. Nhấn <strong>Tính Lại</strong> để tạo báo cáo.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="table-card-footer">
+        <span id="footerCount">Hiển thị {{ reports|length }} sinh viên</span>
+        <span>Cập nhật lúc: {% now "d/m/Y H:i" %}</span>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Tìm kiếm + lọc phía client
+const searchInput  = document.getElementById('searchInput');
+const statusFilter = document.getElementById('statusFilter');
+const rows         = document.querySelectorAll('.report-row');
+const footerCount  = document.getElementById('footerCount');
+
+function applyFilter() {
+    const q      = searchInput.value.toLowerCase().trim();
+    const status = statusFilter.value;
+    let visible  = 0;
+
+    rows.forEach(row => {
+        const matchText   = !q || row.dataset.name.includes(q) || row.dataset.id.includes(q);
+        const matchStatus = !status || row.dataset.status === status;
+        const show        = matchText && matchStatus;
+        row.style.display = show ? '' : 'none';
+        if (show) visible++;
+    });
+
+    footerCount.textContent = `Hiển thị ${visible} sinh viên`;
+}
+
+searchInput .addEventListener('input',  applyFilter);
+statusFilter.addEventListener('change', applyFilter);
+</script>
+{% endblock %}

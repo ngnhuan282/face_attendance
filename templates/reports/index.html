@@ -1,0 +1,83 @@
+{% extends 'layouts/admin_base.html' %}
+
+{% block title %}EduFace - Báo Cáo Chuyên Cần{% endblock %}
+{% block page_title %}Báo Cáo Chuyên Cần{% endblock %}
+{% block breadcrumb %}Phân Tích / Báo Cáo{% endblock %}
+
+{% block page_content %}
+
+<!-- Bộ lọc học kỳ -->
+<div class="table-card" style="margin-bottom:20px;">
+    <div class="table-card-header">
+        <div class="table-card-title">Chọn Học Kỳ</div>
+    </div>
+    <div style="padding:16px 20px;">
+        <form method="get" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+            <select name="semester" class="filter-select" style="min-width:220px;" onchange="this.form.submit()">
+                <option value="">-- Chọn học kỳ --</option>
+                {% for sem in semesters %}
+                    <option value="{{ sem.pk }}" {% if selected_sem.pk == sem.pk %}selected{% endif %}>
+                        {{ sem }}
+                    </option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn-primary" style="padding:8px 18px;font-size:13px;">Xem</button>
+        </form>
+    </div>
+</div>
+
+{% if selected_sem %}
+
+<!-- Danh sách lớp HP -->
+<div class="table-card">
+    <div class="table-card-header">
+        <div class="table-card-title">Danh Sách Lớp Học Phần — {{ selected_sem }}</div>
+    </div>
+
+    {% if course_classes %}
+    <div style="overflow-x:auto;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Mã Lớp HP</th>
+                    <th>Học Phần</th>
+                    <th>Giảng Viên</th>
+                    <th>Tổng Buổi</th>
+                    <th>Hành Động</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cc in course_classes %}
+                <tr>
+                    <td style="font-weight:600;font-family:monospace;">{{ cc.class_code }}</td>
+                    <td>{{ cc.course.course_name }}</td>
+                    <td>{{ cc.teacher.user.get_full_name|default:cc.teacher.user.username }}</td>
+                    <td>{{ cc.total_sessions }}</td>
+                    <td>
+                        <a href="{% url 'reports:class' cc.pk %}" class="btn-action btn-action-view">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="20" x2="18" y2="10"/>
+                                <line x1="12" y1="20" x2="12" y2="4"/>
+                                <line x1="6" y1="20" x2="6" y2="14"/>
+                            </svg>
+                            Xem Báo Cáo
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="table-card-footer">
+        <span>{{ course_classes|length }} lớp học phần trong học kỳ này</span>
+    </div>
+    {% else %}
+    <div style="padding:40px;text-align:center;color:var(--text-light);">
+        Chưa có lớp học phần nào trong học kỳ này.
+    </div>
+    {% endif %}
+</div>
+
+{% endif %}
+
+{% endblock %}
