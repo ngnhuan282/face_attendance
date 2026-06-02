@@ -100,15 +100,28 @@ def attendance_demo(request):
 
     if request.method == "POST":
         course_class_id = request.POST.get("course_class_id")
+        schedule_id = request.POST.get("schedule_id")
         note = request.POST.get("note", "")
 
         try:
-            course_class = get_object_or_404(CourseClass, pk=course_class_id)
-            selected_session = AttendanceSession.objects.create(
-                course_class=course_class,
-                created_by=request.user,
-                note=note,
-            )
+            if schedule_id:
+                schedule = get_object_or_404(Schedule, pk=schedule_id)
+                course_class = schedule.course_class
+                if hasattr(schedule, 'attendance_session') and schedule.attendance_session:
+                    return redirect(f"{reverse('attendance:demo')}?session_id={schedule.attendance_session.id}")
+                selected_session = AttendanceSession.objects.create(
+                    course_class=course_class,
+                    schedule=schedule,
+                    created_by=request.user,
+                    note=note,
+                )
+            else:
+                course_class = get_object_or_404(CourseClass, pk=course_class_id)
+                selected_session = AttendanceSession.objects.create(
+                    course_class=course_class,
+                    created_by=request.user,
+                    note=note,
+                )
             return redirect(f"{reverse('attendance:demo')}?session_id={selected_session.id}")
         except (ValidationError, IntegrityError) as exc:
             error_message = str(exc)

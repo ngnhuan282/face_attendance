@@ -111,10 +111,14 @@
         </div>
         
         <div style="display: flex; gap: 12px; border-top: 1px solid var(--border-color); padding-top: 20px;">
-            <a id="btnStartAttendance" href="#" class="btn-primary" style="flex: 1; text-align: center; text-decoration: none; padding: 10px; display: flex; justify-content: center; align-items: center; gap: 8px;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-                Bắt Đầu Điểm Danh
-            </a>
+            <form method="post" action="{% url 'attendance:demo' %}" style="flex: 1;">
+                {% csrf_token %}
+                <input type="hidden" name="schedule_id" id="modalScheduleId" value="">
+                <button type="submit" class="btn-primary" style="width: 100%; border: none; cursor: pointer; text-align: center; text-decoration: none; padding: 10px; display: flex; justify-content: center; align-items: center; gap: 8px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                    Bắt Đầu Điểm Danh
+                </button>
+            </form>
             <button type="button" class="btn-secondary" onclick="closeScheduleModal()" style="padding: 10px 24px;">Đóng</button>
         </div>
     </div>
@@ -137,9 +141,8 @@
         document.getElementById('modalTeacherName').textContent = teacherName;
         document.getElementById('modalTime').textContent = `Tiết ${startPeriod} - ${endPeriod}`;
         
-        // Cập nhật link Bắt Đầu Điểm Danh (truyền schedule_id)
-        // Hiện tại gán href placeholder. Khi module điểm danh xong, thay đổi URL tương ứng.
-        document.getElementById('btnStartAttendance').href = `#?schedule_id=${scheduleId}`;
+        // Cập nhật giá trị schedule_id cho form Bắt Đầu Điểm Danh
+        document.getElementById('modalScheduleId').value = scheduleId;
         
         document.getElementById('scheduleDetailModal').style.display = 'flex';
     }
