@@ -4,6 +4,13 @@
 {% block page_title %}Quản Lý Sinh Viên{% endblock %}
 {% block breadcrumb %}Quản Lý / Sinh Viên{% endblock %}
 
+{% block extra_css %}
+<style>
+.filter-bar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.photo-thumb { width:36px; height:36px; border-radius:50%; object-fit:cover; }
+</style>
+{% endblock %}
+
 {% block page_content %}
 
 <!-- Stats -->
@@ -13,19 +20,18 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         </div>
         <div class="stat-info">
-            <div class="stat-value">1,248</div>
+            <div class="stat-value">{{ total }}</div>
             <div class="stat-label">Tổng Sinh Viên</div>
-            <div class="stat-change up">↑ 24 sinh viên mới</div>
         </div>
     </div>
     <div class="stat-card">
         <div class="stat-icon blue">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 7l9-4 9 4"/><line x1="12" y1="7" x2="12" y2="20"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="5"/><path d="M3 21a9 9 0 0 1 18 0"/></svg>
         </div>
         <div class="stat-info">
-            <div class="stat-value">1,156</div>
+            <div class="stat-value">{{ with_photo }}</div>
             <div class="stat-label">Đã Đăng Ký Khuôn Mặt</div>
-            <div class="stat-change up">92.6% tổng số</div>
+            {% if total > 0 %}<div class="stat-change up">{{ with_photo|floatformat:0 }} / {{ total }} SV</div>{% endif %}
         </div>
     </div>
     <div class="stat-card">
@@ -33,9 +39,9 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         </div>
         <div class="stat-info">
-            <div class="stat-value">92</div>
-            <div class="stat-label">Chưa Đăng Ký</div>
-            <div class="stat-change down">↓ Cần cập nhật</div>
+            <div class="stat-value">{{ without_photo }}</div>
+            <div class="stat-label">Chưa Đăng Ký Ảnh</div>
+            {% if without_photo > 0 %}<div class="stat-change down">↓ Cần cập nhật</div>{% endif %}
         </div>
     </div>
     <div class="stat-card">
@@ -43,40 +49,49 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
         </div>
         <div class="stat-info">
-            <div class="stat-value">24</div>
-            <div class="stat-label">Lớp Học</div>
+            <div class="stat-value">{{ class_count }}</div>
+            <div class="stat-label">Lớp Sinh Hoạt</div>
         </div>
     </div>
 </div>
 
-<!-- Table -->
+<!-- Filter Bar -->
 <div class="table-card">
     <div class="table-card-header">
         <div>
             <div class="table-card-title">Danh Sách Sinh Viên</div>
         </div>
         <div class="table-toolbar">
-            <div class="search-input-wrap">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input class="search-input" type="text" placeholder="Tìm mã SV, họ tên...">
+            <form method="get" class="filter-bar" id="filter-form">
+                <div class="search-input-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input class="search-input" type="text" name="q" value="{{ q }}" placeholder="Tìm MSSV, họ tên, email...">
+                </div>
+                <select class="filter-select" name="dept_id" onchange="this.form.submit()">
+                    <option value="">Tất cả ngành</option>
+                    {% for dept in all_departments %}
+                    <option value="{{ dept.pk }}" {% if dept_id == dept.pk|stringformat:"s" %}selected{% endif %}>{{ dept.name }}</option>
+                    {% endfor %}
+                </select>
+                <select class="filter-select" name="class_id" onchange="this.form.submit()">
+                    <option value="">Tất cả lớp</option>
+                    {% for cls in all_classes %}
+                    <option value="{{ cls.pk }}" {% if class_id == cls.pk|stringformat:"s" %}selected{% endif %}>{{ cls.class_code }}</option>
+                    {% endfor %}
+                </select>
+                {% if q %}<button type="submit" class="btn-primary" style="padding:8px 12px;font-size:13px;">Tìm</button>{% endif %}
+            </form>
+
+            <div style="display:flex;gap:8px;">
+                <a href="{% url 'students:class_list' %}" class="btn-primary" style="padding:8px 16px;font-size:13px;gap:6px;background:var(--sidebar-link-active,#6366f1);text-decoration:none;display:flex;align-items:center;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    Lớp Sinh Hoạt
+                </a>
+                <a href="{% url 'students:create' %}" class="btn-primary" style="padding:8px 16px;font-size:13px;gap:6px;text-decoration:none;display:flex;align-items:center;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Thêm Sinh Viên
+                </a>
             </div>
-            <select class="filter-select">
-                <option value="">Tất cả khoa</option>
-                <option>Khoa CNTT</option>
-                <option>Khoa KTPM</option>
-                <option>Khoa HTTT</option>
-                <option>Khoa MMT</option>
-            </select>
-            <select class="filter-select">
-                <option value="">Tất cả lớp</option>
-                <option>CNTT-K22A</option>
-                <option>CNTT-K22B</option>
-                <option>KTPM-K22A</option>
-            </select>
-            <a href="#" class="btn-primary" style="padding:8px 16px;font-size:13px;gap:6px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Thêm Sinh Viên
-            </a>
         </div>
     </div>
 
@@ -87,141 +102,100 @@
                     <th>Mã Sinh Viên</th>
                     <th>Họ Tên</th>
                     <th>Lớp</th>
-                    <th>Khoa</th>
-                    <th>Giới Tính</th>
-                    <th>Khuôn Mặt</th>
+                    <th>Ngành</th>
+                    <th>Ảnh KM</th>
                     <th>Trạng Thái</th>
                     <th>Hành Động</th>
                 </tr>
             </thead>
             <tbody>
+                {% for sv in students %}
                 <tr>
-                    <td style="font-weight:600;color:var(--text-dark);font-family:monospace;">SV220001</td>
+                    <td style="font-weight:600;color:var(--text-dark);font-family:monospace;">{{ sv.student_id }}</td>
                     <td>
                         <div class="cell-user">
-                            <div class="cell-avatar">NA</div>
-                            <div><div class="cell-name">Nguyễn Văn An</div><div class="cell-sub">20/03/2003</div></div>
+                            {% if sv.photo %}
+                            <img src="{{ sv.photo.url }}" alt="{{ sv.full_name }}" class="photo-thumb">
+                            {% else %}
+                            <div class="cell-avatar">{{ sv.full_name|slice:":1"|upper }}{{ sv.full_name|slice:"1:2"|upper }}</div>
+                            {% endif %}
+                            <div>
+                                <div class="cell-name">{{ sv.full_name }}</div>
+                                <div class="cell-sub">{{ sv.date_of_birth|date:"d/m/Y"|default:"—" }}</div>
+                            </div>
                         </div>
                     </td>
-                    <td>CNTT-K22A</td>
-                    <td>Khoa CNTT</td>
-                    <td>Nam</td>
-                    <td><span class="badge badge-green"><span class="badge-dot"></span>Đã Đăng Ký</span></td>
-                    <td><span class="badge badge-green"><span class="badge-dot"></span>Hoạt Động</span></td>
+                    <td>{{ sv.student_class.class_code }}</td>
+                    <td>{{ sv.student_class.department.name }}</td>
+                    <td>
+                        {% if sv.photo %}
+                        <span class="badge badge-green"><span class="badge-dot"></span>Đã Đăng Ký</span>
+                        {% else %}
+                        <span class="badge badge-orange"><span class="badge-dot"></span>Chưa Đăng Ký</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if sv.is_active %}
+                        <span class="badge badge-green"><span class="badge-dot"></span>Hoạt Động</span>
+                        {% else %}
+                        <span class="badge badge-gray"><span class="badge-dot"></span>Nghỉ Học</span>
+                        {% endif %}
+                    </td>
                     <td>
                         <div class="action-btns">
-                            <a href="#" class="btn-action btn-action-view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Xem</a>
-                            <a href="#" class="btn-action btn-action-edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Sửa</a>
+                            <a href="{% url 'students:edit' sv.pk %}" class="btn-action btn-action-edit">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                Sửa
+                            </a>
+                            {% if request.is_admin_group %}
+                            <a href="{% url 'students:delete' sv.pk %}" class="btn-action btn-action-delete" style="color:#ef4444;border-color:#fca5a5;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                                Xóa
+                            </a>
+                            {% endif %}
                         </div>
                     </td>
                 </tr>
+                {% empty %}
                 <tr>
-                    <td style="font-weight:600;color:var(--text-dark);font-family:monospace;">SV220002</td>
-                    <td>
-                        <div class="cell-user">
-                            <div class="cell-avatar">TB</div>
-                            <div><div class="cell-name">Trần Thị Bình</div><div class="cell-sub">15/07/2003</div></div>
-                        </div>
-                    </td>
-                    <td>CNTT-K22A</td>
-                    <td>Khoa CNTT</td>
-                    <td>Nữ</td>
-                    <td><span class="badge badge-green"><span class="badge-dot"></span>Đã Đăng Ký</span></td>
-                    <td><span class="badge badge-green"><span class="badge-dot"></span>Hoạt Động</span></td>
-                    <td>
-                        <div class="action-btns">
-                            <a href="#" class="btn-action btn-action-view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Xem</a>
-                            <a href="#" class="btn-action btn-action-edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Sửa</a>
-                        </div>
+                    <td colspan="7" style="text-align:center;padding:48px;color:var(--text-muted);">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="opacity:0.3;display:block;margin:0 auto 12px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                        {% if q or class_id or dept_id %}
+                        Không tìm thấy sinh viên phù hợp.
+                        <a href="{% url 'students:list' %}" style="color:var(--accent);">Xóa bộ lọc</a>
+                        {% else %}
+                        Chưa có sinh viên nào. <a href="{% url 'students:create' %}" style="color:var(--accent);">Thêm ngay</a>
+                        {% endif %}
                     </td>
                 </tr>
-                <tr>
-                    <td style="font-weight:600;color:var(--text-dark);font-family:monospace;">SV220045</td>
-                    <td>
-                        <div class="cell-user">
-                            <div class="cell-avatar">LH</div>
-                            <div><div class="cell-name">Lê Quốc Hùng</div><div class="cell-sub">08/11/2002</div></div>
-                        </div>
-                    </td>
-                    <td>KTPM-K22A</td>
-                    <td>Khoa KTPM</td>
-                    <td>Nam</td>
-                    <td><span class="badge badge-orange"><span class="badge-dot"></span>Chưa Đăng Ký</span></td>
-                    <td><span class="badge badge-green"><span class="badge-dot"></span>Hoạt Động</span></td>
-                    <td>
-                        <div class="action-btns">
-                            <a href="#" class="btn-action btn-action-view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Xem</a>
-                            <a href="#" class="btn-action btn-action-edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Sửa</a>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="font-weight:600;color:var(--text-dark);font-family:monospace;">SV220103</td>
-                    <td>
-                        <div class="cell-user">
-                            <div class="cell-avatar">PM</div>
-                            <div><div class="cell-name">Phạm Thị Mai</div><div class="cell-sub">25/01/2003</div></div>
-                        </div>
-                    </td>
-                    <td>HTTT-K22A</td>
-                    <td>Khoa HTTT</td>
-                    <td>Nữ</td>
-                    <td><span class="badge badge-green"><span class="badge-dot"></span>Đã Đăng Ký</span></td>
-                    <td><span class="badge badge-gray"><span class="badge-dot"></span>Nghỉ Học</span></td>
-                    <td>
-                        <div class="action-btns">
-                            <a href="#" class="btn-action btn-action-view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Xem</a>
-                            <a href="#" class="btn-action btn-action-edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Sửa</a>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="font-weight:600;color:var(--text-dark);font-family:monospace;">SV210088</td>
-                    <td>
-                        <div class="cell-user">
-                            <div class="cell-avatar">VD</div>
-                            <div><div class="cell-name">Vũ Minh Đức</div><div class="cell-sub">12/05/2002</div></div>
-                        </div>
-                    </td>
-                    <td>MMT-K21A</td>
-                    <td>Khoa MMT</td>
-                    <td>Nam</td>
-                    <td><span class="badge badge-green"><span class="badge-dot"></span>Đã Đăng Ký</span></td>
-                    <td><span class="badge badge-green"><span class="badge-dot"></span>Hoạt Động</span></td>
-                    <td>
-                        <div class="action-btns">
-                            <a href="#" class="btn-action btn-action-view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Xem</a>
-                            <a href="#" class="btn-action btn-action-edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Sửa</a>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="font-weight:600;color:var(--text-dark);font-family:monospace;">SV220167</td>
-                    <td>
-                        <div class="cell-user">
-                            <div class="cell-avatar">HN</div>
-                            <div><div class="cell-name">Hoàng Thị Ngân</div><div class="cell-sub">30/09/2003</div></div>
-                        </div>
-                    </td>
-                    <td>CNTT-K22B</td>
-                    <td>Khoa CNTT</td>
-                    <td>Nữ</td>
-                    <td><span class="badge badge-orange"><span class="badge-dot"></span>Chưa Đăng Ký</span></td>
-                    <td><span class="badge badge-green"><span class="badge-dot"></span>Hoạt Động</span></td>
-                    <td>
-                        <div class="action-btns">
-                            <a href="#" class="btn-action btn-action-view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Xem</a>
-                            <a href="#" class="btn-action btn-action-edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Sửa</a>
-                        </div>
-                    </td>
-                </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
-    <div class="table-card-footer">
-        <span>Hiển thị 1–6 trong 1,248 sinh viên</span>
-        <span>Trang 1 / 208</span>
+
+    {% if page_obj.has_other_pages %}
+    <div class="table-card-footer" style="justify-content: center;">
+        <div style="display: flex; gap: 8px; align-items: center;">
+            {% if page_obj.has_previous %}
+            <a href="?page=1{% if q %}&q={{ q }}{% endif %}{% if class_id %}&class_id={{ class_id }}{% endif %}{% if dept_id %}&dept_id={{ dept_id }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Về đầu">&laquo;</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if class_id %}&class_id={{ class_id }}{% endif %}{% if dept_id %}&dept_id={{ dept_id }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Trước">&lsaquo;</a>
+            {% else %}
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&laquo;</span>
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&lsaquo;</span>
+            {% endif %}
+
+            <span style="font-size: 13px; font-weight: 600; padding: 0 8px;">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if class_id %}&class_id={{ class_id }}{% endif %}{% if dept_id %}&dept_id={{ dept_id }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Tiếp">&rsaquo;</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if q %}&q={{ q }}{% endif %}{% if class_id %}&class_id={{ class_id }}{% endif %}{% if dept_id %}&dept_id={{ dept_id }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Về cuối">&raquo;</a>
+            {% else %}
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&rsaquo;</span>
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&raquo;</span>
+            {% endif %}
+        </div>
     </div>
+    {% endif %}
 </div>
 
 {% endblock %}

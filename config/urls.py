@@ -5,6 +5,8 @@ URL configuration for EduFace project.
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
+from django.conf import settings
+from django.conf.urls.static import static
 from dashboards.views import home, dashboard
 
 urlpatterns = [
@@ -42,3 +44,8 @@ urlpatterns = [
     
     path('notifications/', include('notifications.urls')),
 ]
+
+# Serve media files in development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT if hasattr(settings, 'STATIC_ROOT') else None)
