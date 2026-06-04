@@ -4,6 +4,20 @@
 {% block page_title %}Lớp Sinh Hoạt{% endblock %}
 {% block breadcrumb %}Sinh Viên / Lớp Sinh Hoạt{% endblock %}
 
+{% block extra_css %}
+<style>
+#deleteClassModal {
+    display: none;
+    position: fixed; top:0; left:0; width:100%; height:100%;
+    background: rgba(0,0,0,0.45);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+#deleteClassModal.show { display: flex !important; }
+</style>
+{% endblock %}
+
 {% block page_content %}
 
 <div class="table-card">
@@ -69,10 +83,13 @@
                                 Sửa
                             </a>
                             {% if request.is_admin_group %}
-                            <a href="{% url 'students:class_delete' cls.pk %}" class="btn-action btn-action-delete" style="color:#ef4444;border-color:#fca5a5;">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+                            <button type="button"
+                                class="btn-action btn-action-delete"
+                                onclick="openDeleteClassModal('{% url 'students:class_delete' cls.pk %}', '{{ cls.class_code|escapejs }} — {{ cls.class_name|escapejs }}')"
+                            >
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                                 Xóa
-                            </a>
+                            </button>
                             {% endif %}
                         </div>
                     </td>
@@ -97,5 +114,113 @@
         <span>Tổng {{ classes|length }} lớp sinh hoạt</span>
     </div>
 </div>
+
+<!-- Delete Class Modal -->
+<div id="deleteClassModal">
+    <div class="card" style="max-width:440px;width:100%;text-align:center;padding:40px 32px;">
+        <div style="width:68px;height:68px;border-radius:50%;background:#fef2f2;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+        </div>
+        <h2 style="font-size:20px;font-weight:700;color:var(--text-dark);margin:0 0 10px;">Xác Nhận Xóa Lớp</h2>
+        <p style="font-size:14px;color:var(--text-muted);margin:0 0 6px;line-height:1.6;">
+            Bạn có chắc chắn muốn xóa lớp<br>
+            <strong id="deleteClassName" style="color:var(--text-dark);"></strong>?
+        </p>
+        <p style="font-size:12px;color:#ef4444;margin:0 0 28px;">Hành động này không thể hoàn tác.</p>
+
+        <div id="deleteClassError" style="display:none;padding:10px 14px;background:#fee2e2;border:1.5px solid #fca5a5;border-radius:6px;margin-bottom:16px;color:#dc2626;font-size:13px;"></div>
+
+        <div style="display:flex;gap:12px;justify-content:center;">
+            <button type="button" onclick="closeDeleteClassModal()"
+                style="flex:1;padding:10px 0;border:1px solid var(--border,#e5e7eb);border-radius:8px;background:transparent;color:var(--text-muted);font-size:14px;font-weight:500;cursor:pointer;">
+                Hủy
+            </button>
+            <button type="button" id="deleteClassConfirmBtn" onclick="submitDeleteClass()"
+                style="flex:1;padding:10px 0;border:none;border-radius:8px;background:#ef4444;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">
+                Xác Nhận Xóa
+            </button>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+let _deleteClassUrl = '';
+
+function openDeleteClassModal(url, name) {
+    _deleteClassUrl = url;
+    document.getElementById('deleteClassName').textContent = name;
+    document.getElementById('deleteClassError').style.display = 'none';
+    document.getElementById('deleteClassConfirmBtn').disabled = false;
+    document.getElementById('deleteClassConfirmBtn').textContent = 'Xác Nhận Xóa';
+    const modal = document.getElementById('deleteClassModal');
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+}
+
+function closeDeleteClassModal() {
+    const modal = document.getElementById('deleteClassModal');
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+}
+
+function getCsrfToken() {
+    return document.cookie.split(';').map(c => c.trim())
+        .find(c => c.startsWith('csrftoken='))?.split('=')[1] || '';
+}
+
+function submitDeleteClass() {
+    const btn = document.getElementById('deleteClassConfirmBtn');
+    const errorDiv = document.getElementById('deleteClassError');
+    btn.disabled = true;
+    btn.textContent = 'Đang xóa...';
+    errorDiv.style.display = 'none';
+
+    fetch(_deleteClassUrl, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCsrfToken(),
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(res => {
+        if (!res.ok) {
+            return res.json().then(data => {
+                throw new Error(data.error || 'Lỗi không xác định.');
+            });
+        }
+        return res.json();
+    })
+    .then(data => {
+        if (data.success) {
+            closeDeleteClassModal();
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        } else {
+            errorDiv.textContent = data.error || 'Lỗi không xác định.';
+            errorDiv.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Xác Nhận Xóa';
+        }
+    })
+    .catch(error => {
+        errorDiv.textContent = error.message || 'Lỗi kết nối. Vui lòng thử lại.';
+        errorDiv.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Xác Nhận Xóa';
+    });
+}
+
+document.getElementById('deleteClassModal').addEventListener('click', function(e) {
+    if (e.target === this) closeDeleteClassModal();
+});
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeDeleteClassModal();
+});
+</script>
 
 {% endblock %}

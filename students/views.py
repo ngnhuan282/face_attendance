@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q, Count
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 
 from accounts.constants import ADMIN_GROUP_NAME, TEACHER_GROUP_NAME
 from accounts.permissions import group_required
@@ -123,21 +125,17 @@ def student_edit(request, pk):
 
 @group_required(ADMIN_GROUP_NAME)
 def student_delete(request, pk):
-    """Xóa sinh viên (chỉ Admin)."""
+    """Xóa sinh viên (chỉ Admin) – chỉ chấp nhận POST qua AJAX."""
     student = get_object_or_404(Student, pk=pk)
 
     if request.method == 'POST':
         name = student.full_name
+        sid = student.student_id
         student.delete()
-        messages.success(request, f'Đã xóa sinh viên {name}.')
-        return redirect('students:list')
+        messages.success(request, f'Xóa sinh viên {name} ({sid}) thành công.')
+        return JsonResponse({'success': True, 'message': f'Đã xóa sinh viên {name} ({sid}).'})
 
-    return render(request, 'students/confirm_delete.html', {
-        'active_menu': 'students',
-        'object': student,
-        'object_label': f'sinh viên "{student.full_name} ({student.student_id})"',
-        'cancel_url': 'students:list',
-    })
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
 # ──────────────────────────────────────────────
@@ -215,24 +213,20 @@ def studentclass_edit(request, pk):
 
 @group_required(ADMIN_GROUP_NAME)
 def studentclass_delete(request, pk):
-    """Xóa lớp sinh hoạt (chỉ Admin, không xóa được nếu còn sinh viên)."""
+    """Xóa lớp sinh hoạt (chỉ Admin, không xóa được nếu còn sinh viên) – chỉ chấp nhận POST qua AJAX."""
     sc = get_object_or_404(StudentClass, pk=pk)
 
     if request.method == 'POST':
         if sc.students.exists():
-            messages.error(request, f'Không thể xóa lớp {sc.class_code} vì còn {sc.students.count()} sinh viên trong lớp.')
-            return redirect('students:class_list')
+            return JsonResponse({
+                'error': f'Không thể xóa lớp {sc.class_code} vì còn {sc.students.count()} sinh viên trong lớp.'
+            }, status=400)
         code = sc.class_code
         sc.delete()
-        messages.success(request, f'Đã xóa lớp {code}.')
-        return redirect('students:class_list')
+        messages.success(request, f'Xóa lớp sinh hoạt "{code}" thành công.')
+        return JsonResponse({'success': True, 'message': f'Đã xóa lớp {code}.'})
 
-    return render(request, 'students/confirm_delete.html', {
-        'active_menu': 'students',
-        'object': sc,
-        'object_label': f'lớp sinh hoạt "{sc.class_code} — {sc.class_name}"',
-        'cancel_url': 'students:class_list',
-    })
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
 @group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
