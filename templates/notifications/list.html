@@ -124,7 +124,7 @@
             </thead>
             <tbody>
                 {% for noti in page_obj %}
-                <tr style="{% if not noti.is_read %}background:rgba(251,191,36,0.06);{% endif %}">
+                <tr {% if not noti.is_read %}style="background:rgba(251,191,36,0.06);"{% endif %}>
                     <td>
                         <div class="cell-user">
                             <div class="cell-avatar">{{ noti.student.full_name|first }}</div>
@@ -149,8 +149,11 @@
                         <span style="color:var(--text-light);">/ {{ noti.total_sessions }}</span>
                     </td>
                     <td style="text-align:center;">
-                        <span style="font-weight:700;font-size:14px;
-                            color:{% if noti.absent_percent >= 40 %}#dc2626{% else %}#d97706{% endif %};">
+                        {% if noti.absent_percent >= 40 %}
+                        <span style="font-weight:700;font-size:14px;color:#dc2626;">
+                        {% else %}
+                        <span style="font-weight:700;font-size:14px;color:#d97706;">
+                        {% endif %}
                             {{ noti.absent_percent|floatformat:1 }}%
                         </span>
                     </td>
