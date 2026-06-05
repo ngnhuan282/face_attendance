@@ -3,7 +3,6 @@ from students.models import Student
 from courses.models import CourseClass
 
 class Notification(models.Model):
-    """Cảnh báo vắng mặt tự động khi sinh viên vắng > 20% tổng số buổi"""
     TYPE_CHOICES = [
         ('absent_warning', 'Cảnh báo vắng (> 20%)'),
         ('absent_danger', 'Nguy hiểm vắng (> 40%)'),
@@ -36,6 +35,7 @@ class Notification(models.Model):
         verbose_name = 'Cảnh báo vắng mặt'
         verbose_name_plural = 'Cảnh báo vắng mặt'
         ordering = ['-created_at']
+        unique_together = [('student', 'course_class')]
 
     def __str__(self):
         return (

@@ -9,24 +9,39 @@
 <!-- Stat Cards -->
 <div class="stats-grid" style="margin-bottom:20px;">
     <div class="stat-card">
-        <div class="stat-icon orange">
+        <div class="stat-icon blue">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
             </svg>
         </div>
         <div class="stat-info">
-            <div class="stat-value">{{ unread_count }}</div>
-            <div class="stat-label">Chưa Đọc</div>
+            <div class="stat-value">{{ total_count }}</div>
+            <div class="stat-label">Tổng Cảnh Báo</div>
         </div>
     </div>
     <div class="stat-card">
         <div class="stat-icon orange">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                <line x1="12" y1="9" x2="12" y2="13"/>
-                <line x1="12" y1="17" x2="12.01" y2="17"/>
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-value">{{ unread_count }}</div>
+            <div class="stat-label">Chưa Đọc</div>
+            {% if unread_count > 0 %}
+            <div class="stat-change down">Cần xem xét</div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon orange">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
         </div>
         <div class="stat-info">
@@ -37,9 +52,9 @@
     <div class="stat-card">
         <div class="stat-icon purple">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
+                <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
         </div>
         <div class="stat-info">
@@ -53,19 +68,40 @@
 <div class="table-card">
     <div class="table-card-header">
         <div class="table-card-title">Danh Sách Cảnh Báo</div>
-        <div class="table-toolbar">
-            <a href="?type=absent_warning"
-               class="btn-action {% if filter_type == 'absent_warning' %}btn-action-edit{% else %}btn-action-view{% endif %}">
-               Cảnh Báo
+        <div class="table-toolbar" style="flex-wrap:wrap;gap:8px;">
+
+            <!-- Bộ lọc học kỳ -->
+            <form method="get" id="filterForm" style="display:contents;">
+                <input type="hidden" name="type" value="{{ filter_type }}">
+                <input type="hidden" name="unread" value="{{ show_unread }}">
+                <select name="semester" class="filter-select" onchange="document.getElementById('filterForm').submit()">
+                    <option value="">Tất cả học kỳ</option>
+                    {% for sem in semesters %}
+                    <option value="{{ sem.pk }}" {% if filter_sem == sem.pk|stringformat:"s" %}selected{% endif %}>
+                        {{ sem }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+
+            <!-- Lọc nhanh theo loại -->
+            <a href="?type=absent_warning{% if filter_sem %}&semester={{ filter_sem }}{% endif %}"
+                class="btn-action {% if filter_type == 'absent_warning' %}btn-action-edit{% else %}btn-action-view{% endif %}">
+                ⚠ Cảnh Báo
             </a>
-            <a href="?type=absent_danger"
-               class="btn-action {% if filter_type == 'absent_danger' %}btn-action-delete{% else %}btn-action-view{% endif %}">
-               Nguy Hiểm
+            <a href="?type=absent_danger{% if filter_sem %}&semester={{ filter_sem }}{% endif %}"
+                class="btn-action {% if filter_type == 'absent_danger' %}btn-action-delete{% else %}btn-action-view{% endif %}">
+                🚨 Nguy Hiểm
+            </a>
+            <a href="?unread=1{% if filter_sem %}&semester={{ filter_sem }}{% endif %}"
+                class="btn-action {% if show_unread == '1' %}btn-action-edit{% else %}btn-action-view{% endif %}">
+                📬 Chưa Đọc
             </a>
             <a href="?" class="btn-action btn-action-view">Tất Cả</a>
-            <a href="{% url 'notifications:read_all' %}"
-               class="btn-primary" style="padding:8px 16px;font-size:13px;">
-               Đọc Tất Cả
+
+            <!-- Đọc tất cả -->
+            <a href="{% url 'notifications:read_all' %}" class="btn-primary" style="padding:8px 14px;font-size:13px;">
+                ✓ Đọc Tất Cả
             </a>
         </div>
     </div>
@@ -76,6 +112,7 @@
                 <tr>
                     <th>Sinh Viên</th>
                     <th>Lớp HP</th>
+                    <th>Học Phần</th>
                     <th>Học Kỳ</th>
                     <th style="text-align:center;">Vắng / Tổng</th>
                     <th style="text-align:center;">Tỉ Lệ Vắng</th>
@@ -86,61 +123,72 @@
                 </tr>
             </thead>
             <tbody>
-                {% for noti in notifications %}
-                <tr style="{% if not noti.is_read %}background:rgba(251,191,36,0.05);{% endif %}">
+                {% for noti in page_obj %}
+                <tr style="{% if not noti.is_read %}background:rgba(251,191,36,0.06);{% endif %}">
                     <td>
                         <div class="cell-user">
                             <div class="cell-avatar">{{ noti.student.full_name|first }}</div>
                             <div>
-                                <div class="cell-name">{{ noti.student.full_name }}</div>
+                                <div class="cell-name">
+                                    <a href="{% url 'reports:student' noti.student.pk %}"
+                                        style="color:var(--text-dark);text-decoration:none;">
+                                        {{ noti.student.full_name }}
+                                    </a>
+                                </div>
                                 <div class="cell-sub">{{ noti.student.student_id }}</div>
                             </div>
                         </div>
                     </td>
-                    <td style="font-family:monospace;font-weight:600;">{{ noti.course_class.class_code }}</td>
-                    <td>{{ noti.course_class.semester }}</td>
+                    <td style="font-family:monospace;font-weight:600;font-size:12px;">
+                        {{ noti.course_class.class_code }}
+                    </td>
+                    <td style="font-size:13px;">{{ noti.course_class.course.course_name }}</td>
+                    <td style="font-size:12px;color:var(--text-light);">{{ noti.course_class.semester }}</td>
                     <td style="text-align:center;">
                         <strong style="color:#dc2626;">{{ noti.absent_count }}</strong>
-                        / {{ noti.total_sessions }}
+                        <span style="color:var(--text-light);">/ {{ noti.total_sessions }}</span>
                     </td>
                     <td style="text-align:center;">
-                        <span style="font-weight:700;
+                        <span style="font-weight:700;font-size:14px;
                             color:{% if noti.absent_percent >= 40 %}#dc2626{% else %}#d97706{% endif %};">
                             {{ noti.absent_percent|floatformat:1 }}%
                         </span>
                     </td>
                     <td style="text-align:center;">
                         {% if noti.noti_type == 'absent_danger' %}
-                            <span class="badge badge-red"><span class="badge-dot"></span>Nguy Hiểm</span>
+                        <span class="badge badge-red"><span class="badge-dot"></span>Nguy Hiểm</span>
                         {% else %}
-                            <span class="badge badge-orange"><span class="badge-dot"></span>Cảnh Báo</span>
+                        <span class="badge badge-orange"><span class="badge-dot"></span>Cảnh Báo</span>
                         {% endif %}
                     </td>
-                    <td style="font-size:12px;color:var(--text-light);">
+                    <td style="font-size:12px;color:var(--text-light);white-space:nowrap;">
                         {{ noti.created_at|date:"d/m/Y H:i" }}
                     </td>
                     <td style="text-align:center;">
                         {% if noti.is_read %}
-                            <span class="badge badge-green">Đã Đọc</span>
+                        <span class="badge badge-green" style="font-size:11px;">Đã Đọc</span>
                         {% else %}
-                            <span class="badge badge-orange">Chưa Đọc</span>
+                        <span class="badge badge-orange" style="font-size:11px;">Chưa Đọc</span>
                         {% endif %}
                     </td>
                     <td>
                         {% if not noti.is_read %}
-                        <a href="{% url 'notifications:read' noti.pk %}"
-                           class="btn-action btn-action-view" style="white-space:nowrap;">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
-                                <polyline points="20 6 9 17 4 12"/>
+                        <a href="{% url 'notifications:read' noti.pk %}" class="btn-action btn-action-view"
+                            style="white-space:nowrap;font-size:12px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12"
+                                height="12">
+                                <polyline points="20 6 9 17 4 12" />
                             </svg>
                             Đánh Dấu Đọc
                         </a>
+                        {% else %}
+                        <span style="color:var(--text-light);font-size:12px;">—</span>
                         {% endif %}
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="9" style="text-align:center;padding:48px;color:var(--text-light);">
+                    <td colspan="10" style="text-align:center;padding:48px;color:var(--text-light);">
                         Không có cảnh báo nào.
                     </td>
                 </tr>
@@ -149,9 +197,52 @@
         </table>
     </div>
 
-    <div class="table-card-footer">
-        <span>{{ notifications|length }} cảnh báo</span>
+    {% if page_obj.has_other_pages %}
+    <div class="table-card-footer" style="justify-content: center;">
+        <div style="display: flex; gap: 8px; align-items: center;">
+            {% if page_obj.has_previous %}
+            <a href="?page=1{% if filter_type %}&type={{ filter_type }}{% endif %}{% if filter_sem %}&semester={{ filter_sem }}{% endif %}{% if show_unread %}&unread={{ show_unread }}{% endif %}"
+                class="btn-secondary"
+                style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;"
+                title="Về đầu">&laquo;</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if filter_type %}&type={{ filter_type }}{% endif %}{% if filter_sem %}&semester={{ filter_sem }}{% endif %}{% if show_unread %}&unread={{ show_unread }}{% endif %}"
+                class="btn-secondary"
+                style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;"
+                title="Trước">&lsaquo;</a>
+            {% else %}
+            <span class="btn-secondary"
+                style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&laquo;</span>
+            <span class="btn-secondary"
+                style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&lsaquo;</span>
+            {% endif %}
+
+            <span style="font-size: 13px; font-weight: 600; padding: 0 8px;">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if filter_type %}&type={{ filter_type }}{% endif %}{% if filter_sem %}&semester={{ filter_sem }}{% endif %}{% if show_unread %}&unread={{ show_unread }}{% endif %}"
+                class="btn-secondary"
+                style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;"
+                title="Tiếp">&rsaquo;</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if filter_type %}&type={{ filter_type }}{% endif %}{% if filter_sem %}&semester={{ filter_sem }}{% endif %}{% if show_unread %}&unread={{ show_unread }}{% endif %}"
+                class="btn-secondary"
+                style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;"
+                title="Về cuối">&raquo;</a>
+            {% else %}
+            <span class="btn-secondary"
+                style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&rsaquo;</span>
+            <span class="btn-secondary"
+                style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&raquo;</span>
+            {% endif %}
+        </div>
     </div>
+    {% else %}
+    <div class="table-card-footer">
+        <span>{{ page_obj.paginator.count }} cảnh báo</span>
+        {% if show_unread == '1' or filter_type or filter_sem %}
+        <a href="?" style="font-size:12px;color:var(--text-light);">Xoá bộ lọc</a>
+        {% endif %}
+    </div>
+    {% endif %}
 </div>
 
 {% endblock %}

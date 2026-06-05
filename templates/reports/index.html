@@ -13,12 +13,12 @@
     </div>
     <div style="padding:16px 20px;">
         <form method="get" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
-            <select name="semester" class="filter-select" style="min-width:220px;" onchange="this.form.submit()">
+            <select name="semester" class="filter-select" style="min-width:240px;" onchange="this.form.submit()">
                 <option value="">-- Chọn học kỳ --</option>
                 {% for sem in semesters %}
-                    <option value="{{ sem.pk }}" {% if selected_sem.pk == sem.pk %}selected{% endif %}>
-                        {{ sem }}
-                    </option>
+                <option value="{{ sem.pk }}" {% if selected_sem.pk == sem.pk %}selected{% endif %}>
+                    {{ sem }}
+                </option>
                 {% endfor %}
             </select>
             <button type="submit" class="btn-primary" style="padding:8px 18px;font-size:13px;">Xem</button>
@@ -31,7 +31,10 @@
 <!-- Danh sách lớp HP -->
 <div class="table-card">
     <div class="table-card-header">
-        <div class="table-card-title">Danh Sách Lớp Học Phần — {{ selected_sem }}</div>
+        <div>
+            <div class="table-card-title">Danh Sách Lớp Học Phần</div>
+            <div style="font-size:13px;color:var(--text-light);margin-top:3px;">{{ selected_sem }}</div>
+        </div>
     </div>
 
     {% if course_classes %}
@@ -42,34 +45,37 @@
                     <th>Mã Lớp HP</th>
                     <th>Học Phần</th>
                     <th>Giảng Viên</th>
-                    <th>Tổng Buổi</th>
-                    <th>Hành Động</th>
+                    <th style="text-align:center;">Tổng Buổi</th>
+                    <th style="text-align:center;">Sĩ Số Tối Đa</th>
+                    <th style="text-align:center;">Hành Động</th>
                 </tr>
             </thead>
             <tbody>
-                {% for cc in course_classes %}
+                {% for cc in page_obj %}
                 <tr>
                     <td style="font-weight:600;font-family:monospace;">{{ cc.class_code }}</td>
                     <td>{{ cc.course.course_name }}</td>
                     <td>{{ cc.teacher.user.get_full_name|default:cc.teacher.user.username }}</td>
-                    <td>{{ cc.total_sessions }}</td>
-                    <td>
-                        <div style="display: flex; gap: 8px; justify-content: center;">
-                            <a href="{% url 'reports:class' cc.pk %}" class="btn-action btn-action-view" title="Xem Báo Cáo">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <line x1="18" y1="20" x2="18" y2="10"/>
-                                    <line x1="12" y1="20" x2="12" y2="4"/>
-                                    <line x1="6" y1="20" x2="6" y2="14"/>
+                    <td style="text-align:center;">{{ cc.total_sessions }}</td>
+                    <td style="text-align:center;">{{ cc.max_students }}</td>
+                    <td style="text-align:center;">
+                        <div class="action-btns" style="justify-content: center;">
+                            <a href="{% url 'reports:class' cc.pk %}" class="btn-action btn-action-view">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14"
+                                    height="14">
+                                    <line x1="18" y1="20" x2="18" y2="10" />
+                                    <line x1="12" y1="20" x2="12" y2="4" />
+                                    <line x1="6" y1="20" x2="6" y2="14" />
                                 </svg>
-                                Xem
+                                Xem Báo Cáo
                             </a>
-                            <a href="{% url 'reports:export_class_report' cc.pk %}" class="btn-action" style="color: #10b981; background: rgba(16, 185, 129, 0.1);" title="Xuất Báo Cáo">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="7 10 12 15 17 10"></polyline>
-                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                            <a href="{% url 'reports:excel' cc.pk %}" class="btn-action btn-action-edit">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14"
+                                    height="14">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                    <polyline points="14 2 14 8 20 8" />
                                 </svg>
-                                Xuất
+                                Xuất Excel
                             </a>
                         </div>
                     </td>
@@ -78,11 +84,35 @@
             </tbody>
         </table>
     </div>
-    <div class="table-card-footer">
-        <span>{{ course_classes|length }} lớp học phần trong học kỳ này</span>
+    {% if page_obj.has_other_pages %}
+    <div class="table-card-footer" style="justify-content: center;">
+        <div style="display: flex; gap: 8px; align-items: center;">
+            {% if page_obj.has_previous %}
+            <a href="?page=1{% if request.GET.semester %}&semester={{ request.GET.semester }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Về đầu">&laquo;</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.semester %}&semester={{ request.GET.semester }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Trước">&lsaquo;</a>
+            {% else %}
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&laquo;</span>
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&lsaquo;</span>
+            {% endif %}
+            
+            <span style="font-size: 13px; font-weight: 600; padding: 0 8px;">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+            
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.semester %}&semester={{ request.GET.semester }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Tiếp">&rsaquo;</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.semester %}&semester={{ request.GET.semester }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Về cuối">&raquo;</a>
+            {% else %}
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&rsaquo;</span>
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&raquo;</span>
+            {% endif %}
+        </div>
     </div>
     {% else %}
-    <div style="padding:40px;text-align:center;color:var(--text-light);">
+    <div class="table-card-footer">
+        <span>{{ page_obj.paginator.count }} lớp học phần trong học kỳ này</span>
+    </div>
+    {% endif %}
+    {% else %}
+    <div style="padding:48px;text-align:center;color:var(--text-light);">
         Chưa có lớp học phần nào trong học kỳ này.
     </div>
     {% endif %}

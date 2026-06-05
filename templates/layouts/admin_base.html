@@ -127,13 +127,22 @@
                 </svg>
                 Báo Cáo
             </a>
-
-            <a href="{% url 'notifications:list' %}" class="sidebar-link {% if active_menu == 'notifications' %}active{% endif %}">
+            <a href="{% url 'notifications:list' %}" class="sidebar-link {% if active_menu == 'notifications' %}active{% endif %}"
+               style="position:relative;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
                     <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
                 </svg>
                 Cảnh Báo
+                {% if unread_noti_count > 0 %}
+                <span style="
+                    display:inline-flex;align-items:center;justify-content:center;
+                    background:#ef4444;color:#fff;
+                    font-size:10px;font-weight:700;
+                    min-width:18px;height:18px;padding:0 4px;
+                    border-radius:999px;margin-left:auto;line-height:1;
+                ">{{ unread_noti_count }}</span>
+                {% endif %}
             </a>
 
             {% if request.is_admin_group %}

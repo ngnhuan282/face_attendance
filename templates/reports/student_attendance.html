@@ -1,0 +1,285 @@
+{% extends 'layouts/admin_base.html' %}
+
+{% block title %}EduFace - Lịch Sử Điểm Danh — {{ student.full_name }}{% endblock %}
+{% block page_title %}Lịch Sử Điểm Danh{% endblock %}
+{% block breadcrumb %}Phân Tích / Báo Cáo / {{ student.full_name }}{% endblock %}
+
+{% block page_content %}
+
+<!-- Thông tin SV -->
+<div class="table-card" style="margin-bottom:20px;">
+    <div class="table-card-header">
+        <div style="display:flex;align-items:center;gap:14px;">
+            <div class="cell-avatar" style="width:48px;height:48px;font-size:18px;flex-shrink:0;">
+                {{ student.full_name|first }}
+            </div>
+            <div>
+                <div class="table-card-title" style="margin:0;">{{ student.full_name }}</div>
+                <div style="font-size:13px;color:var(--text-light);margin-top:3px;">
+                    MSSV: <strong>{{ student.student_id }}</strong> &nbsp;|&nbsp;
+                    Lớp: {{ student.student_class.class_code }} &nbsp;|&nbsp;
+                    {{ student.email|default:"—" }}
+                </div>
+            </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+            <a href="javascript:history.back()" class="btn-action btn-action-view" style="padding:8px 14px;">← Quay Lại</a>
+        </div>
+    </div>
+</div>
+
+<!-- Bộ lọc lớp HP -->
+<div class="table-card" style="margin-bottom:20px;">
+    <div style="padding:14px 20px;">
+        <form method="get" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+            <label style="font-size:13px;font-weight:500;">Lọc theo lớp HP:</label>
+            <select name="class" class="filter-select" style="min-width:200px;" onchange="this.form.submit()">
+                <option value="">Tất cả lớp HP</option>
+                {% for enroll in enrollments %}
+                    <option value="{{ enroll.course_class.pk }}"
+                        {% if selected_class.pk == enroll.course_class.pk %}selected{% endif %}>
+                        {{ enroll.course_class.class_code }} — {{ enroll.course_class.course.course_name }}
+                        ({{ enroll.course_class.semester }})
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+</div>
+
+<!-- Tổng hợp chuyên cần theo lớp HP -->
+{% if reports %}
+<div class="table-card" style="margin-bottom:20px;">
+    <div class="table-card-header">
+        <div class="table-card-title">Tổng Hợp Chuyên Cần</div>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Lớp HP</th>
+                    <th>Học Phần</th>
+                    <th>Học Kỳ</th>
+                    <th style="text-align:center;">Tổng Buổi</th>
+                    <th style="text-align:center;">Có Mặt</th>
+                    <th style="text-align:center;">Vắng</th>
+                    <th style="text-align:center;">Đi Trễ</th>
+                    <th style="text-align:center;">Tỉ Lệ</th>
+                    <th style="text-align:center;">Trạng Thái</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rpt in reports %}
+                <tr>
+                    <td style="font-family:monospace;font-weight:600;">{{ rpt.course_class.class_code }}</td>
+                    <td>{{ rpt.course_class.course.course_name }}</td>
+                    <td style="font-size:12px;">{{ rpt.course_class.semester }}</td>
+                    <td style="text-align:center;">{{ rpt.total_sessions }}</td>
+                    <td style="text-align:center;color:#16a34a;font-weight:700;">{{ rpt.present_count }}</td>
+                    <td style="text-align:center;color:#dc2626;font-weight:700;">{{ rpt.absent_count }}</td>
+                    <td style="text-align:center;color:#d97706;font-weight:700;">{{ rpt.late_count }}</td>
+                    <td style="text-align:center;">
+                        <div style="display:flex;align-items:center;gap:6px;justify-content:center;">
+                            <div style="width:56px;background:#e5e7eb;border-radius:99px;height:6px;">
+                                <div style="width:{{ rpt.attendance_rate }}%;height:6px;border-radius:99px;
+                                    background:{% if rpt.attendance_rate >= 80 %}#22c55e{% elif rpt.attendance_rate >= 60 %}#f59e0b{% else %}#ef4444{% endif %};"></div>
+                            </div>
+                            <span style="font-weight:700;min-width:38px;font-size:12px;
+                                color:{% if rpt.attendance_rate >= 80 %}#16a34a{% elif rpt.attendance_rate >= 60 %}#d97706{% else %}#dc2626{% endif %};">
+                                {{ rpt.attendance_rate }}%
+                            </span>
+                        </div>
+                    </td>
+                    <td style="text-align:center;">
+                        {% if rpt.absent_rate >= 40 %}
+                            <span class="badge badge-red"><span class="badge-dot"></span>Nguy Hiểm</span>
+                        {% elif rpt.absent_rate >= 20 %}
+                            <span class="badge badge-orange"><span class="badge-dot"></span>Cảnh Báo</span>
+                        {% else %}
+                            <span class="badge badge-green"><span class="badge-dot"></span>Đạt</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Lịch sử từng buổi -->
+<div class="table-card">
+    <div class="table-card-header">
+        <div class="table-card-title">Lịch Sử Từng Buổi</div>
+        <div style="font-size:12px;color:var(--text-light);">
+            Nhấn <strong>Sửa</strong> để điều chỉnh khi nhận diện sai
+        </div>
+    </div>
+
+    <div style="overflow-x:auto;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Lớp HP</th>
+                    <th>Học Phần</th>
+                    <th>Ngày Học</th>
+                    <th style="text-align:center;">Trạng Thái</th>
+                    <th style="text-align:center;">Phương Thức</th>
+                    <th style="text-align:center;">Độ Chính Xác</th>
+                    <th>Ghi Chú</th>
+                    <th>Hành Động</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in history %}
+                <tr id="row-{{ item.session.pk }}">
+                    <td style="font-family:monospace;font-weight:600;font-size:12px;">
+                        {{ item.session.course_class.class_code }}
+                    </td>
+                    <td style="font-size:13px;">{{ item.session.course_class.course.course_name }}</td>
+                    <td style="font-size:12px;color:var(--text-light);">
+                        {{ item.session.started_at|date:"d/m/Y H:i" }}
+                    </td>
+                    <td style="text-align:center;">
+                        {% if item.status == 'present' %}
+                            <span class="badge badge-green"><span class="badge-dot"></span>Có Mặt</span>
+                        {% elif item.status == 'late' %}
+                            <span class="badge badge-orange"><span class="badge-dot"></span>Đi Trễ</span>
+                        {% elif item.status == 'absent' %}
+                            <span class="badge badge-red"><span class="badge-dot"></span>Vắng</span>
+                        {% else %}
+                            <span class="badge" style="background:#e5e7eb;color:#374151;">—</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align:center;font-size:12px;">
+                        {% if item.method == 'face' %}
+                            <span style="color:#3b82f6;">🤖 AI</span>
+                        {% elif item.method == 'manual' %}
+                            <span style="color:#6b7280;">✏️ Thủ công</span>
+                        {% else %}
+                            <span style="color:#9ca3af;">—</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align:center;font-size:12px;color:var(--text-light);">
+                        {% if item.confidence > 0 %}{{ item.confidence|floatformat:1 }}%{% else %}—{% endif %}
+                    </td>
+                    <td style="font-size:12px;color:var(--text-light);">{{ item.note|default:"—" }}</td>
+                    <td>
+                        <button type="button"
+                            class="btn-action btn-action-edit"
+                            onclick="openEditModal({{ item.session.pk }}, {{ student.pk }}, '{{ item.status }}', '{{ item.note|escapejs }}')"
+                            style="border:none;background:none;cursor:pointer;padding:6px;color:#3b82f6;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                            Sửa
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" style="text-align:center;padding:48px;color:var(--text-light);">
+                        Chưa có dữ liệu điểm danh{% if selected_class %} cho lớp HP này{% endif %}.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="table-card-footer">
+        <span>{{ history|length }} buổi học</span>
+    </div>
+</div>
+
+<!-- Modal sửa thủ công -->
+<div id="editModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+    <div class="card" style="width:440px;padding:24px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <div class="card-title" style="margin:0;">Sửa Điểm Danh Thủ Công</div>
+            <button onclick="closeEditModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--text-light);line-height:1;">×</button>
+        </div>
+
+        <form id="editForm" method="post" action="" onsubmit="submitEdit(event)">
+            {% csrf_token %}
+            <div id="edit_error" style="display:none;padding:10px;background:#fee2e2;border:1px solid #fca5a5;border-radius:6px;margin-bottom:14px;color:#dc2626;font-size:13px;"></div>
+
+            <div style="margin-bottom:16px;">
+                <label style="display:block;margin-bottom:6px;font-size:13px;font-weight:500;">Trạng thái điểm danh</label>
+                <select name="status" id="edit_status"
+                    style="width:100%;padding:10px;border:1px solid var(--border-color);border-radius:6px;font-family:inherit;font-size:13px;outline:none;">
+                    <option value="present">✅ Có mặt</option>
+                    <option value="late">⏰ Đi trễ</option>
+                    <option value="absent">❌ Vắng</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom:20px;">
+                <label style="display:block;margin-bottom:6px;font-size:13px;font-weight:500;">
+                    Ghi chú lý do sửa <span style="color:var(--text-light);font-weight:400;">(tuỳ chọn)</span>
+                </label>
+                <textarea name="note" id="edit_note" rows="3"
+                    style="width:100%;padding:10px;border:1px solid var(--border-color);border-radius:6px;font-family:inherit;font-size:13px;resize:vertical;outline:none;"
+                    placeholder="VD: Camera nhận diện nhầm, SV xác nhận có mặt..."></textarea>
+            </div>
+
+            <div style="display:flex;gap:10px;">
+                <button type="button" class="btn-secondary" style="flex:1;padding:10px;" onclick="closeEditModal()">Huỷ</button>
+                <button type="submit" id="edit_submit" class="btn-primary" style="flex:1;padding:10px;">Lưu Thay Đổi</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openEditModal(sessionId, studentId, currentStatus, currentNote) {
+    document.getElementById('editForm').action = `/reports/record/${sessionId}/${studentId}/edit/`;
+    document.getElementById('edit_status').value = currentStatus === 'pending' ? 'absent' : currentStatus;
+    document.getElementById('edit_note').value   = currentNote || '';
+    document.getElementById('edit_error').style.display = 'none';
+    document.getElementById('editModal').style.display  = 'flex';
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+
+function submitEdit(e) {
+    e.preventDefault();
+    const form    = e.target;
+    const errorEl = document.getElementById('edit_error');
+    const btn     = document.getElementById('edit_submit');
+    btn.disabled  = true;
+    btn.textContent = 'Đang lưu...';
+
+    fetch(form.action, {
+        method : 'POST',
+        body   : new FormData(form),
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    })
+    .then(res => {
+        // attendance_edit luôn redirect → follow redirect và reload
+        if (res.redirected || res.ok) {
+            window.location.reload();
+        } else {
+            return res.json().then(d => { throw new Error(d.error || 'Lỗi hệ thống'); });
+        }
+    })
+    .catch(err => {
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Lưu Thay Đổi';
+    });
+}
+
+// Đóng modal khi click ngoài
+document.getElementById('editModal').addEventListener('click', function(e) {
+    if (e.target === this) closeEditModal();
+});
+</script>
+{% endblock %}
