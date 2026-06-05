@@ -416,7 +416,7 @@
 
 .data-table thead th {
     padding: 11px 16px;
-    text-align: left;
+    text-align: center;
     font-size: 11px;
     font-weight: 700;
     color: var(--text-lighter);
@@ -433,6 +433,7 @@
     color: var(--text-medium);
     border-bottom: 1px solid #f3f4f6;
     vertical-align: middle;
+    text-align: center;
 }
 
 .data-table tbody tr:last-child td { border-bottom: none; }
@@ -443,6 +444,7 @@
 .cell-user {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 10px;
 }
 
@@ -493,7 +495,7 @@
 .badge-gray   .badge-dot { background: #9ca3af; }
 
 /* Action buttons */
-.action-btns { display: flex; gap: 6px; }
+.action-btns { display: flex; gap: 6px; justify-content: center; }
 
 .btn-action {
     padding: 5px 10px;

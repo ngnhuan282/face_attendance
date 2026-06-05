@@ -45,7 +45,13 @@ def room_create(request):
     try:
         room_code = request.POST.get('room_code')
         building = request.POST.get('building', '')
-        capacity = request.POST.get('capacity', 40)
+        capacity = request.POST.get('capacity')
+        if not capacity or str(capacity).strip() == '':
+            capacity = 40
+        try:
+            capacity = int(capacity)
+        except ValueError:
+            return JsonResponse({'error': 'Sức chứa phải là một số hợp lệ'}, status=400)
         has_camera = request.POST.get('has_camera') == 'on'
         
         if not room_code:
@@ -57,7 +63,7 @@ def room_create(request):
         Room.objects.create(
             room_code=room_code,
             building=building,
-            capacity=int(capacity),
+            capacity=capacity,
             has_camera=has_camera
         )
         
@@ -74,7 +80,13 @@ def room_edit(request, pk):
         
         room_code = request.POST.get('room_code')
         building = request.POST.get('building', '')
-        capacity = request.POST.get('capacity', 40)
+        capacity = request.POST.get('capacity')
+        if not capacity or str(capacity).strip() == '':
+            capacity = 40
+        try:
+            capacity = int(capacity)
+        except ValueError:
+            return JsonResponse({'error': 'Sức chứa phải là một số hợp lệ'}, status=400)
         has_camera = request.POST.get('has_camera') == 'on'
         
         if not room_code:
@@ -85,7 +97,7 @@ def room_edit(request, pk):
             
         room.room_code = room_code
         room.building = building
-        room.capacity = int(capacity)
+        room.capacity = capacity
         room.has_camera = has_camera
         room.save()
         
@@ -128,7 +140,7 @@ def schedule_list(request):
     if end_date:
         schedules = schedules.filter(date__lte=end_date)
         
-    paginator = Paginator(schedules, 15)
+    paginator = Paginator(schedules, 10)
     page_number = request.GET.get('page', 1)
     if page_number == 'last' or page_number == '999999':
         page_number = paginator.num_pages
@@ -155,9 +167,13 @@ def schedule_create_bulk(request):
     try:
         courseclass_id = request.POST.get('course_class')
         room_id = request.POST.get('room')
-        day_of_week = int(request.POST.get('day_of_week'))
-        start_period = int(request.POST.get('start_period'))
-        end_period = int(request.POST.get('end_period'))
+        try:
+            day_of_week = int(request.POST.get('day_of_week'))
+            start_period = int(request.POST.get('start_period'))
+            end_period = int(request.POST.get('end_period'))
+        except (ValueError, TypeError):
+            return JsonResponse({'error': 'Thứ và Tiết học phải là một số hợp lệ'}, status=400)
+            
         start_date_str = request.POST.get('start_date')
         end_date_str = request.POST.get('end_date')
         
@@ -247,8 +263,11 @@ def schedule_edit(request, pk):
         if not all([room_id, start_period, end_period, date_str]):
             return JsonResponse({'error': 'Vui lòng điền đủ thông tin'}, status=400)
             
-        start_period = int(start_period)
-        end_period = int(end_period)
+        try:
+            start_period = int(start_period)
+            end_period = int(end_period)
+        except (ValueError, TypeError):
+            return JsonResponse({'error': 'Tiết học phải là một số hợp lệ'}, status=400)
         
         if not (1 <= start_period <= 10) or not (1 <= end_period <= 10):
             return JsonResponse({'error': 'Tiết học phải từ 1 đến 10'}, status=400)

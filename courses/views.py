@@ -62,7 +62,14 @@ def course_create(request):
             room_id = request.POST.get('room')
             course_code = request.POST.get('course_code')
             course_name = request.POST.get('course_name')
-            credits = request.POST.get('credits', 3)
+            credits = request.POST.get('credits')
+            if not credits or credits.strip() == '':
+                credits = 3
+            try:
+                credits = int(credits)
+            except ValueError:
+                return JsonResponse({'error': 'Tín chỉ phải là một số hợp lệ'}, status=400)
+            
             description = request.POST.get('description', '')
             
             # Validation
@@ -80,7 +87,7 @@ def course_create(request):
                 room=room,
                 course_code=course_code,
                 course_name=course_name,
-                credits=int(credits),
+                credits=credits,
                 description=description
             )
             
@@ -113,7 +120,13 @@ def course_edit(request, pk):
             from schedules.models import Room
             
             course.course_name = request.POST.get('course_name', course.course_name)
-            course.credits = request.POST.get('credits', course.credits)
+            credits = request.POST.get('credits')
+            if credits is not None and credits.strip() != '':
+                try:
+                    course.credits = int(credits)
+                except ValueError:
+                    return JsonResponse({'error': 'Tín chỉ phải là một số hợp lệ'}, status=400)
+            
             course.description = request.POST.get('description', course.description)
             
             room_id = request.POST.get('room')
@@ -248,8 +261,19 @@ def courseclass_create(request):
             semester_id = request.POST.get('semester')
             teacher_id = request.POST.get('teacher')
             class_code = request.POST.get('class_code')
-            max_students = request.POST.get('max_students', 40)
-            total_sessions = request.POST.get('total_sessions', 15)
+            max_students = request.POST.get('max_students')
+            if not max_students or max_students.strip() == '':
+                max_students = 40
+                
+            total_sessions = request.POST.get('total_sessions')
+            if not total_sessions or total_sessions.strip() == '':
+                total_sessions = 15
+                
+            try:
+                max_students = int(max_students)
+                total_sessions = int(total_sessions)
+            except ValueError:
+                return JsonResponse({'error': 'Sĩ số và Tổng số buổi phải là một số hợp lệ'}, status=400)
             
             # Validation
             if not all([course_id, semester_id, teacher_id, class_code]):
@@ -273,8 +297,8 @@ def courseclass_create(request):
                 semester=semester,
                 teacher=teacher,
                 class_code=class_code,
-                max_students=int(max_students),
-                total_sessions=int(total_sessions)
+                max_students=max_students,
+                total_sessions=total_sessions
             )
             
             messages.success(request, f'Tạo lớp học phần "{class_code}" thành công')
@@ -309,15 +333,24 @@ def courseclass_edit(request, pk):
             from accounts.models import Teacher
             
             teacher_id = request.POST.get('teacher')
-            max_students = request.POST.get('max_students', courseclass.max_students)
-            total_sessions = request.POST.get('total_sessions', courseclass.total_sessions)
+            max_students = request.POST.get('max_students')
+            total_sessions = request.POST.get('total_sessions')
             
             if teacher_id:
                 teacher = get_object_or_404(Teacher, pk=teacher_id)
                 courseclass.teacher = teacher
             
-            courseclass.max_students = int(max_students)
-            courseclass.total_sessions = int(total_sessions)
+            if max_students is not None and max_students.strip() != '':
+                try:
+                    courseclass.max_students = int(max_students)
+                except ValueError:
+                    return JsonResponse({'error': 'Sĩ số phải là một số hợp lệ'}, status=400)
+                    
+            if total_sessions is not None and total_sessions.strip() != '':
+                try:
+                    courseclass.total_sessions = int(total_sessions)
+                except ValueError:
+                    return JsonResponse({'error': 'Tổng số buổi phải là một số hợp lệ'}, status=400)
             courseclass.save()
             
             messages.success(request, 'Cập nhật lớp học phần thành công')
@@ -374,7 +407,7 @@ def courseclass_detail(request, pk):
         )
     
     # Pagination
-    paginator = Paginator(enrollments, 15)
+    paginator = Paginator(enrollments, 10)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
     
@@ -429,7 +462,7 @@ def enrollment_all_list(request):
         )
         
     # Pagination
-    paginator = Paginator(enrollments, 15)
+    paginator = Paginator(enrollments, 10)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
     

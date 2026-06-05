@@ -79,3 +79,57 @@ def report_class(request, class_id):
         'active_menu'    : 'reports',
     }
     return render(request, 'reports/class_report.html', context)
+
+
+@login_required
+def export_class_report(request, class_id):
+    import csv
+    from django.http import HttpResponse
+
+    course_class = get_object_or_404(
+        CourseClass.objects.select_related('course', 'semester', 'teacher__user'),
+        pk=class_id,
+    )
+
+    reports = (
+        AttendanceReport.objects
+        .filter(course_class=course_class)
+        .select_related('student__student_class')
+        .order_by('student__full_name')
+    )
+
+    response = HttpResponse(content_type='text/csv')
+    filename = f"bao_cao_chuyen_can_{course_class.class_code}.csv"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    # Write BOM for Excel compatibility with UTF-8
+    response.write(u'\ufeff'.encode('utf8'))
+
+    writer = csv.writer(response)
+    writer.writerow([
+        'Mã SV', 'Họ Tên', 'Lớp Sinh Hoạt', 'Tổng Buổi',
+        'Có Mặt', 'Đi Trễ', 'Vắng', 'Tỉ Lệ Có Mặt (%)', 'Trạng Thái'
+    ])
+
+    for rpt in reports:
+        absent_pct = rpt.absent_rate
+        if absent_pct >= 40:
+            status = 'Nguy Hiểm'
+        elif absent_pct > 20:
+            status = 'Cảnh Báo'
+        else:
+            status = 'Đạt'
+
+        writer.writerow([
+            rpt.student.student_id,
+            rpt.student.full_name,
+            rpt.student.student_class.class_code if rpt.student.student_class else '',
+            rpt.total_sessions,
+            rpt.present_count,
+            rpt.late_count,
+            rpt.absent_count,
+            rpt.attendance_rate,
+            status
+        ])
+
+    return response

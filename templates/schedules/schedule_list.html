@@ -74,12 +74,14 @@
                     <td>{{ schedule.start_period }} - {{ schedule.end_period }}</td>
                     <td>{{ schedule.room.room_code|default:"--" }}</td>
                     <td>
-                        <div style="display: flex; gap: 8px;">
-                            <button type="button" class="btn-secondary" style="padding: 6px; border: none; background: none; color: var(--primary-green); cursor: pointer;" onclick="openEditScheduleModal(this)" title="Sửa">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        <div class="action-btns">
+                            <button type="button" class="btn-action btn-action-edit" onclick="openEditScheduleModal(this)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                Sửa
                             </button>
-                            <button type="button" class="btn-secondary" style="padding: 6px; border: none; background: none; color: var(--accent-red); cursor: pointer;" onclick="openDeleteScheduleModal('{{ schedule.id }}', '{{ schedule.date|date:'d/m/Y' }} (Buổi {{ schedule.session_number }})')" title="Xóa">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            <button type="button" class="btn-action btn-action-delete" onclick="openDeleteScheduleModal('{{ schedule.id }}', '{{ schedule.date|date:'d/m/Y' }} (Buổi {{ schedule.session_number }})')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                Xóa
                             </button>
                         </div>
                     </td>
@@ -99,21 +101,21 @@
     <div class="table-card-footer" style="justify-content: center;">
         <div style="display: flex; gap: 8px; align-items: center;">
             {% if page_obj.has_previous %}
-            <a href="?page=1{% if courseclass_id %}&courseclass_id={{ courseclass_id }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-weight: bold; text-decoration: none;">&laquo;</a>
-            <a href="?page={{ page_obj.previous_page_number }}{% if courseclass_id %}&courseclass_id={{ courseclass_id }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-weight: bold; text-decoration: none;">&lsaquo;</a>
+            <a href="?page=1{% if courseclass_id %}&courseclass_id={{ courseclass_id }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Về đầu">&laquo;</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if courseclass_id %}&courseclass_id={{ courseclass_id }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Trước">&lsaquo;</a>
             {% else %}
-            <span class="btn-secondary" style="padding: 6px 12px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&laquo;</span>
-            <span class="btn-secondary" style="padding: 6px 12px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&lsaquo;</span>
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&laquo;</span>
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&lsaquo;</span>
             {% endif %}
             
             <span style="font-size: 13px; font-weight: 600; padding: 0 8px;">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
             
             {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}{% if courseclass_id %}&courseclass_id={{ courseclass_id }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-weight: bold; text-decoration: none;">&rsaquo;</a>
-            <a href="?page={{ page_obj.paginator.num_pages }}{% if courseclass_id %}&courseclass_id={{ courseclass_id }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-weight: bold; text-decoration: none;">&raquo;</a>
+            <a href="?page={{ page_obj.next_page_number }}{% if courseclass_id %}&courseclass_id={{ courseclass_id }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Tiếp">&rsaquo;</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if courseclass_id %}&courseclass_id={{ courseclass_id }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Về cuối">&raquo;</a>
             {% else %}
-            <span class="btn-secondary" style="padding: 6px 12px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&rsaquo;</span>
-            <span class="btn-secondary" style="padding: 6px 12px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&raquo;</span>
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&rsaquo;</span>
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&raquo;</span>
             {% endif %}
         </div>
     </div>
@@ -134,7 +136,7 @@
             
             <div class="form-group" style="margin-bottom: 16px;">
                 <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Lớp Học Phần <span style="color: red;">*</span></label>
-                <select name="course_class" id="bulk_course_class" required class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
+                <select name="course_class" id="bulk_course_class" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
                     <option value="">-- Chọn lớp học phần --</option>
                     {% for c in course_classes %}
                     <option value="{{ c.id }}">{{ c.class_code }} - {{ c.course.course_name }}</option>
@@ -144,7 +146,7 @@
             
             <div class="form-group" style="margin-bottom: 16px;">
                 <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Phòng Học <span style="color: red;">*</span></label>
-                <select name="room" id="bulk_room" required class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
+                <select name="room" id="bulk_room" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
                     <option value="">-- Chọn phòng học --</option>
                     {% for r in rooms %}
                     <option value="{{ r.id }}">{{ r.room_code }} ({{ r.building }}) - Sức chứa: {{ r.capacity }}</option>
@@ -155,18 +157,18 @@
             <div style="display: flex; gap: 16px; margin-bottom: 16px;">
                 <div style="flex: 1;">
                     <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Từ Ngày <span style="color: red;">*</span></label>
-                    <input type="date" name="start_date" required class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
+                    <input type="date" name="start_date" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
                 </div>
                 <div style="flex: 1;">
                     <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Đến Ngày <span style="color: red;">*</span></label>
-                    <input type="date" name="end_date" required class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
+                    <input type="date" name="end_date" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
                 </div>
             </div>
             
             <div style="display: flex; gap: 16px; margin-bottom: 24px;">
                 <div style="flex: 1;">
                     <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Thứ (trong tuần) <span style="color: red;">*</span></label>
-                    <select name="day_of_week" required class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
+                    <select name="day_of_week" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
                         <option value="2">Thứ Hai</option>
                         <option value="3">Thứ Ba</option>
                         <option value="4">Thứ Tư</option>
@@ -178,11 +180,11 @@
                 </div>
                 <div style="flex: 1;">
                     <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Tiết Bắt Đầu <span style="color: red;">*</span></label>
-                    <input type="number" name="start_period" required min="1" max="10" value="1" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
+                    <input type="number" name="start_period" min="1" max="10" value="1" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
                 </div>
                 <div style="flex: 1;">
                     <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Tiết Kết Thúc <span style="color: red;">*</span></label>
-                    <input type="number" name="end_period" required min="1" max="10" value="3" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
+                    <input type="number" name="end_period" min="1" max="10" value="3" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
                 </div>
             </div>
             
@@ -208,7 +210,7 @@
             
             <div class="form-group" style="margin-bottom: 16px;">
                 <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Phòng Học <span style="color: red;">*</span></label>
-                <select name="room" id="edit_room" required class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
+                <select name="room" id="edit_room" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
                     <option value="">-- Chọn phòng học --</option>
                     {% for r in rooms %}
                     <option value="{{ r.id }}">{{ r.room_code }} ({{ r.building }})</option>
@@ -218,17 +220,17 @@
             
             <div class="form-group" style="margin-bottom: 16px;">
                 <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Ngày Học <span style="color: red;">*</span></label>
-                <input type="date" name="date" id="edit_date" required class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
+                <input type="date" name="date" id="edit_date" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
             </div>
             
             <div style="display: flex; gap: 16px; margin-bottom: 24px;">
                 <div style="flex: 1;">
                     <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Tiết Bắt Đầu <span style="color: red;">*</span></label>
-                    <input type="number" name="start_period" id="edit_start_period" required min="1" max="10" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
+                    <input type="number" name="start_period" id="edit_start_period" min="1" max="10" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
                 </div>
                 <div style="flex: 1;">
                     <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Tiết Kết Thúc <span style="color: red;">*</span></label>
-                    <input type="number" name="end_period" id="edit_end_period" required min="1" max="10" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
+                    <input type="number" name="end_period" id="edit_end_period" min="1" max="10" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
                 </div>
             </div>
             

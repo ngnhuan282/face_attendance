@@ -54,14 +54,24 @@
                     <td>{{ cc.teacher.user.get_full_name|default:cc.teacher.user.username }}</td>
                     <td>{{ cc.total_sessions }}</td>
                     <td>
-                        <a href="{% url 'reports:class' cc.pk %}" class="btn-action btn-action-view">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="18" y1="20" x2="18" y2="10"/>
-                                <line x1="12" y1="20" x2="12" y2="4"/>
-                                <line x1="6" y1="20" x2="6" y2="14"/>
-                            </svg>
-                            Xem Báo Cáo
-                        </a>
+                        <div style="display: flex; gap: 8px; justify-content: center;">
+                            <a href="{% url 'reports:class' cc.pk %}" class="btn-action btn-action-view" title="Xem Báo Cáo">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="20" x2="18" y2="10"/>
+                                    <line x1="12" y1="20" x2="12" y2="4"/>
+                                    <line x1="6" y1="20" x2="6" y2="14"/>
+                                </svg>
+                                Xem
+                            </a>
+                            <a href="{% url 'reports:export_class_report' cc.pk %}" class="btn-action" style="color: #10b981; background: rgba(16, 185, 129, 0.1);" title="Xuất Báo Cáo">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                Xuất
+                            </a>
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
