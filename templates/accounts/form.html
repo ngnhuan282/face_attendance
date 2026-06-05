@@ -2,7 +2,7 @@
 
 {% block title %}EduFace - {{ form_title }}{% endblock %}
 {% block page_title %}{{ form_title }}{% endblock %}
-{% block breadcrumb %}Sinh Viên / {{ form_title }}{% endblock %}
+{% block breadcrumb %}Tài Khoản / {{ form_title }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -92,13 +92,6 @@
 }
 
 .form-group { margin-bottom: 20px; }
-.has-error .form-control {
-    border-color: #ef4444 !important;
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
-}
-.has-error .form-label {
-    color: #ef4444 !important;
-}
 .form-label {
     display: block;
     font-size: 13px;
@@ -106,7 +99,6 @@
     color: var(--text-dark, #1e293b);
     margin-bottom: 6px;
 }
-.form-label .required { color: #ef4444; margin-left: 2px; }
 .form-control {
     width: 100%;
     padding: 10px 14px;
@@ -156,6 +148,13 @@
     font-weight:500; transition:all .2s;
 }
 .btn-cancel:hover { background:var(--bg-hover,#f1f5f9); color: var(--text-dark, #1e293b); border-color: var(--text-muted, #94a3b8); }
+.has-error .form-control {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+}
+.has-error .form-label {
+    color: #ef4444 !important;
+}
 </style>
 {% endblock %}
 
@@ -165,25 +164,23 @@
     <div class="form-card-header">
         <div class="form-card-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
             </svg>
         </div>
         <div>
             <h2 class="form-card-title">{{ form_title }}</h2>
-            <p class="form-card-desc">Vui lòng nhập đầy đủ thông tin sinh viên bên dưới.</p>
+            <p class="form-card-desc">Vui lòng nhập đầy đủ thông tin tài khoản bên dưới.</p>
         </div>
     </div>
 
-    <!-- Nếu là sinh viên đã tồn tại, hiển thị ảnh hiện tại -->
-    {% if student and student.photo %}
+    <!-- Nếu là giảng viên đã tồn tại và có avatar -->
+    {% if user_instance and user_instance.teacher and user_instance.teacher.avatar %}
     <div class="current-photo-container">
-        <img src="{{ student.photo.url }}" alt="{{ student.full_name }}" class="current-photo-img">
+        <img src="{{ user_instance.teacher.avatar.url }}" alt="{{ user_instance.get_full_name }}" class="current-photo-img">
         <div class="current-photo-info">
-            <span class="current-photo-label">Ảnh chân dung hiện tại</span>
-            <span class="current-photo-sub">Được sử dụng làm dữ liệu để nhận diện khuôn mặt tự động</span>
+            <span class="current-photo-label">Ảnh đại diện hiện tại</span>
+            <span class="current-photo-sub">Đang hiển thị trên hệ thống và các danh sách</span>
         </div>
     </div>
     {% endif %}
@@ -191,7 +188,6 @@
     <form method="post" enctype="multipart/form-data" id="main-form" novalidate>
         {% csrf_token %}
 
-        <!-- Render tất cả fields của form (dùng chung cho Student và StudentClass) -->
         {% for field in form %}
         <div class="form-group {% if field.errors %}has-error{% endif %} {% if field.field.widget.input_type == 'checkbox' %}form-check-wrap{% endif %}">
             {% if field.field.widget.input_type == 'checkbox' %}
@@ -201,13 +197,6 @@
                         {{ field.label }}
                     </label>
                 </div>
-            {% elif field.field.widget.input_type == 'file' %}
-                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {{ field }}
-                <div style="font-size:12px;color:var(--text-muted,#64748b);margin-top:4px;">
-                    Ảnh rõ mặt, đuôi .jpg / .png. Dùng để nhận diện tự động khi điểm danh.
-                </div>
-                <img id="photo-preview-new" class="photo-preview" style="display:none;" alt="preview">
             {% else %}
                 <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
                 {{ field }}
@@ -232,33 +221,42 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                 {{ submit_label }}
             </button>
-            <a href="javascript:history.back()" class="btn-cancel">
+            <a href="{% url cancel_url %}" class="btn-cancel">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 Hủy
             </a>
         </div>
     </form>
 </div>
-
 {% endblock %}
 
 {% block extra_js %}
 <script>
-// Preview ảnh ngay khi chọn
-const photoInput = document.getElementById('id_photo');
-const previewImg = document.getElementById('photo-preview-new');
-if (photoInput && previewImg) {
-    photoInput.addEventListener('change', function() {
-        const file = this.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = e => {
-                previewImg.src = e.target.result;
-                previewImg.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        }
-    });
-}
+document.addEventListener('DOMContentLoaded', function() {
+    const roleSelect = document.getElementById('id_role');
+    const teacherFields = [
+        document.getElementById('id_department'),
+        document.getElementById('id_teacher_id'),
+        document.getElementById('id_phone'),
+        document.getElementById('id_avatar')
+    ];
+    
+    function toggleTeacherFields() {
+        if (!roleSelect) return;
+        const isTeacher = roleSelect.value === 'teacher';
+        teacherFields.forEach(field => {
+            if (!field) return;
+            const group = field.closest('.form-group');
+            if (group) {
+                group.style.display = isTeacher ? 'block' : 'none';
+            }
+        });
+    }
+    
+    if (roleSelect) {
+        roleSelect.addEventListener('change', toggleTeacherFields);
+        toggleTeacherFields(); // run initially
+    }
+});
 </script>
 {% endblock %}

@@ -188,6 +188,10 @@ def courseclass_list(request):
         'course', 'semester', 'teacher'
     ).all().order_by('id')
     
+    # GV chỉ được xem lớp mình dạy
+    if request.is_teacher_group and not request.is_admin_group:
+        course_classes = course_classes.filter(teacher__user=request.user)
+    
     # Search
     search_query = request.GET.get('search', '')
     if search_query:
@@ -212,8 +216,11 @@ def courseclass_list(request):
     courses = Course.objects.select_related('department').all()
     teachers = Teacher.objects.all()
     # Stats
-    total_capacity = CourseClass.objects.aggregate(total=models.Sum('max_students'))['total'] or 0
-    total_enrolled = Enrollment.objects.filter(is_active=True).count()
+    stats_classes = CourseClass.objects.all()
+    if request.is_teacher_group and not request.is_admin_group:
+        stats_classes = stats_classes.filter(teacher__user=request.user)
+    total_capacity = stats_classes.aggregate(total=models.Sum('max_students'))['total'] or 0
+    total_enrolled = Enrollment.objects.filter(is_active=True, course_class__in=stats_classes).count()
     
     context = {
         'active_menu': 'courseclasses',

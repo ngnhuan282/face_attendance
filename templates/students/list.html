@@ -19,6 +19,43 @@
     justify-content: center;
 }
 #deleteStudentModal.show { display: flex !important; }
+
+/* Tabs Navigation */
+.tab-container {
+    display: flex;
+    gap: 8px;
+    border-bottom: 2px solid var(--border-color, #e5e7eb);
+    margin-bottom: 24px;
+    padding-bottom: 0;
+}
+.tab-link {
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-light, #6b7280);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+    margin-bottom: -2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.tab-link:hover {
+    color: var(--text-dark, #111827);
+}
+.tab-link.active {
+    color: var(--primary-green, #1a6b3c);
+    border-bottom-color: var(--primary-green, #1a6b3c);
+}
+.tab-link svg {
+    width: 16px;
+    height: 16px;
+    transition: stroke 0.2s ease;
+}
+.tab-link.active svg {
+    stroke: var(--primary-green, #1a6b3c);
+}
 </style>
 {% endblock %}
 
@@ -66,6 +103,18 @@
     </div>
 </div>
 
+<!-- Navigation Tabs -->
+<div class="tab-container">
+    <a href="{% url 'students:list' %}" class="tab-link active">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        Danh Sách Sinh Viên
+    </a>
+    <a href="{% url 'students:class_list' %}" class="tab-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Lớp Sinh Hoạt
+    </a>
+</div>
+
 <!-- Filter Bar -->
 <div class="table-card">
     <div class="table-card-header">
@@ -94,10 +143,6 @@
             </form>
 
             <div style="display:flex;gap:8px;">
-                <a href="{% url 'students:class_list' %}" class="btn-primary" style="padding:8px 16px;font-size:13px;gap:6px;background:var(--sidebar-link-active,#6366f1);text-decoration:none;display:flex;align-items:center;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                    Lớp Sinh Hoạt
-                </a>
                 <a href="{% url 'students:create' %}" class="btn-primary" style="padding:8px 16px;font-size:13px;gap:6px;text-decoration:none;display:flex;align-items:center;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     Thêm Sinh Viên

@@ -4,6 +4,21 @@
 {% block page_title %}Quản Lý Tài Khoản{% endblock %}
 {% block breadcrumb %}Quản Lý / Tài Khoản{% endblock %}
 
+{% block extra_css %}
+<style>
+#deleteAccountModal {
+    display: none;
+    position: fixed; top:0; left:0; width:100%; height:100%;
+    background: rgba(0,0,0,0.45);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+#deleteAccountModal.show { display: flex !important; }
+.photo-thumb { width:36px; height:36px; border-radius:50%; object-fit:cover; }
+</style>
+{% endblock %}
+
 {% block page_content %}
 
 <!-- Stats -->
@@ -13,7 +28,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </div>
         <div class="stat-info">
-            <div class="stat-value">32</div>
+            <div class="stat-value">{{ total_count }}</div>
             <div class="stat-label">Tổng Tài Khoản</div>
         </div>
     </div>
@@ -22,7 +37,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         </div>
         <div class="stat-info">
-            <div class="stat-value">5</div>
+            <div class="stat-value">{{ admin_count }}</div>
             <div class="stat-label">Quản Trị Viên</div>
         </div>
     </div>
@@ -31,7 +46,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         </div>
         <div class="stat-info">
-            <div class="stat-value">27</div>
+            <div class="stat-value">{{ teacher_count }}</div>
             <div class="stat-label">Giảng Viên</div>
         </div>
     </div>
@@ -40,7 +55,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         </div>
         <div class="stat-info">
-            <div class="stat-value">30</div>
+            <div class="stat-value">{{ active_count }}</div>
             <div class="stat-label">Đang Hoạt Động</div>
         </div>
     </div>
@@ -59,10 +74,10 @@
             </div>
             <select class="filter-select">
                 <option value="">Tất cả vai trò</option>
-                <option>Quản Trị Viên</option>
-                <option>Giảng Viên</option>
+                <option value="admin">Quản Trị Viên</option>
+                <option value="teacher">Giảng Viên</option>
             </select>
-            <a href="#" class="btn-primary" style="padding:8px 16px;font-size:13px;gap:6px;">
+            <a href="{% url 'accounts:create' %}" class="btn-primary" style="padding:8px 16px;font-size:13px;gap:6px;text-decoration:none;display:flex;align-items:center;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Thêm Tài Khoản
             </a>
@@ -83,108 +98,225 @@
                 </tr>
             </thead>
             <tbody>
+                {% for u in users %}
                 <tr>
                     <td>
                         <div class="cell-user">
-                            <div class="cell-avatar">NM</div>
-                            <div><div class="cell-name">Nguyễn Văn Minh</div><div class="cell-sub">Khoa CNTT</div></div>
+                            {% if u.teacher and u.teacher.avatar %}
+                            <img src="{{ u.teacher.avatar.url }}" alt="{{ u.get_full_name }}" class="photo-thumb">
+                            {% else %}
+                            <div class="cell-avatar">{{ u.first_name|slice:":1"|upper }}{{ u.last_name|slice:":1"|upper }}</div>
+                            {% endif %}
+                            <div>
+                                <div class="cell-name">{{ u.get_full_name|default:u.username }}</div>
+                                <div class="cell-sub">
+                                    {% if u.teacher %}
+                                        {{ u.teacher.department.name }}
+                                    {% else %}
+                                        Hệ thống
+                                    {% endif %}
+                                </div>
+                            </div>
                         </div>
                     </td>
-                    <td>nguyenvanminh</td>
-                    <td>nguyenvanminh@edu.vn</td>
-                    <td><span class="badge badge-purple">Quản Trị Viên</span></td>
-                    <td><span class="badge badge-green"><span class="badge-dot"></span>Hoạt Động</span></td>
-                    <td>01/09/2023</td>
+                    <td>{{ u.username }}</td>
+                    <td>{{ u.email|default:"—" }}</td>
+                    <td>
+                        {% if u.teacher %}
+                        <span class="badge badge-blue">Giảng Viên</span>
+                        {% else %}
+                        <span class="badge badge-purple">Quản Trị Viên</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if u.is_active %}
+                        <span class="badge badge-green"><span class="badge-dot"></span>Hoạt Động</span>
+                        {% else %}
+                        <span class="badge badge-gray"><span class="badge-dot"></span>Vô Hiệu Hóa</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ u.date_joined|date:"d/m/Y" }}</td>
                     <td>
                         <div class="action-btns">
-                            <a href="#" class="btn-action btn-action-edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Sửa</a>
-                            <a href="#" class="btn-action btn-action-delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>Xóa</a>
+                            <a href="{% url 'accounts:edit' u.pk %}" class="btn-action btn-action-edit">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                </svg>
+                                Sửa
+                            </a>
+                            {% if u != request.user %}
+                            <button type="button" class="btn-action btn-action-delete" style="cursor:pointer;" onclick="openDeleteAccountModal('{% url 'accounts:delete' u.pk %}', '{{ u.get_full_name|escapejs }} ({{ u.username|escapejs }})')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"/>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                                </svg>
+                                Xóa
+                            </button>
+                            {% endif %}
                         </div>
                     </td>
                 </tr>
+                {% empty %}
                 <tr>
-                    <td>
-                        <div class="cell-user">
-                            <div class="cell-avatar">TH</div>
-                            <div><div class="cell-name">Trần Thị Hoa</div><div class="cell-sub">Khoa CNTT</div></div>
-                        </div>
-                    </td>
-                    <td>tranthihoa</td>
-                    <td>tranthihoa@edu.vn</td>
-                    <td><span class="badge badge-blue">Giảng Viên</span></td>
-                    <td><span class="badge badge-green"><span class="badge-dot"></span>Hoạt Động</span></td>
-                    <td>05/09/2023</td>
-                    <td>
-                        <div class="action-btns">
-                            <a href="#" class="btn-action btn-action-edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Sửa</a>
-                            <a href="#" class="btn-action btn-action-delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>Xóa</a>
-                        </div>
+                    <td colspan="7" style="text-align:center;padding:48px;color:var(--text-muted);">
+                        Chưa có tài khoản nào.
                     </td>
                 </tr>
-                <tr>
-                    <td>
-                        <div class="cell-user">
-                            <div class="cell-avatar">LC</div>
-                            <div><div class="cell-name">Lê Văn Cường</div><div class="cell-sub">Khoa KTPM</div></div>
-                        </div>
-                    </td>
-                    <td>levancuong</td>
-                    <td>levancuong@edu.vn</td>
-                    <td><span class="badge badge-blue">Giảng Viên</span></td>
-                    <td><span class="badge badge-green"><span class="badge-dot"></span>Hoạt Động</span></td>
-                    <td>10/09/2023</td>
-                    <td>
-                        <div class="action-btns">
-                            <a href="#" class="btn-action btn-action-edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Sửa</a>
-                            <a href="#" class="btn-action btn-action-delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>Xóa</a>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="cell-user">
-                            <div class="cell-avatar">PL</div>
-                            <div><div class="cell-name">Phạm Thị Lan</div><div class="cell-sub">Khoa HTTT</div></div>
-                        </div>
-                    </td>
-                    <td>phamthilan</td>
-                    <td>phamthilan@edu.vn</td>
-                    <td><span class="badge badge-blue">Giảng Viên</span></td>
-                    <td><span class="badge badge-red"><span class="badge-dot"></span>Vô Hiệu Hóa</span></td>
-                    <td>15/09/2023</td>
-                    <td>
-                        <div class="action-btns">
-                            <a href="#" class="btn-action btn-action-edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Sửa</a>
-                            <a href="#" class="btn-action btn-action-delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>Xóa</a>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="cell-user">
-                            <div class="cell-avatar">HT</div>
-                            <div><div class="cell-name">Hoàng Văn Tuấn</div><div class="cell-sub">Khoa MMT</div></div>
-                        </div>
-                    </td>
-                    <td>hoangvantuan</td>
-                    <td>hoangvantuan@edu.vn</td>
-                    <td><span class="badge badge-blue">Giảng Viên</span></td>
-                    <td><span class="badge badge-green"><span class="badge-dot"></span>Hoạt Động</span></td>
-                    <td>20/09/2023</td>
-                    <td>
-                        <div class="action-btns">
-                            <a href="#" class="btn-action btn-action-edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Sửa</a>
-                            <a href="#" class="btn-action btn-action-delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>Xóa</a>
-                        </div>
-                    </td>
-                </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
     <div class="table-card-footer">
-        <span>Hiển thị 1–5 trong 32 tài khoản</span>
-        <span>Trang 1 / 7</span>
+        <span>Hiển thị {{ users|length }} tài khoản</span>
     </div>
 </div>
 
+<!-- Delete Account Modal -->
+<div id="deleteAccountModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.45); z-index:1000; align-items:center; justify-content:center;">
+    <div class="card" style="max-width:440px;width:100%;text-align:center;padding:40px 32px;">
+        <div style="width:68px;height:68px;border-radius:50%;background:#fef2f2;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+        </div>
+        <h2 style="font-size:20px;font-weight:700;color:var(--text-dark);margin:0 0 10px;">Xác Nhận Xóa</h2>
+        <p style="font-size:14px;color:var(--text-muted);margin:0 0 6px;line-height:1.6;">
+            Bạn có chắc chắn muốn xóa tài khoản<br>
+            <strong id="deleteAccountName" style="color:var(--text-dark);"></strong>?
+        </p>
+        <p style="font-size:12px;color:#ef4444;margin:0 0 28px;">Hành động này không thể hoàn tác.</p>
+
+        <div id="deleteAccountError" style="display:none;padding:10px 14px;background:#fee2e2;border:1.5px solid #fca5a5;border-radius:6px;margin-bottom:16px;color:#dc2626;font-size:13px;"></div>
+
+        <div style="display:flex;gap:12px;justify-content:center;">
+            <button type="button" onclick="closeDeleteAccountModal()"
+                style="flex:1;padding:10px 0;border:1px solid var(--border,#e5e7eb);border-radius:8px;background:transparent;color:var(--text-muted);font-size:14px;font-weight:500;cursor:pointer;">
+                Hủy
+            </button>
+            <button type="button" id="deleteAccountConfirmBtn" onclick="submitDeleteAccount()"
+                style="flex:1;padding:10px 0;border:none;border-radius:8px;background:#ef4444;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">
+                Xác Nhận Xóa
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let _deleteAccountUrl = '';
+
+function openDeleteAccountModal(url, name) {
+    _deleteAccountUrl = url;
+    document.getElementById('deleteAccountName').textContent = name;
+    document.getElementById('deleteAccountError').style.display = 'none';
+    document.getElementById('deleteAccountConfirmBtn').disabled = false;
+    document.getElementById('deleteAccountConfirmBtn').textContent = 'Xác Nhận Xóa';
+    const modal = document.getElementById('deleteAccountModal');
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+}
+
+function closeDeleteAccountModal() {
+    const modal = document.getElementById('deleteAccountModal');
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+}
+
+function getCsrfToken() {
+    return document.cookie.split(';').map(c => c.trim())
+        .find(c => c.startsWith('csrftoken='))?.split('=')[1] || '';
+}
+
+function submitDeleteAccount() {
+    const btn = document.getElementById('deleteAccountConfirmBtn');
+    const errorDiv = document.getElementById('deleteAccountError');
+    btn.disabled = true;
+    btn.textContent = 'Đang xóa...';
+    errorDiv.style.display = 'none';
+
+    fetch(_deleteAccountUrl, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCsrfToken(),
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(res => {
+        if (!res.ok) {
+            return res.json().then(data => {
+                throw new Error(data.error || 'Lỗi không xác định.');
+            });
+        }
+        return res.json();
+    })
+    .then(data => {
+        if (data.success) {
+            closeDeleteAccountModal();
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        } else {
+            errorDiv.textContent = data.error || 'Lỗi không xác định.';
+            errorDiv.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Xác Nhận Xóa';
+        }
+    })
+    .catch(error => {
+        errorDiv.textContent = error.message || 'Lỗi kết nối. Vui lòng thử lại.';
+        errorDiv.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Xác Nhận Xóa';
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.querySelector('.search-input');
+    const roleSelect = document.querySelector('.filter-select');
+    const rows = document.querySelectorAll('.data-table tbody tr');
+
+    function filterTable() {
+        const q = searchInput.value.toLowerCase().trim();
+        const role = roleSelect.value;
+
+        rows.forEach(row => {
+            // Check empty state row
+            if (row.cells.length === 1) return;
+
+            const name = row.querySelector('.cell-name')?.textContent.toLowerCase() || '';
+            const username = row.cells[1]?.textContent.toLowerCase() || '';
+            const email = row.cells[2]?.textContent.toLowerCase() || '';
+            const rowRole = row.querySelector('.badge-purple, .badge-blue')?.textContent.trim() || '';
+
+            let matchSearch = name.includes(q) || username.includes(q) || email.includes(q);
+            let matchRole = true;
+            if (role === 'admin') {
+                matchRole = rowRole.includes('Quản Trị');
+            } else if (role === 'teacher') {
+                matchRole = rowRole.includes('Giảng Viên');
+            }
+
+            if (matchSearch && matchRole) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    if (searchInput) searchInput.addEventListener('input', filterTable);
+    if (roleSelect) roleSelect.addEventListener('change', filterTable);
+});
+
+// Close delete modal on background click
+document.getElementById('deleteAccountModal').addEventListener('click', function(e) {
+    if (e.target === this) closeDeleteAccountModal();
+});
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeDeleteAccountModal();
+});
+</script>
 {% endblock %}

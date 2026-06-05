@@ -38,6 +38,21 @@ class StudentClassForm(forms.ModelForm):
             'class_name': 'Tên lớp',
             'intake_year': 'Năm nhập học',
         }
+        error_messages = {
+            'department': {
+                'required': 'Ngành không được để trống.',
+            },
+            'class_code': {
+                'required': 'Mã lớp không được để trống.',
+                'unique': 'Mã lớp này đã tồn tại.',
+            },
+            'class_name': {
+                'required': 'Tên lớp không được để trống.',
+            },
+            'intake_year': {
+                'required': 'Năm nhập học không được để trống.',
+            },
+        }
 
 
 class StudentForm(forms.ModelForm):
@@ -98,4 +113,16 @@ class StudentForm(forms.ModelForm):
             'phone': 'Số điện thoại',
             'photo': 'Ảnh khuôn mặt',
             'is_active': 'Đang học',
+        }
+        error_messages = {
+            'student_class': {
+                'required': 'Lớp không được để trống.',
+            },
+            'student_id': {
+                'required': 'Mã sinh viên không được để trống.',
+                'unique': 'Mã sinh viên này đã tồn tại.',
+            },
+            'full_name': {
+                'required': 'Họ tên không được để trống.',
+            },
         }
