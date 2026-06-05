@@ -4,6 +4,56 @@
 {% block page_title %}Lớp {{ sc.class_code }}{% endblock %}
 {% block breadcrumb %}Sinh Viên / Lớp Sinh Hoạt / {{ sc.class_code }}{% endblock %}
 
+{% block extra_css %}
+<style>
+/* CSS for student selection modal and delete modal */
+#addStudentModal, #deleteStudentModal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease-out;
+}
+#addStudentModal.show, #deleteStudentModal.show {
+    display: flex !important;
+}
+#addStudentModal .card, #deleteStudentModal .card {
+    transform: scale(0.95);
+    transition: transform 0.2s ease-out;
+    background: #ffffff;
+    border: none;
+}
+#addStudentModal.show .card, #deleteStudentModal.show .card {
+    transform: scale(1);
+}
+#studentSelect option {
+    padding: 8px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 2px;
+}
+#studentSelect option:checked {
+    background-color: var(--accent, #3b82f6) !important;
+    color: white !important;
+}
+#studentSelect option:hover {
+    background-color: #f1f5f9;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+</style>
+{% endblock %}
+
 {% block page_content %}
 
 <!-- Thông tin lớp -->
@@ -46,7 +96,7 @@
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 Sửa Lớp
             </a>
-            <a href="{% url 'students:create' %}" class="btn-primary" style="padding:8px 16px;font-size:13px;gap:6px;text-decoration:none;display:flex;align-items:center;">
+            <a href="#" onclick="openAddStudentModal(); return false;" class="btn-primary" style="padding:8px 16px;font-size:13px;gap:6px;text-decoration:none;display:flex;align-items:center;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Thêm Sinh Viên
             </a>
@@ -104,6 +154,11 @@
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                 Sửa
                             </a>
+                            <button type="button" class="btn-action btn-action-delete"
+                                onclick="openDeleteModal('{% url 'students:class_remove_student' sv.pk %}', '{{ sv.full_name|escapejs }} ({{ sv.student_id|escapejs }})')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                Xóa
+                            </button>
                         </div>
                     </td>
                 </tr>
@@ -111,7 +166,7 @@
                 <tr>
                     <td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);">
                         Lớp này chưa có sinh viên nào.
-                        <a href="{% url 'students:create' %}" style="color:var(--accent);">Thêm sinh viên</a>
+                        <a href="#" onclick="openAddStudentModal(); return false;" style="color:var(--accent);">Thêm sinh viên</a>
                     </td>
                 </tr>
                 {% endfor %}
@@ -127,4 +182,235 @@
     </div>
 </div>
 
+<!-- Add Existing Student Modal -->
+<div id="addStudentModal">
+    <div class="card" style="max-width:540px; width:100%; padding:32px; border-radius:12px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h2 style="font-size:20px; font-weight:700; color:var(--text-dark); margin:0;">Thêm Sinh Viên Vào Lớp</h2>
+            <button type="button" onclick="closeAddStudentModal()" style="background:none; border:none; font-size:24px; cursor:pointer; color:var(--text-muted); line-height:1;">&times;</button>
+        </div>
+        
+        <form method="POST" action="{% url 'students:class_add_student' sc.pk %}">
+            {% csrf_token %}
+            <div style="margin-bottom:16px;">
+                <label for="studentSearchInput" style="display:block; font-size:13px; font-weight:600; color:var(--text-muted); margin-bottom:6px;">Tìm kiếm sinh viên:</label>
+                <input type="text" id="studentSearchInput" placeholder="Nhập tên hoặc MSSV để lọc..." 
+                    style="width:100%; padding:10px 12px; border:1px solid var(--border-color, #e5e7eb); border-radius:6px; font-size:14px; outline:none; transition:border-color 0.2s;"
+                    onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border-color)'">
+            </div>
+            
+            <div style="margin-bottom:24px;">
+                <label for="studentSelect" style="display:block; font-size:13px; font-weight:600; color:var(--text-muted); margin-bottom:6px;">Danh sách sinh viên hiện có ({{ available_students|length }}):</label>
+                <select id="studentSelect" name="student_id" size="10" 
+                    style="width:100%; border:1px solid var(--border-color, #e5e7eb); border-radius:6px; font-size:14px; outline:none; padding:4px; font-family:inherit; transition:border-color 0.2s;"
+                    onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border-color)'">
+                    {% for s in available_students %}
+                    <option value="{{ s.pk }}" data-search="{{ s.full_name|lower }} {{ s.student_id }}">
+                        [{{ s.student_id }}] {{ s.full_name }} &nbsp;—&nbsp; Lớp: {{ s.student_class.class_code|default:"Chưa có lớp" }}
+                    </option>
+                    {% empty %}
+                    <option value="" disabled style="color:var(--text-muted); padding:10px; text-align:center;">Không có sinh viên nào khác khả dụng</option>
+                    {% endfor %}
+                </select>
+                <p style="font-size:12px; color:var(--text-muted); margin-top:6px; line-height:1.4;">
+                    * Lưu ý: Chọn sinh viên từ danh sách trên để chuyển sang lớp **{{ sc.class_code }}**.
+                </p>
+            </div>
+            
+            <div style="display:flex; gap:12px; justify-content:flex-end;">
+                <button type="button" onclick="closeAddStudentModal()"
+                    style="padding:10px 20px; border:1px solid var(--border-color, #e5e7eb); border-radius:8px; background:transparent; color:var(--text-muted); font-size:14px; font-weight:500; cursor:pointer;">
+                    Hủy
+                </button>
+                <button type="submit" class="btn-primary"
+                    style="padding:10px 24px; border:none; border-radius:8px; background:var(--accent, #3b82f6); color:#fff; font-size:14px; font-weight:600; cursor:pointer;">
+                    Xác Nhận Thêm
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Student Modal -->
+<div id="deleteStudentModal">
+    <div class="card" style="max-width:440px;width:100%;text-align:center;padding:40px 32px;border-radius:12px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);">
+        <div style="width:68px;height:68px;border-radius:50%;background:#fff7ed;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+        </div>
+        <h2 style="font-size:20px;font-weight:700;color:var(--text-dark);margin:0 0 10px;">Xóa Khỏi Lớp</h2>
+        <p style="font-size:14px;color:var(--text-muted);margin:0 0 6px;line-height:1.6;">
+            Bạn có chắc chắn muốn xóa sinh viên<br>
+            <strong id="deleteStudentName" style="color:var(--text-dark);"></strong><br>khỏi lớp **{{ sc.class_code }}**?
+        </p>
+        <p style="font-size:12px;color:var(--text-muted);margin:0 0 28px;">Lưu ý: Sinh viên này vẫn sẽ tồn tại trong hệ thống.</p>
+
+        <div id="deleteStudentError" style="display:none;padding:10px 14px;background:#fee2e2;border:1.5px solid #fca5a5;border-radius:6px;margin-bottom:16px;color:#dc2626;font-size:13px;"></div>
+
+        <div style="display:flex;gap:12px;justify-content:center;">
+            <button type="button" id="deleteStudentCancelBtn" onclick="closeDeleteModal()"
+                style="flex:1;padding:10px 0;border:1px solid var(--border,#e5e7eb);border-radius:8px;background:transparent;color:var(--text-muted);font-size:14px;font-weight:500;cursor:pointer;">
+                Hủy
+            </button>
+            <button type="button" id="deleteStudentConfirmBtn" onclick="submitDelete()"
+                style="flex:1;padding:10px 0;border:none;border-radius:8px;background:#f97316;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">
+                Xác Nhận Xóa
+            </button>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
+
+{% block extra_js %}
+<script>
+let _deleteUrl = '';
+
+function openDeleteModal(url, name) {
+    _deleteUrl = url;
+    document.getElementById('deleteStudentName').textContent = name;
+    document.getElementById('deleteStudentError').style.display = 'none';
+    document.getElementById('deleteStudentConfirmBtn').disabled = false;
+    document.getElementById('deleteStudentConfirmBtn').textContent = 'Xác Nhận Xóa';
+    const modal = document.getElementById('deleteStudentModal');
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+}
+
+function closeDeleteModal() {
+    const modal = document.getElementById('deleteStudentModal');
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+}
+
+function getCsrfToken() {
+    return document.cookie.split(';').map(c => c.trim())
+        .find(c => c.startsWith('csrftoken='))?.split('=')[1] || '';
+}
+
+function submitDelete() {
+    const btn = document.getElementById('deleteStudentConfirmBtn');
+    const errorDiv = document.getElementById('deleteStudentError');
+    btn.disabled = true;
+    btn.textContent = 'Đang xóa...';
+    errorDiv.style.display = 'none';
+
+    fetch(_deleteUrl, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCsrfToken(),
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(res => {
+        if (!res.ok) {
+            return res.json().then(data => {
+                throw new Error(data.error || 'Lỗi không xác định.');
+            });
+        }
+        return res.json();
+    })
+    .then(data => {
+        if (data.success) {
+            closeDeleteModal();
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        } else {
+            errorDiv.textContent = data.error || 'Lỗi không xác định.';
+            errorDiv.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Xác Nhận Xóa';
+        }
+    })
+    .catch(error => {
+        errorDiv.textContent = error.message || 'Lỗi kết nối. Vui lòng thử lại.';
+        errorDiv.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Xác Nhận Xóa';
+    });
+}
+
+function openAddStudentModal() {
+    const modal = document.getElementById('addStudentModal');
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+    document.getElementById('studentSearchInput').value = '';
+    filterStudents();
+    document.getElementById('studentSearchInput').focus();
+}
+
+function closeAddStudentModal() {
+    const modal = document.getElementById('addStudentModal');
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+}
+
+function filterStudents() {
+    const query = document.getElementById('studentSearchInput').value.toLowerCase().trim();
+    const select = document.getElementById('studentSelect');
+    const options = select.querySelectorAll('option');
+    let visibleCount = 0;
+    
+    options.forEach(opt => {
+        if (opt.value === "") return; // Skip empty/disabled
+        const searchData = opt.getAttribute('data-search') || '';
+        if (searchData.includes(query)) {
+            opt.style.display = 'block';
+            visibleCount++;
+        } else {
+            opt.style.display = 'none';
+            if (opt.selected) {
+                opt.selected = false;
+            }
+        }
+    });
+    
+    let emptyOption = document.getElementById('noResultsOption');
+    if (visibleCount === 0) {
+        if (!emptyOption) {
+            emptyOption = document.createElement('option');
+            emptyOption.id = 'noResultsOption';
+            emptyOption.disabled = true;
+            emptyOption.style.textAlign = 'center';
+            emptyOption.style.padding = '10px';
+            emptyOption.style.color = 'var(--text-muted)';
+            emptyOption.textContent = 'Không tìm thấy sinh viên phù hợp';
+            select.appendChild(emptyOption);
+        }
+    } else if (emptyOption) {
+        emptyOption.remove();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('studentSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', filterStudents);
+    }
+    
+    const addModal = document.getElementById('addStudentModal');
+    if (addModal) {
+        addModal.addEventListener('click', function(e) {
+            if (e.target === this) closeAddStudentModal();
+        });
+    }
+
+    const deleteModal = document.getElementById('deleteStudentModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('click', function(e) {
+            if (e.target === this) closeDeleteModal();
+        });
+    }
+    
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeAddStudentModal();
+            closeDeleteModal();
+        }
+    });
+});
+</script>
+{% endblock %}
+

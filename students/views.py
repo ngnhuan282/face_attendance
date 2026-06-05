@@ -123,7 +123,7 @@ def student_edit(request, pk):
     })
 
 
-@group_required(ADMIN_GROUP_NAME)
+@group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
 def student_delete(request, pk):
     """Xóa sinh viên (chỉ Admin) – chỉ chấp nhận POST qua AJAX."""
     student = get_object_or_404(Student, pk=pk)
@@ -155,9 +155,16 @@ def studentclass_list(request):
             Q(class_code__icontains=q) | Q(class_name__icontains=q)
         )
 
+    # Phân trang – 10 dòng / trang
+    paginator = Paginator(qs, 10)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+
     return render(request, 'students/class_list.html', {
         'active_menu': 'students',
-        'classes': qs,
+        'classes': page_obj,
+        'page_obj': page_obj,
+        'paginator': paginator,
         'q': q,
     })
 
@@ -211,7 +218,7 @@ def studentclass_edit(request, pk):
     })
 
 
-@group_required(ADMIN_GROUP_NAME)
+@group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
 def studentclass_delete(request, pk):
     """Xóa lớp sinh hoạt (chỉ Admin, không xóa được nếu còn sinh viên) – chỉ chấp nhận POST qua AJAX."""
     sc = get_object_or_404(StudentClass, pk=pk)
@@ -237,9 +244,51 @@ def studentclass_detail(request, pk):
         pk=pk
     )
     students = sc.students.order_by('full_name')
+    # Lấy tất cả sinh viên không thuộc lớp này để hiển thị trong phần thêm sinh viên
+    available_students = Student.objects.exclude(student_class=sc).select_related('student_class').order_by('student_id')
 
     return render(request, 'students/class_detail.html', {
         'active_menu': 'students',
         'sc': sc,
         'students': students,
+        'available_students': available_students,
     })
+
+
+@group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
+def studentclass_add_student(request, pk):
+    """Thêm sinh viên hiện có vào lớp sinh hoạt."""
+    sc = get_object_or_404(StudentClass, pk=pk)
+    if request.method == 'POST':
+        student_id = request.POST.get('student_id')
+        if student_id:
+            try:
+                student = Student.objects.select_related('student_class').get(pk=student_id)
+                old_class = student.student_class
+                student.student_class = sc
+                student.save()
+                if old_class:
+                    messages.success(request, f'Đã chuyển sinh viên {student.full_name} ({student.student_id}) từ lớp {old_class.class_code} sang lớp {sc.class_code} thành công.')
+                else:
+                    messages.success(request, f'Đã thêm sinh viên {student.full_name} ({student.student_id}) vào lớp {sc.class_code} thành công.')
+            except Student.DoesNotExist:
+                messages.error(request, 'Không tìm thấy sinh viên đã chọn.')
+        else:
+            messages.error(request, 'Vui lòng chọn một sinh viên.')
+    return redirect('students:class_detail', pk=pk)
+
+
+@group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
+def studentclass_remove_student(request, pk):
+    """Xóa sinh viên khỏi lớp sinh hoạt (set student_class = None) – chỉ chấp nhận POST qua AJAX."""
+    student = get_object_or_404(Student, pk=pk)
+    if request.method == 'POST':
+        old_class = student.student_class
+        student.student_class = None
+        student.save()
+        messages.success(request, f'Đã xóa sinh viên {student.full_name} ({student.student_id}) khỏi lớp {old_class.class_code if old_class else ""}.')
+        return JsonResponse({'success': True, 'message': f'Đã xóa sinh viên {student.full_name} khỏi lớp.'})
+
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+

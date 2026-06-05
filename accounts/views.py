@@ -15,16 +15,43 @@ from .forms import AccountForm, AccountEditForm
 def account_list(request):
     """Trang quản lý tài khoản – chỉ Admin."""
     from django.db.models import Q
+    from django.core.paginator import Paginator
+    
+    q = request.GET.get('q', '').strip()
+    role = request.GET.get('role', '').strip()
+    
     users = User.objects.prefetch_related('groups', 'teacher', 'teacher__department').all().order_by('id')
     
-    total_count = users.count()
-    admin_count = users.filter(Q(is_superuser=True) | Q(groups__name=ADMIN_GROUP_NAME)).distinct().count()
-    teacher_count = users.filter(groups__name=TEACHER_GROUP_NAME).distinct().count()
-    active_count = users.filter(is_active=True).count()
+    if q:
+        users = users.filter(
+            Q(username__icontains=q) |
+            Q(first_name__icontains=q) |
+            Q(last_name__icontains=q) |
+            Q(email__icontains=q)
+        )
+        
+    if role == 'admin':
+        users = users.filter(Q(is_superuser=True) | Q(groups__name=ADMIN_GROUP_NAME)).distinct()
+    elif role == 'teacher':
+        users = users.filter(groups__name=TEACHER_GROUP_NAME).distinct()
+        
+    total_count = User.objects.count()
+    admin_count = User.objects.filter(Q(is_superuser=True) | Q(groups__name=ADMIN_GROUP_NAME)).distinct().count()
+    teacher_count = User.objects.filter(groups__name=TEACHER_GROUP_NAME).distinct().count()
+    active_count = User.objects.filter(is_active=True).count()
+    
+    # Pagination - 10 rows / page
+    paginator = Paginator(users, 10)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
     
     return render(request, 'accounts/list.html', {
         'active_menu': 'accounts',
-        'users': users,
+        'users': page_obj,
+        'page_obj': page_obj,
+        'paginator': paginator,
+        'q': q,
+        'role': role,
         'total_count': total_count,
         'admin_count': admin_count,
         'teacher_count': teacher_count,

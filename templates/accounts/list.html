@@ -68,15 +68,20 @@
             <div class="table-card-title">Danh Sách Tài Khoản</div>
         </div>
         <div class="table-toolbar">
-            <div class="search-input-wrap">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input class="search-input" type="text" placeholder="Tìm tên, email...">
-            </div>
-            <select class="filter-select">
-                <option value="">Tất cả vai trò</option>
-                <option value="admin">Quản Trị Viên</option>
-                <option value="teacher">Giảng Viên</option>
-            </select>
+            <form method="get" style="display:flex;gap:10px;align-items:center;">
+                <div class="search-input-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input class="search-input" type="text" name="q" value="{{ q }}" placeholder="Tìm tên, email...">
+                </div>
+                <select class="filter-select" name="role" onchange="this.form.submit()">
+                    <option value="">Tất cả vai trò</option>
+                    <option value="admin" {% if role == 'admin' %}selected{% endif %}>Quản Trị Viên</option>
+                    <option value="teacher" {% if role == 'teacher' %}selected{% endif %}>Giảng Viên</option>
+                </select>
+                {% if q or role %}
+                <a href="{% url 'accounts:list' %}" style="font-size:13px;color:var(--text-muted);text-decoration:none;">Xóa lọc</a>
+                {% endif %}
+            </form>
             <a href="{% url 'accounts:create' %}" class="btn-primary" style="padding:8px 16px;font-size:13px;gap:6px;text-decoration:none;display:flex;align-items:center;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Thêm Tài Khoản
@@ -167,8 +172,29 @@
             </tbody>
         </table>
     </div>
-    <div class="table-card-footer">
-        <span>Hiển thị {{ users|length }} tài khoản</span>
+    <div class="table-card-footer" style="justify-content: space-between; align-items: center; display: flex;">
+        <span>Hiển thị {{ users|length }} / {{ paginator.count }} tài khoản</span>
+        {% if page_obj.has_other_pages %}
+        <div style="display: flex; gap: 8px; align-items: center;">
+            {% if page_obj.has_previous %}
+            <a href="?page=1{% if q %}&q={{ q }}{% endif %}{% if role %}&role={{ role }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Về đầu">&laquo;</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if role %}&role={{ role }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Trước">&lsaquo;</a>
+            {% else %}
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&laquo;</span>
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&lsaquo;</span>
+            {% endif %}
+
+            <span style="font-size: 13px; font-weight: 600; padding: 0 8px;">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if role %}&role={{ role }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Tiếp">&rsaquo;</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if q %}&q={{ q }}{% endif %}{% if role %}&role={{ role }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Về cuối">&raquo;</a>
+            {% else %}
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&rsaquo;</span>
+            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&raquo;</span>
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
 </div>
 
@@ -273,42 +299,6 @@ function submitDeleteAccount() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.querySelector('.search-input');
-    const roleSelect = document.querySelector('.filter-select');
-    const rows = document.querySelectorAll('.data-table tbody tr');
-
-    function filterTable() {
-        const q = searchInput.value.toLowerCase().trim();
-        const role = roleSelect.value;
-
-        rows.forEach(row => {
-            // Check empty state row
-            if (row.cells.length === 1) return;
-
-            const name = row.querySelector('.cell-name')?.textContent.toLowerCase() || '';
-            const username = row.cells[1]?.textContent.toLowerCase() || '';
-            const email = row.cells[2]?.textContent.toLowerCase() || '';
-            const rowRole = row.querySelector('.badge-purple, .badge-blue')?.textContent.trim() || '';
-
-            let matchSearch = name.includes(q) || username.includes(q) || email.includes(q);
-            let matchRole = true;
-            if (role === 'admin') {
-                matchRole = rowRole.includes('Quản Trị');
-            } else if (role === 'teacher') {
-                matchRole = rowRole.includes('Giảng Viên');
-            }
-
-            if (matchSearch && matchRole) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
-    }
-
-    if (searchInput) searchInput.addEventListener('input', filterTable);
-    if (roleSelect) roleSelect.addEventListener('change', filterTable);
 });
 
 // Close delete modal on background click

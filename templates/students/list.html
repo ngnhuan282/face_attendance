@@ -181,8 +181,8 @@
                             </div>
                         </div>
                     </td>
-                    <td>{{ sv.student_class.class_code }}</td>
-                    <td>{{ sv.student_class.department.name }}</td>
+                    <td>{{ sv.student_class.class_code|default:"—" }}</td>
+                    <td>{{ sv.student_class.department.name|default:"—" }}</td>
                     <td>
                         {% if sv.photo %}
                         <span class="badge badge-green"><span class="badge-dot"></span>Đã Đăng Ký</span>
