@@ -627,3 +627,46 @@
     .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
     .admin-topbar { padding: 0 16px; }
 }
+
+/* ==========================================
+   CENTERED PAGINATION FOOTER
+   ========================================== */
+.pagination-centered-footer {
+    display: grid !important;
+    grid-template-columns: 1fr auto 1fr !important;
+    align-items: center !important;
+    width: 100% !important;
+}
+.pagination-centered-footer .footer-info {
+    text-align: left;
+}
+.pagination-centered-footer .footer-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.pagination-centered-footer .pagination-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.pagination-centered-footer .footer-spacer {
+    display: block;
+}
+
+@media (max-width: 768px) {
+    .pagination-centered-footer {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        text-align: center !important;
+        justify-content: center !important;
+    }
+    .pagination-centered-footer .footer-info {
+        text-align: center;
+    }
+    .pagination-centered-footer .footer-spacer {
+        display: none;
+    }
+}
+
