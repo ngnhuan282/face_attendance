@@ -9,4 +9,8 @@ urlpatterns = [
     path('<int:pk>/update/', views.account_edit, name='edit'),
     path('<int:pk>/delete/', views.account_delete, name='delete'),
     path('permissions/', views.permission_matrix, name='permissions'),
+    # Hồ sơ cá nhân (cho cả Admin và GV)
+    path('profile/', views.teacher_profile, name='profile'),
+    # API kiểm tra phân quyền — dùng để test tích hợp
+    path('api/check-permission/', views.api_check_permission, name='api_check_permission'),
 ]

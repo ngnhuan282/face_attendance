@@ -202,3 +202,86 @@ class AccountEditForm(forms.Form):
                 if qs.exists():
                     self.add_error('teacher_id', 'Mã giảng viên này đã tồn tại.')
         return cleaned_data
+
+
+class TeacherProfileForm(forms.Form):
+    """Form để Giảng viên tự cập nhật hồ sơ cá nhân."""
+
+    first_name = forms.CharField(
+        max_length=150,
+        label='Họ và tên đệm',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Họ và tên đệm'}),
+        error_messages={'required': 'Họ và tên đệm không được để trống.'}
+    )
+    last_name = forms.CharField(
+        max_length=150,
+        label='Tên',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tên'}),
+        error_messages={'required': 'Tên không được để trống.'}
+    )
+    email = forms.EmailField(
+        label='Email',
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'example@sgu.edu.vn'}),
+        error_messages={
+            'required': 'Email không được để trống.',
+            'invalid': 'Email không hợp lệ.'
+        }
+    )
+    phone = forms.CharField(
+        max_length=15,
+        required=False,
+        label='Số điện thoại',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '0912 345 678'})
+    )
+    avatar = forms.ImageField(
+        required=False,
+        label='Ảnh đại diện',
+        widget=forms.ClearableFileInput(attrs={
+            'class': 'form-control',
+            'accept': 'image/*',
+            'id': 'id_profile_avatar'
+        })
+    )
+    # Đổi mật khẩu — tùy chọn
+    current_password = forms.CharField(
+        label='Mật khẩu hiện tại',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': '••••••••'}),
+        required=False
+    )
+    new_password = forms.CharField(
+        label='Mật khẩu mới',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': '••••••••'}),
+        required=False,
+        min_length=6,
+        error_messages={'min_length': 'Mật khẩu mới phải ít nhất 6 ký tự.'}
+    )
+    confirm_password = forms.CharField(
+        label='Xác nhận mật khẩu mới',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': '••••••••'}),
+        required=False
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.user_instance = kwargs.pop('user_instance', None)
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        current_pw = cleaned_data.get('current_password')
+        new_pw = cleaned_data.get('new_password')
+        confirm_pw = cleaned_data.get('confirm_password')
+
+        # Chỉ validate mật khẩu khi người dùng muốn đổi
+        if current_pw or new_pw or confirm_pw:
+            if not current_pw:
+                self.add_error('current_password', 'Vui lòng nhập mật khẩu hiện tại.')
+            elif self.user_instance and not self.user_instance.check_password(current_pw):
+                self.add_error('current_password', 'Mật khẩu hiện tại không đúng.')
+
+            if not new_pw:
+                self.add_error('new_password', 'Vui lòng nhập mật khẩu mới.')
+
+            if new_pw and confirm_pw and new_pw != confirm_pw:
+                self.add_error('confirm_password', 'Mật khẩu xác nhận không khớp.')
+
+        return cleaned_data

@@ -7,8 +7,12 @@ urlpatterns = [
     # ── Students ─────────────────────────────────
     path('', views.student_list, name='list'),
     path('create/', views.student_create, name='create'),
+    path('<int:pk>/', views.student_detail, name='detail'),
     path('<int:pk>/update/', views.student_edit, name='edit'),
     path('<int:pk>/delete/', views.student_delete, name='delete'),
+    # Import CSV hàng loạt (Admin)
+    path('import-csv/', views.student_import_csv, name='import_csv'),
+    path('import-csv/template/', views.student_import_csv_template, name='import_csv_template'),
 
     # ── Student Classes ───────────────────────────
     path('classes/', views.studentclass_list, name='class_list'),

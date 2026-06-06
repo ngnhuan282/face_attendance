@@ -159,15 +159,29 @@
 
         <!-- User info + Logout -->
         <div class="sidebar-footer">
-            <div class="sidebar-user">
-                <div class="sidebar-avatar">
+            <a href="{% url 'accounts:profile' %}" class="sidebar-user" title="Xem hồ sơ cá nhân"
+               style="text-decoration:none;display:flex;align-items:center;gap:10px;padding:10px 12px;
+                      border-radius:10px;transition:background 0.2s;cursor:pointer;"
+               onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
+                <div class="sidebar-avatar" style="position:relative;">
+                    {% if request.user.teacher.avatar %}
+                    <img src="{{ request.user.teacher.avatar.url }}" alt=""
+                         style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                    {% else %}
                     {{ request.user.username|first|upper }}
+                    {% endif %}
                 </div>
                 <div class="sidebar-user-info">
                     <div class="sidebar-username">{{ request.user.get_full_name|default:request.user.username }}</div>
-                    <div class="sidebar-role">{% if request.is_admin_group %}Quản Trị Viên{% elif request.is_teacher_group %}Giảng Viên{% else %}Người Dùng{% endif %}</div>
+                    <div class="sidebar-role" style="display:flex;align-items:center;gap:4px;">
+                        {% if request.is_admin_group %}Quản Trị Viên{% elif request.is_teacher_group %}Giảng Viên{% else %}Người Dùng{% endif %}
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity:0.6;">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                    </div>
                 </div>
-            </div>
+            </a>
             <form action="{% url 'logout' %}" method="post" style="display: inline; width: 100%;">
                 {% csrf_token %}
                 <button type="submit" class="sidebar-logout" style="width: 100%; border: none; background: none; cursor: pointer; text-align: left; font-family: inherit;">
@@ -191,8 +205,80 @@
                 <div class="topbar-breadcrumb">EduFace / {% block breadcrumb %}Tổng Quan{% endblock %}</div>
             </div>
             <div class="topbar-right">
-                <div class="topbar-avatar" title="{{ request.user.username }}">
-                    {{ request.user.username|first|upper }}
+                <!-- Avatar Dropdown Trigger -->
+                <div class="topbar-avatar-wrap" id="avatarDropdownWrap">
+                    <div class="topbar-avatar" id="avatarDropdownBtn"
+                         onclick="toggleAvatarDropdown(event)"
+                         title="{{ request.user.get_full_name|default:request.user.username }}"
+                         style="cursor:pointer;">
+                        {% if request.user.teacher.avatar %}
+                        <img src="{{ request.user.teacher.avatar.url }}" alt=""
+                             style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                        {% else %}
+                        {{ request.user.username|first|upper }}
+                        {% endif %}
+                    </div>
+
+                    <!-- Dropdown Popover -->
+                    <div class="avatar-dropdown" id="avatarDropdown">
+                        <!-- Header -->
+                        <div class="adrop-header">
+                            <div class="adrop-avatar">
+                                {% if request.user.teacher.avatar %}
+                                <img src="{{ request.user.teacher.avatar.url }}" alt=""
+                                     style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                                {% else %}
+                                {{ request.user.username|first|upper }}
+                                {% endif %}
+                            </div>
+                            <div class="adrop-info">
+                                <div class="adrop-name">{{ request.user.get_full_name|default:request.user.username }}</div>
+                                <div class="adrop-username">@{{ request.user.username }}</div>
+                                <span class="adrop-role-badge {% if request.is_admin_group %}adrop-role-admin{% elif request.is_teacher_group %}adrop-role-teacher{% else %}adrop-role-other{% endif %}">
+                                    {% if request.is_admin_group %}Quản Trị Viên{% elif request.is_teacher_group %}Giảng Viên{% else %}Người Dùng{% endif %}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="adrop-divider"></div>
+
+                        <!-- Menu items -->
+                        <div class="adrop-menu">
+                            <a href="{% url 'accounts:profile' %}" class="adrop-item">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                                Thông Tin Cá Nhân
+                            </a>
+                            {% if request.is_admin_group %}
+                            <a href="{% url 'accounts:permissions' %}" class="adrop-item">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                </svg>
+                                Phân Quyền Hệ Thống
+                            </a>
+                            {% endif %}
+                        </div>
+
+                        <div class="adrop-divider"></div>
+
+                        <!-- Logout -->
+                        <div class="adrop-footer">
+                            <form action="{% url 'logout' %}" method="post" style="margin:0;">
+                                {% csrf_token %}
+                                <button type="submit" class="adrop-logout-btn">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                        <polyline points="16 17 21 12 16 7"/>
+                                        <line x1="21" y1="12" x2="9" y2="12"/>
+                                    </svg>
+                                    Đăng Xuất
+                                </button>
+                            </form>
+                        </div>
+                    </div><!-- /avatar-dropdown -->
                 </div>
             </div>
         </header>
@@ -267,5 +353,161 @@
 {% endif %}
 
 {% block extra_js %}{% endblock %}
+
+<!-- ===== AVATAR DROPDOWN STYLES ===== -->
+<style>
+/* Wrapper giữ vị trí tương đối để dropdown biết mốc */
+.topbar-avatar-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Dropdown card */
+.avatar-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 260px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
+    z-index: 9999;
+    overflow: hidden;
+    /* Hidden by default */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px) scale(0.97);
+    transform-origin: top right;
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+    pointer-events: none;
+}
+.avatar-dropdown.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+/* Header: avatar lớn + tên + role */
+.adrop-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 16px 14px;
+}
+.adrop-avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1a6b3c 0%, #2d9e5f 100%);
+    color: #fff;
+    font-size: 18px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; flex-shrink: 0;
+    border: 2px solid #dcfce7;
+}
+.adrop-info { flex: 1; min-width: 0; }
+.adrop-name {
+    font-size: 14px; font-weight: 700;
+    color: #1e293b;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin-bottom: 1px;
+}
+.adrop-username {
+    font-size: 12px; color: #94a3b8;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin-bottom: 5px;
+}
+.adrop-role-badge {
+    display: inline-flex; align-items: center;
+    padding: 2px 8px; border-radius: 999px;
+    font-size: 11px; font-weight: 600;
+}
+.adrop-role-admin   { background: #ede9fe; color: #5b21b6; }
+.adrop-role-teacher { background: #dcfce7; color: #166534; }
+.adrop-role-other   { background: #f1f5f9; color: #475569; }
+
+/* Divider */
+.adrop-divider {
+    height: 1px;
+    background: #f1f5f9;
+    margin: 0;
+}
+
+/* Menu items */
+.adrop-menu { padding: 6px 6px; }
+.adrop-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px;
+    border-radius: 9px;
+    font-size: 13.5px; font-weight: 500;
+    color: #374151;
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+}
+.adrop-item svg { color: #94a3b8; flex-shrink: 0; transition: color 0.15s; }
+.adrop-item:hover {
+    background: #f1f5f9;
+    color: #1a6b3c;
+}
+.adrop-item:hover svg { color: #1a6b3c; }
+
+/* Footer logout */
+.adrop-footer { padding: 6px 6px 8px; }
+.adrop-logout-btn {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 9px 10px;
+    border: none; border-radius: 9px;
+    background: transparent;
+    font-size: 13.5px; font-weight: 500;
+    color: #ef4444;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+    text-align: left;
+}
+.adrop-logout-btn svg { color: #ef4444; flex-shrink: 0; }
+.adrop-logout-btn:hover { background: #fef2f2; }
+</style>
+
+<!-- ===== AVATAR DROPDOWN SCRIPT ===== -->
+<script>
+(function() {
+    function toggleAvatarDropdown(e) {
+        e.stopPropagation();
+        const btn  = document.getElementById('avatarDropdownBtn');
+        const drop = document.getElementById('avatarDropdown');
+        const isOpen = drop.classList.contains('open');
+        if (isOpen) {
+            closeAvatarDropdown();
+        } else {
+            drop.classList.add('open');
+            btn.classList.add('open');
+        }
+    }
+
+    function closeAvatarDropdown() {
+        const btn  = document.getElementById('avatarDropdownBtn');
+        const drop = document.getElementById('avatarDropdown');
+        if (drop) { drop.classList.remove('open'); }
+        if (btn)  { btn.classList.remove('open'); }
+    }
+
+    // Expose toàn cục để onclick="" gọi được
+    window.toggleAvatarDropdown = toggleAvatarDropdown;
+
+    // Đóng khi click ra ngoài
+    document.addEventListener('click', function(e) {
+        const wrap = document.getElementById('avatarDropdownWrap');
+        if (wrap && !wrap.contains(e.target)) {
+            closeAvatarDropdown();
+        }
+    });
+
+    // Đóng khi nhấn Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeAvatarDropdown();
+    });
+})();
+</script>
 </body>
 </html>

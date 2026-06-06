@@ -1,0 +1,605 @@
+{% extends 'layouts/admin_base.html' %}
+{% load static %}
+
+{% block title %}EduFace – Import CSV Sinh Viên{% endblock %}
+{% block page_title %}Import Sinh Viên CSV{% endblock %}
+{% block breadcrumb %}Sinh Viên / Import CSV{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ===== IMPORT PAGE LAYOUT ===== */
+.import-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 24px;
+    align-items: start;
+    max-width: 1100px;
+}
+@media (max-width: 900px) { .import-wrapper { grid-template-columns: 1fr; } }
+
+/* ===== SECTION CARD ===== */
+.imp-section {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    animation: fadeUp 0.4s ease-out;
+}
+@keyframes fadeUp {
+    from { opacity:0; transform:translateY(14px); }
+    to   { opacity:1; transform:translateY(0); }
+}
+.imp-section-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border,#e2e8f0);
+    display:flex; align-items:center; gap:10px;
+}
+.imp-section-icon {
+    width:36px; height:36px; border-radius:10px;
+    background: var(--primary-green-light,#eaf5ed);
+    color: var(--primary-green,#1a6b3c);
+    display:flex; align-items:center; justify-content:center;
+}
+.imp-section-title { font-size:16px; font-weight:700; color:var(--text-dark,#1e293b); }
+.imp-section-body  { padding: 24px; }
+
+/* ===== DROPZONE ===== */
+.dropzone {
+    border: 2.5px dashed var(--border,#cbd5e1);
+    border-radius: 14px;
+    padding: 40px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s;
+    background: var(--bg-input,#f8fafc);
+    margin-bottom: 20px;
+    position: relative;
+}
+.dropzone:hover, .dropzone.drag-over {
+    border-color: var(--primary-green,#1a6b3c);
+    background: #eaf5ed;
+}
+.dropzone-icon {
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    background: #dcfce7;
+    color: #16a34a;
+    display:flex; align-items:center; justify-content:center;
+    margin: 0 auto 14px;
+}
+.dropzone-title { font-size:15px; font-weight:700; color:var(--text-dark,#1e293b); margin-bottom:5px; }
+.dropzone-sub   { font-size:13px; color:var(--text-muted,#64748b); }
+.dropzone-input { display:none; }
+.dropzone-file-info {
+    display:none;
+    align-items:center; gap:10px;
+    padding: 12px 16px;
+    background: #dcfce7;
+    border-radius: 10px;
+    margin-top: 14px;
+    font-size:13px; color:#166534; font-weight:600;
+}
+
+/* ===== PROGRESS BAR ===== */
+.upload-progress-wrap {
+    display:none;
+    margin-bottom: 16px;
+}
+.upload-progress-bar-outer {
+    width:100%; height:8px; background:#e2e8f0;
+    border-radius:999px; overflow:hidden; margin-top:6px;
+}
+.upload-progress-bar-fill {
+    height:100%; background:linear-gradient(90deg,#22c55e,#16a34a);
+    border-radius:999px; transition: width 0.3s ease;
+    width: 0%;
+}
+.upload-progress-label {
+    font-size:12px; color:var(--text-muted,#64748b);
+    display:flex; justify-content:space-between; margin-top:4px;
+}
+
+/* ===== RESULT PANEL ===== */
+.result-panel { display:none; }
+.result-summary {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.result-stat {
+    border-radius: 12px; padding: 16px;
+    text-align: center;
+}
+.result-created  { background:#dcfce7; }
+.result-skipped  { background:#fff7ed; }
+.result-errors   { background:#fee2e2; }
+.result-stat-val { font-size:28px; font-weight:800; margin-bottom:3px; }
+.val-created  { color:#16a34a; }
+.val-skipped  { color:#d97706; }
+.val-errors   { color:#dc2626; }
+.result-stat-lbl { font-size:12px; font-weight:500; }
+.lbl-created  { color:#166534; }
+.lbl-skipped  { color:#92400e; }
+.lbl-errors   { color:#991b1b; }
+
+.error-list {
+    margin: 0; padding: 0; list-style:none;
+    max-height: 280px; overflow-y: auto;
+}
+.error-item {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border,#f1f5f9);
+    display:flex; align-items:flex-start; gap:8px;
+    font-size:13px;
+}
+.error-item:last-child { border-bottom:none; }
+.error-row { font-weight:700; color:var(--text-dark,#1e293b); white-space:nowrap; min-width:54px; }
+.error-msg { color:var(--text-muted,#475569); }
+.error-type-skip { opacity:0.7; }
+.error-icon-err  { color:#ef4444; flex-shrink:0; margin-top:1px; }
+.error-icon-skip { color:#f59e0b; flex-shrink:0; margin-top:1px; }
+
+/* ===== BTN ===== */
+.btn-import {
+    width:100%; padding:12px; border:none; border-radius:10px;
+    background: var(--primary-green,#1a6b3c); color:#fff;
+    font-size:15px; font-weight:700; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    transition: all 0.2s; font-family:inherit;
+}
+.btn-import:hover:not(:disabled) {
+    background:#155530; transform:translateY(-1px);
+    box-shadow: 0 4px 14px rgba(26,107,60,0.25);
+}
+.btn-import:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+
+.btn-reset {
+    width:100%; padding:10px; border:1.5px solid var(--border,#e2e8f0);
+    border-radius:10px; background:transparent;
+    color:var(--text-muted,#64748b); font-size:14px; font-weight:600;
+    cursor:pointer; font-family:inherit; transition:all 0.2s; margin-top:10px;
+}
+.btn-reset:hover {
+    border-color:var(--primary-green,#1a6b3c);
+    color: var(--primary-green,#1a6b3c);
+}
+
+/* ===== RIGHT: GUIDE ===== */
+.guide-section { display:flex; flex-direction:column; gap:18px; }
+
+.guide-card {
+    background: var(--card-bg,#fff);
+    border: 1px solid var(--border,#e2e8f0);
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    animation: fadeUp 0.4s ease-out;
+}
+.guide-title {
+    font-size:14px; font-weight:700; color:var(--text-dark,#1e293b);
+    margin:0 0 12px; display:flex; align-items:center; gap:8px;
+}
+
+.col-table { width:100%; border-collapse:collapse; font-size:13px; }
+.col-table th {
+    text-align:left; padding:7px 10px;
+    background:var(--bg-input,#f8fafc);
+    color:var(--text-muted,#64748b);
+    font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.4px;
+    border-bottom:1px solid var(--border,#e2e8f0);
+}
+.col-table td {
+    padding:8px 10px;
+    border-bottom:1px solid var(--border,#f1f5f9);
+    vertical-align:top;
+}
+.col-table tr:last-child td { border-bottom:none; }
+.col-required { color:#16a34a; font-weight:700; font-size:11px; }
+.col-optional { color:#94a3b8; font-size:11px; }
+
+.csv-preview {
+    font-family:'Courier New',monospace;
+    font-size:12px;
+    background:#f8fafc;
+    border:1px solid var(--border,#e2e8f0);
+    border-radius:8px;
+    padding:12px;
+    overflow-x:auto;
+    line-height:1.7;
+    color:var(--text-dark,#1e293b);
+}
+.csv-preview .header-row { color:#1a6b3c; font-weight:700; }
+.csv-preview .data-row   { color:#475569; }
+
+.download-btn {
+    display:flex; align-items:center; gap:8px;
+    padding:10px 14px; border:1.5px solid var(--primary-green,#1a6b3c);
+    border-radius:9px; color:var(--primary-green,#1a6b3c);
+    text-decoration:none; font-size:13px; font-weight:600;
+    transition:all 0.2s; width:100%; box-sizing:border-box; justify-content:center;
+}
+.download-btn:hover {
+    background:var(--primary-green,#1a6b3c); color:#fff;
+}
+
+.alert-info {
+    display:flex; align-items:flex-start; gap:10px;
+    padding:12px 14px;
+    background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px;
+    font-size:13px; color:#1e40af;
+}
+</style>
+{% endblock %}
+
+{% block page_content %}
+<div class="import-wrapper">
+
+    <!-- ===== LEFT: UPLOAD FORM ===== -->
+    <div class="imp-section">
+        <div class="imp-section-header">
+            <div class="imp-section-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                </svg>
+            </div>
+            <span class="imp-section-title">Upload File CSV</span>
+        </div>
+        <div class="imp-section-body">
+
+            <!-- DROPZONE -->
+            <div class="dropzone" id="dropzone" onclick="document.getElementById('csv-file-input').click()"
+                 ondragover="event.preventDefault();this.classList.add('drag-over')"
+                 ondragleave="this.classList.remove('drag-over')"
+                 ondrop="handleDrop(event)">
+                <div class="dropzone-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="16 16 12 12 8 16"/>
+                        <line x1="12" y1="12" x2="12" y2="21"/>
+                        <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+                    </svg>
+                </div>
+                <div class="dropzone-title">Kéo thả file CSV vào đây</div>
+                <div class="dropzone-sub">hoặc nhấn để chọn file &nbsp;·&nbsp; Tối đa 5MB</div>
+                <input type="file" id="csv-file-input" class="dropzone-input" accept=".csv" onchange="handleFileSelect(this)">
+            </div>
+
+            <!-- File info -->
+            <div class="dropzone-file-info" id="file-info">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                <span id="file-name-display">—</span>
+                <button type="button" onclick="resetFile()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#dc2626;font-size:18px;line-height:1;" title="Bỏ file">×</button>
+            </div>
+
+            <!-- Progress -->
+            <div class="upload-progress-wrap" id="upload-progress">
+                <div class="upload-progress-bar-outer">
+                    <div class="upload-progress-bar-fill" id="progress-fill"></div>
+                </div>
+                <div class="upload-progress-label">
+                    <span id="progress-status">Đang xử lý...</span>
+                    <span id="progress-pct">0%</span>
+                </div>
+            </div>
+
+            <!-- Result Panel -->
+            <div class="result-panel" id="result-panel">
+                <div class="result-summary">
+                    <div class="result-stat result-created">
+                        <div class="result-stat-val val-created" id="res-created">0</div>
+                        <div class="result-stat-lbl lbl-created">Tạo thành công</div>
+                    </div>
+                    <div class="result-stat result-skipped">
+                        <div class="result-stat-val val-skipped" id="res-skipped">0</div>
+                        <div class="result-stat-lbl lbl-skipped">Bỏ qua (trùng)</div>
+                    </div>
+                    <div class="result-stat result-errors">
+                        <div class="result-stat-val val-errors" id="res-errors">0</div>
+                        <div class="result-stat-lbl lbl-errors">Lỗi</div>
+                    </div>
+                </div>
+
+                <!-- Error list -->
+                <div id="error-list-wrap" style="display:none; border:1px solid var(--border,#e2e8f0);border-radius:12px;overflow:hidden;margin-bottom:14px;">
+                    <div style="padding:10px 14px;background:var(--bg-input,#f8fafc);border-bottom:1px solid var(--border,#e2e8f0);font-size:12px;font-weight:700;color:var(--text-muted);">
+                        CHI TIẾT LỖI VÀ CẢNH BÁO
+                    </div>
+                    <ul class="error-list" id="error-list"></ul>
+                </div>
+
+                <!-- Nút xem kết quả / reset -->
+                <a href="{% url 'students:list' %}" class="btn-import" style="text-decoration:none;" id="go-to-list-btn" target="_blank">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                    Xem Danh Sách Sinh Viên
+                </a>
+                <button class="btn-reset" onclick="resetAll()">Import Thêm File Khác</button>
+            </div>
+
+            <!-- Import button -->
+            <button class="btn-import" id="btn-import" onclick="doImport()" disabled>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
+                    <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+                </svg>
+                <span id="btn-import-text">Chọn file trước</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== RIGHT: GUIDE ===== -->
+    <div class="guide-section">
+
+        <!-- Download template -->
+        <div class="guide-card">
+            <h3 class="guide-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Tải File Mẫu
+            </h3>
+            <a href="{% url 'students:import_csv_template' %}" class="download-btn">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                mau_import_sinhvien.csv
+            </a>
+            <p style="font-size:12px;color:var(--text-muted);margin:10px 0 0;line-height:1.6;">
+                Mở bằng Excel hoặc Google Sheets. Giữ nguyên dòng header, điền dữ liệu từ dòng 2 trở đi.
+            </p>
+        </div>
+
+        <!-- Column guide -->
+        <div class="guide-card">
+            <h3 class="guide-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                Các Cột Trong File CSV
+            </h3>
+            <table class="col-table">
+                <thead>
+                    <tr>
+                        <th>Cột</th>
+                        <th>Bắt buộc</th>
+                        <th>Ghi chú</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>student_id</code></td>
+                        <td><span class="col-required">✓ Bắt buộc</span></td>
+                        <td>MSSV duy nhất</td>
+                    </tr>
+                    <tr>
+                        <td><code>full_name</code></td>
+                        <td><span class="col-required">✓ Bắt buộc</span></td>
+                        <td>Họ và tên đầy đủ</td>
+                    </tr>
+                    <tr>
+                        <td><code>date_of_birth</code></td>
+                        <td><span class="col-optional">Tùy chọn</span></td>
+                        <td>dd/mm/yyyy hoặc yyyy-mm-dd</td>
+                    </tr>
+                    <tr>
+                        <td><code>email</code></td>
+                        <td><span class="col-optional">Tùy chọn</span></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td><code>phone</code></td>
+                        <td><span class="col-optional">Tùy chọn</span></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td><code>class_code</code></td>
+                        <td><span class="col-optional">Tùy chọn</span></td>
+                        <td>Mã lớp sinh hoạt (phải tồn tại)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Preview -->
+        <div class="guide-card">
+            <h3 class="guide-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+                Ví Dụ Nội Dung
+            </h3>
+            <div class="csv-preview">
+                <div class="header-row">student_id,full_name,date_of_birth,email,phone,class_code</div>
+                <div class="data-row">SV220001,Nguyễn Văn A,01/01/2004,a@email.com,0901234567,DHKTPM17A</div>
+                <div class="data-row">SV220002,Trần Thị B,15/03/2004,b@email.com,,DHKTPM17A</div>
+                <div class="data-row">SV220003,Lê Văn C,,,,</div>
+            </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="alert-info">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px;">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            <div>
+                <strong>Lưu ý:</strong> MSSV đã tồn tại sẽ bị bỏ qua (không ghi đè). Chỉ Admin mới có thể thực hiện import.
+                File CSV phải lưu theo encoding <strong>UTF-8</strong> (hoặc UTF-8 with BOM) để hỗ trợ tiếng Việt.
+            </div>
+        </div>
+
+    </div><!-- /guide-section -->
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedFile = null;
+
+function handleFileSelect(input) {
+    if (input.files && input.files[0]) {
+        setFile(input.files[0]);
+    }
+}
+
+function handleDrop(event) {
+    event.preventDefault();
+    document.getElementById('dropzone').classList.remove('drag-over');
+    const file = event.dataTransfer.files[0];
+    if (file && file.name.toLowerCase().endsWith('.csv')) {
+        setFile(file);
+    } else {
+        showToast('Chỉ chấp nhận file .csv', 'error');
+    }
+}
+
+function setFile(file) {
+    selectedFile = file;
+    const sizeKB = (file.size / 1024).toFixed(1);
+    document.getElementById('file-name-display').textContent = `${file.name} (${sizeKB} KB)`;
+    document.getElementById('file-info').style.display = 'flex';
+    document.getElementById('btn-import').disabled = false;
+    document.getElementById('btn-import-text').textContent = 'Bắt Đầu Import';
+}
+
+function resetFile() {
+    selectedFile = null;
+    document.getElementById('csv-file-input').value = '';
+    document.getElementById('file-info').style.display = 'none';
+    document.getElementById('btn-import').disabled = true;
+    document.getElementById('btn-import-text').textContent = 'Chọn file trước';
+}
+
+function resetAll() {
+    resetFile();
+    document.getElementById('result-panel').style.display = 'none';
+    document.getElementById('btn-import').style.display = 'flex';
+    document.getElementById('upload-progress').style.display = 'none';
+}
+
+async function doImport() {
+    if (!selectedFile) return;
+
+    const btn = document.getElementById('btn-import');
+    btn.disabled = true;
+    btn.style.display = 'none';
+
+    // Show progress
+    const progressWrap = document.getElementById('upload-progress');
+    const progressFill = document.getElementById('progress-fill');
+    const progressStatus = document.getElementById('progress-status');
+    const progressPct = document.getElementById('progress-pct');
+    progressWrap.style.display = 'block';
+
+    // Animate fake progress (real progress not possible with Fetch)
+    let pct = 0;
+    const fakeTimer = setInterval(() => {
+        pct = Math.min(pct + Math.random() * 8, 90);
+        progressFill.style.width = pct + '%';
+        progressPct.textContent = Math.round(pct) + '%';
+    }, 200);
+
+    try {
+        const formData = new FormData();
+        formData.append('csv_file', selectedFile);
+        formData.append('csrfmiddlewaretoken', getCsrf());
+
+        const response = await fetch('{% url "students:import_csv" %}', {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+
+        clearInterval(fakeTimer);
+        progressFill.style.width = '100%';
+        progressPct.textContent = '100%';
+        progressStatus.textContent = 'Hoàn tất!';
+
+        const data = await response.json();
+
+        setTimeout(() => {
+            progressWrap.style.display = 'none';
+            showResult(data);
+        }, 500);
+
+    } catch (err) {
+        clearInterval(fakeTimer);
+        progressWrap.style.display = 'none';
+        btn.style.display = 'flex';
+        btn.disabled = false;
+        document.getElementById('btn-import-text').textContent = 'Thử Lại';
+        showToast('Lỗi kết nối: ' + err.message, 'error');
+    }
+}
+
+function showResult(data) {
+    if (data.error) {
+        showToast('Lỗi: ' + data.error, 'error');
+        document.getElementById('btn-import').style.display = 'flex';
+        document.getElementById('btn-import').disabled = false;
+        document.getElementById('btn-import-text').textContent = 'Thử Lại';
+        return;
+    }
+
+    document.getElementById('res-created').textContent = data.created || 0;
+    document.getElementById('res-skipped').textContent = data.skipped || 0;
+    document.getElementById('res-errors').textContent  = data.error_count || 0;
+
+    // Render error list
+    const allItems = [...(data.errors || []), ...(data.skips || [])];
+    const errorList = document.getElementById('error-list');
+    const listWrap  = document.getElementById('error-list-wrap');
+    errorList.innerHTML = '';
+
+    if (allItems.length > 0) {
+        listWrap.style.display = 'block';
+        allItems.forEach(item => {
+            const isSkip = item.type === 'skip';
+            const li = document.createElement('li');
+            li.className = 'error-item' + (isSkip ? ' error-type-skip' : '');
+            li.innerHTML = `
+                <svg class="${isSkip ? 'error-icon-skip' : 'error-icon-err'}" width="14" height="14"
+                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    ${isSkip
+                        ? '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'
+                        : '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'}
+                </svg>
+                <span class="error-row">Dòng ${item.row}</span>
+                <span class="error-msg">${item.msg}</span>
+            `;
+            errorList.appendChild(li);
+        });
+    } else {
+        listWrap.style.display = 'none';
+    }
+
+    document.getElementById('result-panel').style.display = 'block';
+
+    // Toast
+    if (data.created > 0) {
+        showToast(`✅ ${data.message}`, 'success');
+    } else if (data.error_count > 0) {
+        showToast(`⚠ Import hoàn tất nhưng có ${data.error_count} lỗi.`, 'warning');
+    }
+}
+
+function getCsrf() {
+    return document.cookie.split(';').map(c => c.trim())
+        .find(c => c.startsWith('csrftoken='))?.split('=')[1] || '';
+}
+
+function showToast(msg, type) {
+    const colors = { success:'#10b981', error:'#ef4444', warning:'#f59e0b' };
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position:fixed;top:20px;right:20px;z-index:9999;
+        max-width:400px;min-width:280px;padding:14px 18px;
+        background:#fff;border-radius:10px;
+        border-left:4px solid ${colors[type]||'#3b82f6'};
+        box-shadow:0 10px 25px rgba(0,0,0,0.12);
+        font-size:14px;color:#1e293b;font-weight:500;line-height:1.5;
+        animation:slideInRight 0.3s ease-out;
+    `;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+}
+</script>
+{% endblock %}

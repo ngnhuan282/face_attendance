@@ -1,0 +1,746 @@
+{% extends 'layouts/admin_base.html' %}
+{% load static %}
+
+{% block title %}EduFace - Hồ Sơ Cá Nhân{% endblock %}
+{% block page_title %}Hồ Sơ Cá Nhân{% endblock %}
+{% block breadcrumb %}Tài Khoản / Hồ Sơ{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ===== PROFILE LAYOUT ===== */
+.profile-wrapper {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 24px;
+    align-items: start;
+    max-width: 1100px;
+}
+
+@media (max-width: 900px) {
+    .profile-wrapper { grid-template-columns: 1fr; }
+}
+
+/* ===== LEFT: IDENTITY CARD ===== */
+.profile-identity-card {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 18px;
+    padding: 32px 24px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    position: sticky;
+    top: 24px;
+    animation: fadeInUp 0.4s ease-out;
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.profile-avatar-wrap {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 18px;
+}
+.profile-avatar-img {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--primary-green, #1a6b3c);
+    box-shadow: 0 0 0 5px rgba(26,107,60,0.12);
+}
+.profile-avatar-initials {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1a6b3c 0%, #2d9e5f 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 38px;
+    font-weight: 700;
+    color: #fff;
+    border: 3px solid var(--primary-green, #1a6b3c);
+    box-shadow: 0 0 0 5px rgba(26,107,60,0.12);
+    letter-spacing: 1px;
+}
+.profile-avatar-badge {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fff;
+}
+.badge-admin { background: #7c3aed; }
+.badge-teacher { background: #1a6b3c; }
+
+.profile-name {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-dark, #1e293b);
+    margin: 0 0 4px;
+}
+.profile-username {
+    font-size: 13px;
+    color: var(--text-muted, #64748b);
+    margin: 0 0 12px;
+}
+.profile-role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+.role-admin  { background: #ede9fe; color: #5b21b6; }
+.role-teacher{ background: #dcfce7; color: #166534; }
+.role-other  { background: #f1f5f9; color: #475569; }
+
+.profile-meta-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 20px;
+    text-align: left;
+}
+.profile-meta-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border, #f1f5f9);
+    font-size: 13px;
+    color: var(--text-muted, #64748b);
+}
+.profile-meta-list li:last-child { border-bottom: none; }
+.profile-meta-list svg { flex-shrink: 0; margin-top: 1px; color: var(--primary-green, #1a6b3c); }
+.profile-meta-value { color: var(--text-dark, #1e293b); font-weight: 500; }
+
+.profile-api-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-muted, #64748b);
+    text-decoration: none;
+    padding: 6px 12px;
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 8px;
+    transition: all 0.2s;
+    width: 100%;
+    justify-content: center;
+    box-sizing: border-box;
+}
+.profile-api-link:hover {
+    background: var(--bg-hover, #f1f5f9);
+    color: var(--text-dark, #1e293b);
+    border-color: var(--primary-green, #1a6b3c);
+}
+
+/* ===== RIGHT: FORM & TEACHING ===== */
+.profile-right { display: flex; flex-direction: column; gap: 20px; }
+
+.profile-section {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    animation: fadeInUp 0.4s ease-out;
+}
+.profile-section-header {
+    padding: 18px 24px 16px;
+    border-bottom: 1px solid var(--border, #e2e8f0);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.profile-section-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--primary-green-light, #eaf5ed);
+    color: var(--primary-green, #1a6b3c);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.profile-section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-dark, #1e293b);
+}
+.profile-section-body { padding: 24px; }
+
+/* Form fields */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+
+.form-group { margin-bottom: 16px; }
+.form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dark, #1e293b);
+    margin-bottom: 6px;
+}
+.form-label .req { color: #ef4444; margin-left: 2px; }
+.form-control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border, #e2e8f0);
+    border-radius: 9px;
+    font-size: 14px;
+    color: var(--text-dark, #1e293b);
+    background: var(--bg-input, #f8fafc);
+    transition: border-color .2s, box-shadow .2s, background .2s;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-green, #1a6b3c);
+    box-shadow: 0 0 0 3px rgba(26,107,60,0.12);
+    background: #fff;
+}
+.has-error .form-control { border-color: #ef4444 !important; }
+.invalid-feedback { color: #ef4444; font-size: 12px; margin-top: 4px; display: block; }
+.non-field-error {
+    padding: 10px 14px;
+    background: #fef2f2;
+    border: 1.5px solid #fca5a5;
+    border-radius: 8px;
+    color: #dc2626;
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+
+/* Avatar preview */
+.avatar-preview-wrap { display: flex; align-items: center; gap: 14px; margin-top: 8px; }
+.avatar-preview-img {
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 2px solid var(--border, #e2e8f0);
+    transition: border-color 0.2s;
+}
+
+/* Change password toggle */
+.pw-section-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-dark, #1e293b);
+    cursor: pointer;
+    padding: 12px 0;
+    border: none;
+    background: none;
+    font-family: inherit;
+    user-select: none;
+    width: 100%;
+    text-align: left;
+    border-top: 1px solid var(--border, #e2e8f0);
+    margin-top: 4px;
+    transition: color 0.2s;
+}
+.pw-section-toggle:hover { color: var(--primary-green, #1a6b3c); }
+.pw-section-toggle .toggle-arrow {
+    margin-left: auto;
+    transition: transform 0.25s;
+    flex-shrink: 0;
+}
+.pw-section-toggle.open .toggle-arrow { transform: rotate(180deg); }
+.pw-fields { overflow: hidden; transition: max-height 0.3s ease, opacity 0.3s ease; }
+.pw-fields.collapsed { max-height: 0; opacity: 0; pointer-events: none; }
+.pw-fields.expanded  { max-height: 600px; opacity: 1; }
+
+/* Form actions */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border, #f1f5f9);
+    margin-top: 8px;
+}
+.btn-save {
+    padding: 10px 28px;
+    background: var(--primary-green, #1a6b3c);
+    color: #fff;
+    border: none;
+    border-radius: 9px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+.btn-save:hover {
+    background: #155530;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(26,107,60,0.25);
+}
+.btn-save:active { transform: translateY(0); }
+
+/* ===== TEACHING CLASSES TABLE ===== */
+.teaching-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.teaching-table th {
+    text-align: left;
+    padding: 10px 14px;
+    background: var(--bg-input, #f8fafc);
+    color: var(--text-muted, #64748b);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border, #e2e8f0);
+}
+.teaching-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border, #f1f5f9);
+    vertical-align: middle;
+}
+.teaching-table tr:last-child td { border-bottom: none; }
+.teaching-table tr:hover td { background: var(--bg-hover, #f8fafc); }
+
+.class-code-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    background: #dcfce7;
+    color: #166534;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+}
+.semester-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    background: #eff6ff;
+    color: #1e40af;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+}
+.btn-view-class {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 7px;
+    color: var(--text-muted, #64748b);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+.btn-view-class:hover {
+    background: var(--primary-green, #1a6b3c);
+    color: #fff;
+    border-color: var(--primary-green, #1a6b3c);
+}
+</style>
+{% endblock %}
+
+{% block page_content %}
+<div class="profile-wrapper">
+
+    <!-- ======= LEFT: IDENTITY CARD ======= -->
+    <div class="profile-identity-card">
+        <!-- Avatar -->
+        <div class="profile-avatar-wrap">
+            {% if teacher and teacher.avatar %}
+                <img src="{{ teacher.avatar.url }}" alt="{{ request.user.get_full_name }}"
+                     class="profile-avatar-img" id="sidebar-avatar-img">
+            {% else %}
+                <div class="profile-avatar-initials" id="sidebar-avatar-initials">
+                    {{ request.user.first_name|slice:":1"|upper }}{{ request.user.last_name|slice:":1"|upper }}
+                </div>
+            {% endif %}
+            <!-- Role badge trên avatar -->
+            <div class="profile-avatar-badge {% if is_admin %}badge-admin{% else %}badge-teacher{% endif %}">
+                {% if is_admin %}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                {% else %}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Name & role -->
+        <h2 class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</h2>
+        <p class="profile-username">@{{ request.user.username }}</p>
+
+        <span class="profile-role-badge {% if is_admin %}role-admin{% elif is_teacher_role %}role-teacher{% else %}role-other{% endif %}">
+            {% if is_admin %}
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            Quản Trị Viên
+            {% elif is_teacher_role %}
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+            </svg>
+            Giảng Viên
+            {% else %}
+            Người Dùng
+            {% endif %}
+        </span>
+
+        <!-- Info list -->
+        <ul class="profile-meta-list">
+            <li>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                </svg>
+                <span class="profile-meta-value">{{ request.user.email|default:"—" }}</span>
+            </li>
+            {% if teacher %}
+            <li>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <path d="M3 9h18M9 21V9"/>
+                </svg>
+                <span>Mã GV: <span class="profile-meta-value">{{ teacher.teacher_id }}</span></span>
+            </li>
+            <li>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 9.5a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.56 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+                </svg>
+                <span class="profile-meta-value">{{ teacher.phone|default:"Chưa cập nhật" }}</span>
+            </li>
+            <li>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                <span class="profile-meta-value">{{ teacher.department.name|default:"—" }}</span>
+            </li>
+            {% endif %}
+            <li>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <span>Tham gia: <span class="profile-meta-value">{{ request.user.date_joined|date:"d/m/Y" }}</span></span>
+            </li>
+        </ul>
+
+        <!-- API check link -->
+        <a href="{% url 'accounts:api_check_permission' %}" target="_blank" class="profile-api-link">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="16 18 22 12 16 6"/>
+                <polyline points="8 6 2 12 8 18"/>
+            </svg>
+            Kiểm tra quyền (JSON)
+        </a>
+    </div>
+
+    <!-- ======= RIGHT: FORM + TEACHING ======= -->
+    <div class="profile-right">
+
+        <!-- ---- FORM CẬP NHẬT HỒ SƠ ---- -->
+        <div class="profile-section">
+            <div class="profile-section-header">
+                <div class="profile-section-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                </div>
+                <span class="profile-section-title">Cập Nhật Thông Tin</span>
+            </div>
+            <div class="profile-section-body">
+                <form method="post" enctype="multipart/form-data" id="profile-form" novalidate>
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                    <div class="non-field-error">{{ form.non_field_errors|join:", " }}</div>
+                    {% endif %}
+
+                    <!-- Họ tên -->
+                    <div class="form-row">
+                        <div class="form-group {% if form.first_name.errors %}has-error{% endif %}">
+                            <label class="form-label" for="{{ form.first_name.id_for_label }}">
+                                Họ và tên đệm <span class="req">*</span>
+                            </label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                            <span class="invalid-feedback">{{ form.first_name.errors|join:", " }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="form-group {% if form.last_name.errors %}has-error{% endif %}">
+                            <label class="form-label" for="{{ form.last_name.id_for_label }}">
+                                Tên <span class="req">*</span>
+                            </label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                            <span class="invalid-feedback">{{ form.last_name.errors|join:", " }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Email + Phone -->
+                    <div class="form-row">
+                        <div class="form-group {% if form.email.errors %}has-error{% endif %}">
+                            <label class="form-label" for="{{ form.email.id_for_label }}">
+                                Email <span class="req">*</span>
+                            </label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                            <span class="invalid-feedback">{{ form.email.errors|join:", " }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="form-group {% if form.phone.errors %}has-error{% endif %}">
+                            <label class="form-label" for="{{ form.phone.id_for_label }}">Số Điện Thoại</label>
+                            {{ form.phone }}
+                            {% if form.phone.errors %}
+                            <span class="invalid-feedback">{{ form.phone.errors|join:", " }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Ảnh đại diện (chỉ GV có teacher profile) -->
+                    {% if teacher %}
+                    <div class="form-group {% if form.avatar.errors %}has-error{% endif %}">
+                        <label class="form-label">Ảnh Đại Diện</label>
+                        {% if teacher.avatar %}
+                        <div class="avatar-preview-wrap">
+                            <img src="{{ teacher.avatar.url }}" class="avatar-preview-img"
+                                 id="avatar-current-preview" alt="Ảnh hiện tại">
+                            <span style="font-size:12px;color:var(--text-muted);">Ảnh hiện tại — tải lên ảnh mới để thay thế</span>
+                        </div>
+                        {% endif %}
+                        {{ form.avatar }}
+                        {% if form.avatar.errors %}
+                        <span class="invalid-feedback">{{ form.avatar.errors|join:", " }}</span>
+                        {% endif %}
+                        <img id="avatar-new-preview" class="avatar-preview-img"
+                             style="display:none;margin-top:8px;" alt="Xem trước ảnh mới">
+                    </div>
+                    {% endif %}
+
+                    <!-- ---- ĐỔI MẬT KHẨU (COLLAPSIBLE) ---- -->
+                    <button type="button" class="pw-section-toggle" id="pw-toggle" onclick="togglePwSection()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                        Đổi Mật Khẩu
+                        <svg class="toggle-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    </button>
+
+                    <div class="pw-fields {% if form.current_password.errors or form.new_password.errors or form.confirm_password.errors %}expanded{% else %}collapsed{% endif %}"
+                         id="pw-fields">
+                        <div style="padding-top:14px;">
+                            <!-- Mật khẩu hiện tại -->
+                            <div class="form-group {% if form.current_password.errors %}has-error{% endif %}">
+                                <label class="form-label" for="{{ form.current_password.id_for_label }}">Mật Khẩu Hiện Tại</label>
+                                {{ form.current_password }}
+                                {% if form.current_password.errors %}
+                                <span class="invalid-feedback">{{ form.current_password.errors|join:", " }}</span>
+                                {% endif %}
+                            </div>
+                            <!-- Mật khẩu mới + xác nhận -->
+                            <div class="form-row">
+                                <div class="form-group {% if form.new_password.errors %}has-error{% endif %}">
+                                    <label class="form-label" for="{{ form.new_password.id_for_label }}">Mật Khẩu Mới</label>
+                                    {{ form.new_password }}
+                                    {% if form.new_password.errors %}
+                                    <span class="invalid-feedback">{{ form.new_password.errors|join:", " }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="form-group {% if form.confirm_password.errors %}has-error{% endif %}">
+                                    <label class="form-label" for="{{ form.confirm_password.id_for_label }}">Xác Nhận Mật Khẩu</label>
+                                    {{ form.confirm_password }}
+                                    {% if form.confirm_password.errors %}
+                                    <span class="invalid-feedback">{{ form.confirm_password.errors|join:", " }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px;">
+                                💡 Để trống cả 3 ô nếu bạn không muốn đổi mật khẩu.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn-save" id="save-btn">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            Lưu Thay Đổi
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ---- DANH SÁCH LỚP ĐANG DẠY (chỉ GV) ---- -->
+        {% if is_teacher_role and teaching_classes %}
+        <div class="profile-section">
+            <div class="profile-section-header">
+                <div class="profile-section-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2"/>
+                        <line x1="8" y1="21" x2="16" y2="21"/>
+                        <line x1="12" y1="17" x2="12" y2="21"/>
+                    </svg>
+                </div>
+                <span class="profile-section-title">
+                    Lớp Đang Dạy
+                    <span style="font-size:12px;font-weight:500;color:var(--text-muted);margin-left:8px;">
+                        ({{ teaching_classes|length }} lớp)
+                    </span>
+                </span>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="teaching-table">
+                    <thead>
+                        <tr>
+                            <th>Mã Lớp</th>
+                            <th>Tên Học Phần</th>
+                            <th>Học Kỳ</th>
+                            <th>Hành Động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cc in teaching_classes %}
+                        <tr>
+                            <td><span class="class-code-badge">{{ cc.class_code }}</span></td>
+                            <td>{{ cc.course.course_name }}</td>
+                            <td><span class="semester-tag">{{ cc.semester }}</span></td>
+                            <td>
+                                <a href="{% url 'courses:courseclass_detail' cc.pk %}" class="btn-view-class">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                    Xem lớp
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% elif is_teacher_role %}
+        <!-- GV nhưng chưa có lớp nào -->
+        <div class="profile-section">
+            <div class="profile-section-header">
+                <div class="profile-section-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2"/>
+                        <line x1="8" y1="21" x2="16" y2="21"/>
+                        <line x1="12" y1="17" x2="12" y2="21"/>
+                    </svg>
+                </div>
+                <span class="profile-section-title">Lớp Đang Dạy</span>
+            </div>
+            <div class="profile-section-body" style="text-align:center;padding:40px;color:var(--text-muted);">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:12px;opacity:0.4;">
+                    <rect x="2" y="3" width="20" height="14" rx="2"/>
+                    <line x1="8" y1="21" x2="16" y2="21"/>
+                    <line x1="12" y1="17" x2="12" y2="21"/>
+                </svg>
+                <p style="margin:0;font-size:14px;">Chưa được phân công lớp nào.</p>
+            </div>
+        </div>
+        {% endif %}
+
+    </div><!-- /profile-right -->
+</div><!-- /profile-wrapper -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ===== TOGGLE ĐỔI MẬT KHẨU ===== */
+function togglePwSection() {
+    const btn = document.getElementById('pw-toggle');
+    const fields = document.getElementById('pw-fields');
+    const isOpen = btn.classList.contains('open');
+    btn.classList.toggle('open', !isOpen);
+    if (isOpen) {
+        fields.classList.replace('expanded', 'collapsed');
+    } else {
+        fields.classList.replace('collapsed', 'expanded');
+    }
+}
+
+/* Auto-open nếu có lỗi mật khẩu */
+document.addEventListener('DOMContentLoaded', function() {
+    const pwFields = document.getElementById('pw-fields');
+    if (pwFields && pwFields.classList.contains('expanded')) {
+        document.getElementById('pw-toggle').classList.add('open');
+    }
+});
+
+/* ===== XEM TRƯỚC ẢNH ĐẠI DIỆN ===== */
+const avatarInput = document.getElementById('id_profile_avatar');
+if (avatarInput) {
+    avatarInput.addEventListener('change', function() {
+        const preview = document.getElementById('avatar-new-preview');
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(this.files[0]);
+        } else {
+            preview.style.display = 'none';
+        }
+    });
+}
+
+/* ===== LOADING khi submit ===== */
+document.getElementById('profile-form')?.addEventListener('submit', function() {
+    const btn = document.getElementById('save-btn');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `
+            <svg style="animation:spin 0.8s linear infinite" width="15" height="15"
+                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+            </svg>
+            Đang lưu...
+        `;
+    }
+});
+
+/* Spin animation */
+const style = document.createElement('style');
+style.textContent = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
+document.head.appendChild(style);
+</script>
+{% endblock %}

@@ -1,0 +1,471 @@
+{% extends 'layouts/admin_base.html' %}
+{% load static %}
+
+{% block title %}EduFace – {{ student.full_name }} ({{ student.student_id }}){% endblock %}
+{% block page_title %}Chi Tiết Sinh Viên{% endblock %}
+{% block breadcrumb %}Sinh Viên / {{ student.student_id }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ===== LAYOUT ===== */
+.detail-wrapper {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 24px;
+    align-items: start;
+    max-width: 1200px;
+}
+@media (max-width: 900px) { .detail-wrapper { grid-template-columns: 1fr; } }
+
+/* ===== LEFT CARD ===== */
+.sv-card {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 18px;
+    padding: 28px 22px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    position: sticky;
+    top: 24px;
+    animation: fadeUp 0.4s ease-out;
+}
+@keyframes fadeUp {
+    from { opacity:0; transform:translateY(14px); }
+    to   { opacity:1; transform:translateY(0); }
+}
+.sv-photo {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--primary-green, #1a6b3c);
+    box-shadow: 0 0 0 5px rgba(26,107,60,0.1);
+    display: block; margin: 0 auto 16px;
+}
+.sv-initials {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1a6b3c, #2d9e5f);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px; font-weight: 700; color: #fff;
+    margin: 0 auto 16px;
+    border: 3px solid var(--primary-green, #1a6b3c);
+    box-shadow: 0 0 0 5px rgba(26,107,60,0.1);
+}
+.sv-name { font-size: 18px; font-weight: 700; color: var(--text-dark,#1e293b); text-align:center; margin:0 0 4px; }
+.sv-id   { font-size: 13px; color: var(--text-muted,#64748b); text-align:center; margin:0 0 14px; font-family:monospace; }
+
+.sv-status-badge {
+    display: inline-flex; align-items: center; gap:5px;
+    padding: 4px 12px; border-radius: 999px;
+    font-size: 12px; font-weight: 600;
+    margin: 0 auto 18px; display:block; text-align:center; width:fit-content; margin-left:auto; margin-right:auto;
+}
+.badge-active   { background:#dcfce7; color:#166534; }
+.badge-inactive { background:#f1f5f9; color:#64748b; }
+
+.sv-meta { list-style:none; padding:0; margin:0; }
+.sv-meta li {
+    display:flex; align-items:flex-start; gap:9px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border,#f1f5f9);
+    font-size: 13px; color: var(--text-muted,#64748b);
+}
+.sv-meta li:last-child { border-bottom: none; }
+.sv-meta svg { flex-shrink:0; margin-top:1px; color: var(--primary-green,#1a6b3c); }
+.sv-meta-val { color: var(--text-dark,#1e293b); font-weight:500; }
+
+.sv-action-btns { display:flex; gap:8px; margin-top:18px; }
+.sv-btn {
+    flex:1; padding:9px 0; text-align:center; text-decoration:none;
+    border-radius:9px; font-size:13px; font-weight:600;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    transition: all 0.2s;
+}
+.sv-btn-edit   { background:var(--primary-green,#1a6b3c); color:#fff; }
+.sv-btn-edit:hover { background:#155530; transform:translateY(-1px); }
+.sv-btn-back   { background:var(--bg-input,#f8fafc); color:var(--text-muted,#64748b);
+                 border:1px solid var(--border,#e2e8f0); }
+.sv-btn-back:hover { background:var(--bg-hover,#f1f5f9); color:var(--text-dark,#1e293b); }
+
+/* ===== RIGHT PANEL ===== */
+.detail-right { display:flex; flex-direction:column; gap:20px; }
+
+/* ===== OVERALL STATS ===== */
+.overall-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 0;
+}
+@media (max-width:700px) { .overall-grid { grid-template-columns: repeat(2,1fr); } }
+
+.overall-card {
+    background: var(--card-bg,#fff);
+    border: 1px solid var(--border,#e2e8f0);
+    border-radius: 14px;
+    padding: 18px 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    animation: fadeUp 0.4s ease-out;
+}
+.overall-icon {
+    width:36px; height:36px; border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:10px;
+}
+.icon-green  { background:#dcfce7; color:#166534; }
+.icon-blue   { background:#dbeafe; color:#1d4ed8; }
+.icon-red    { background:#fee2e2; color:#dc2626; }
+.icon-orange { background:#fff7ed; color:#c2410c; }
+
+.overall-val { font-size:24px; font-weight:800; color:var(--text-dark,#1e293b); margin:0 0 2px; }
+.overall-lbl { font-size:12px; color:var(--text-muted,#64748b); }
+
+/* ===== WARNING BANNER ===== */
+.warning-banner {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 1.5px solid #fbbf24;
+    border-radius: 12px;
+    padding: 14px 18px;
+    display: flex; align-items: center; gap: 12px;
+    font-size: 13.5px; color: #92400e; font-weight: 500;
+}
+
+/* ===== SECTION CARD ===== */
+.section-card {
+    background: var(--card-bg,#fff);
+    border: 1px solid var(--border,#e2e8f0);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    animation: fadeUp 0.4s ease-out;
+}
+.section-header {
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--border,#e2e8f0);
+    display:flex; align-items:center; gap:10px;
+}
+.section-icon {
+    width:34px; height:34px; border-radius:9px;
+    background: var(--primary-green-light,#eaf5ed);
+    color: var(--primary-green,#1a6b3c);
+    display:flex; align-items:center; justify-content:center;
+}
+.section-title { font-size:15px; font-weight:700; color:var(--text-dark,#1e293b); }
+.section-body { padding: 18px 22px; }
+
+/* ===== ATTENDANCE MODULE CARD ===== */
+.att-module {
+    border: 1px solid var(--border,#e2e8f0);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 14px;
+}
+.att-module:last-child { margin-bottom: 0; }
+.att-module-header {
+    padding: 14px 18px;
+    background: var(--bg-input,#f8fafc);
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    cursor: pointer; user-select:none;
+    transition: background 0.2s;
+}
+.att-module-header:hover { background:#f1f5f9; }
+.att-module-name { font-size:14px; font-weight:700; color:var(--text-dark,#1e293b); flex:1; min-width:160px; }
+.att-module-meta { font-size:12px; color:var(--text-muted,#64748b); }
+.att-module-chevron { transition: transform 0.25s; margin-left:auto; }
+.att-module-chevron.open { transform: rotate(180deg); }
+
+/* Progress bar */
+.att-progress-wrap { display:flex; align-items:center; gap:10px; min-width:160px; }
+.att-progress-bar {
+    flex:1; height:7px; background:#e2e8f0; border-radius:999px; overflow:hidden;
+}
+.att-progress-fill {
+    height:100%; border-radius:999px;
+    transition: width 0.6s cubic-bezier(.4,0,.2,1);
+}
+.fill-good    { background: linear-gradient(90deg, #22c55e, #16a34a); }
+.fill-warning { background: linear-gradient(90deg, #f59e0b, #d97706); }
+.fill-danger  { background: linear-gradient(90deg, #ef4444, #dc2626); }
+.att-progress-pct { font-size:12px; font-weight:700; min-width:36px; text-align:right; }
+.pct-good    { color: #16a34a; }
+.pct-warning { color: #d97706; }
+.pct-danger  { color: #dc2626; }
+
+/* Collapse body */
+.att-module-body { overflow:hidden; transition: max-height 0.35s ease; }
+.att-module-body.collapsed { max-height:0; }
+.att-module-body.expanded  { max-height:1000px; }
+
+/* Records table inside */
+.records-table { width:100%; border-collapse:collapse; font-size:13px; }
+.records-table th {
+    padding:9px 14px; background:var(--bg-input,#f8fafc);
+    color:var(--text-muted,#64748b); font-size:11.5px; font-weight:600;
+    text-transform:uppercase; letter-spacing:0.4px;
+    border-bottom:1px solid var(--border,#e2e8f0); text-align:left;
+}
+.records-table td {
+    padding:10px 14px;
+    border-bottom: 1px solid var(--border,#f1f5f9);
+    vertical-align:middle;
+}
+.records-table tr:last-child td { border-bottom:none; }
+.records-table tr:hover td { background:var(--bg-hover,#f8fafc); }
+
+.status-present { display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;
+    padding:3px 10px;border-radius:999px;background:#dcfce7;color:#166534; }
+.status-absent  { display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;
+    padding:3px 10px;border-radius:999px;background:#fee2e2;color:#dc2626; }
+.status-dot { width:6px;height:6px;border-radius:50%;display:inline-block; }
+.dot-present { background:#22c55e; }
+.dot-absent  { background:#ef4444; }
+
+.no-records { padding:24px; text-align:center; color:var(--text-muted,#94a3b8); font-size:13px; }
+</style>
+{% endblock %}
+
+{% block page_content %}
+<div class="detail-wrapper">
+
+    <!-- ===== LEFT: SV CARD ===== -->
+    <div class="sv-card">
+        {% if student.photo %}
+        <img src="{{ student.photo.url }}" alt="{{ student.full_name }}" class="sv-photo">
+        {% else %}
+        <div class="sv-initials">{{ student.full_name|slice:":1"|upper }}</div>
+        {% endif %}
+
+        <h2 class="sv-name">{{ student.full_name }}</h2>
+        <p class="sv-id">MSSV: {{ student.student_id }}</p>
+
+        <span class="sv-status-badge {% if student.is_active %}badge-active{% else %}badge-inactive{% endif %}">
+            <span style="width:6px;height:6px;border-radius:50%;background:{% if student.is_active %}#22c55e{% else %}#94a3b8{% endif %};display:inline-block;"></span>
+            {% if student.is_active %}Đang Học{% else %}Nghỉ Học{% endif %}
+        </span>
+
+        <ul class="sv-meta">
+            <li>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                <span>Lớp: <span class="sv-meta-val">{{ student.student_class.class_code|default:"—" }}</span></span>
+            </li>
+            <li>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                <span>Ngành: <span class="sv-meta-val">{{ student.student_class.department.name|default:"—" }}</span></span>
+            </li>
+            <li>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span>Ngày sinh: <span class="sv-meta-val">{{ student.date_of_birth|date:"d/m/Y"|default:"—" }}</span></span>
+            </li>
+            <li>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                <span class="sv-meta-val">{{ student.email|default:"—" }}</span>
+            </li>
+            <li>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 4.69 9.5a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.56 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                <span class="sv-meta-val">{{ student.phone|default:"—" }}</span>
+            </li>
+            <li>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>Đăng ký: <span class="sv-meta-val">{{ student.created_at|date:"d/m/Y" }}</span></span>
+            </li>
+        </ul>
+
+        <div class="sv-action-btns">
+            <a href="{% url 'students:list' %}" class="sv-btn sv-btn-back">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                Quay lại
+            </a>
+            {% if request.is_admin_group %}
+            <a href="{% url 'students:edit' student.pk %}" class="sv-btn sv-btn-edit">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Sửa
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ===== RIGHT PANEL ===== -->
+    <div class="detail-right">
+
+        <!-- Cảnh báo chuyên cần nếu cần -->
+        {% if overall_warning %}
+        <div class="warning-banner">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <span>
+                <strong>Cảnh báo chuyên cần!</strong> Tỉ lệ có mặt tổng hợp của sinh viên này là
+                <strong>{{ overall_rate }}%</strong> — dưới ngưỡng 80%.
+            </span>
+        </div>
+        {% endif %}
+
+        <!-- Thống kê tổng hợp -->
+        <div class="overall-grid">
+            <div class="overall-card">
+                <div class="overall-icon icon-blue">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 7l9-4 9 4"/><line x1="12" y1="7" x2="12" y2="20"/></svg>
+                </div>
+                <div class="overall-val">{{ enrollment_count }}</div>
+                <div class="overall-lbl">Môn Đang Học</div>
+            </div>
+            <div class="overall-card">
+                <div class="overall-icon icon-green">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                </div>
+                <div class="overall-val">{{ total_present_all }}</div>
+                <div class="overall-lbl">Buổi Có Mặt</div>
+            </div>
+            <div class="overall-card">
+                <div class="overall-icon icon-red">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                </div>
+                <div class="overall-val">{{ total_sessions_all|add:"-1"|add:"1"|default:"0"|add:"-"|add:total_present_all|default:total_sessions_all }}</div>
+                <div class="overall-lbl">Buổi Vắng</div>
+            </div>
+            <div class="overall-card">
+                <div class="overall-icon {% if overall_warning %}icon-orange{% else %}icon-green{% endif %}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                </div>
+                <div class="overall-val {% if overall_warning %}pct-warning{% else %}pct-good{% endif %}">
+                    {% if overall_rate %}{{ overall_rate }}%{% else %}—{% endif %}
+                </div>
+                <div class="overall-lbl">Tỉ Lệ Chuyên Cần</div>
+            </div>
+        </div>
+
+        <!-- Lịch sử điểm danh theo môn -->
+        <div class="section-card">
+            <div class="section-header">
+                <div class="section-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                </div>
+                <span class="section-title">Lịch Sử Điểm Danh Theo Môn</span>
+            </div>
+            <div class="section-body">
+                {% if attendance_by_class %}
+                {% for item in attendance_by_class %}
+                <div class="att-module" id="att-mod-{{ forloop.counter }}">
+                    <div class="att-module-header" onclick="toggleModule({{ forloop.counter }})">
+                        <!-- Tên môn + lớp -->
+                        <div>
+                            <div class="att-module-name">{{ item.course_class.course.course_name }}</div>
+                            <div class="att-module-meta">
+                                Mã lớp: <strong>{{ item.course_class.class_code }}</strong> &nbsp;·&nbsp;
+                                {{ item.course_class.semester }} &nbsp;·&nbsp;
+                                GV: {{ item.course_class.teacher.user.get_full_name|default:item.course_class.teacher.teacher_id }}
+                            </div>
+                        </div>
+
+                        <!-- Progress bar -->
+                        {% if item.session_count > 0 %}
+                        <div class="att-progress-wrap">
+                            <div class="att-progress-bar">
+                                <div class="att-progress-fill {% if item.attendance_rate >= 80 %}fill-good{% elif item.attendance_rate >= 60 %}fill-warning{% else %}fill-danger{% endif %}"
+                                     style="width: {{ item.attendance_rate|floatformat:0 }}%"></div>
+                            </div>
+                            <span class="att-progress-pct {% if item.attendance_rate >= 80 %}pct-good{% elif item.attendance_rate >= 60 %}pct-warning{% else %}pct-danger{% endif %}">
+                                {{ item.attendance_rate }}%
+                            </span>
+                        </div>
+                        <!-- Thống kê nhỏ -->
+                        <div class="att-module-meta" style="white-space:nowrap;">
+                            ✅ {{ item.present_count }} / {{ item.session_count }} buổi
+                            {% if item.is_warning %}&nbsp;<span style="color:#d97706;font-weight:700;">⚠ Cảnh báo</span>{% endif %}
+                        </div>
+                        {% else %}
+                        <div class="att-module-meta">Chưa có buổi điểm danh</div>
+                        {% endif %}
+
+                        <svg class="att-module-chevron" id="chevron-{{ forloop.counter }}"
+                             width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    </div>
+
+                    <!-- Chi tiết từng buổi -->
+                    <div class="att-module-body collapsed" id="att-body-{{ forloop.counter }}">
+                        {% if item.recent_records %}
+                        <table class="records-table">
+                            <thead>
+                                <tr>
+                                    <th>Buổi / Thời gian</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in item.recent_records %}
+                                <tr>
+                                    <td>{{ record.session.started_at|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        {% if record.status == 'present' %}
+                                        <span class="status-present">
+                                            <span class="status-dot dot-present"></span>Có mặt
+                                        </span>
+                                        {% else %}
+                                        <span class="status-absent">
+                                            <span class="status-dot dot-absent"></span>Vắng
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% if item.session_count > 10 %}
+                        <div style="padding:10px 14px;font-size:12px;color:var(--text-muted);border-top:1px solid var(--border,#f1f5f9);">
+                            Hiển thị 10 buổi gần nhất trong tổng số {{ item.session_count }} buổi.
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <div class="no-records">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:0.3;margin-bottom:8px;display:block;margin-left:auto;margin-right:auto;">
+                                <polyline points="9 11 12 14 22 4"/>
+                            </svg>
+                            Chưa có bản ghi điểm danh cho môn này.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div style="text-align:center;padding:48px;color:var(--text-muted);">
+                    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                         style="opacity:0.3;display:block;margin:0 auto 12px;">
+                        <rect x="3" y="7" width="18" height="13" rx="2"/>
+                        <path d="M3 7l9-4 9 4"/>
+                    </svg>
+                    <p style="margin:0;font-size:14px;">Sinh viên chưa đăng ký môn học nào.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div><!-- /detail-right -->
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ===== TOGGLE CÁC BUỔI ĐIỂM DANH ===== */
+function toggleModule(n) {
+    const body    = document.getElementById('att-body-' + n);
+    const chevron = document.getElementById('chevron-' + n);
+    const isOpen  = body.classList.contains('expanded');
+    body.classList.toggle('collapsed', isOpen);
+    body.classList.toggle('expanded', !isOpen);
+    chevron.classList.toggle('open', !isOpen);
+}
+
+/* Animate progress bars khi trang load */
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.att-progress-fill').forEach(el => {
+        const w = el.style.width;
+        el.style.width = '0%';
+        requestAnimationFrame(() => {
+            setTimeout(() => { el.style.width = w; }, 100);
+        });
+    });
+});
+</script>
+{% endblock %}
