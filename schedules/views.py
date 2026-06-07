@@ -322,17 +322,63 @@ def schedule_delete(request, pk):
 @group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
 def timetable_view(request):
     """Giao diện Thời Khóa Biểu (Dạng bảng lưới)"""
-    date_str = request.GET.get('date')
-    if date_str:
+    from academics.models import Semester
+    from datetime import datetime, timedelta
+    from django.utils import timezone
+    
+    semesters = Semester.objects.all().order_by('-academic_year__start_date', '-semester_num')
+    selected_semester = None
+    
+    semester_id = request.GET.get('semester')
+    if semester_id:
         try:
-            target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-        except ValueError:
-            target_date = timezone.now().date()
-    else:
-        target_date = timezone.now().date()
+            selected_semester = Semester.objects.get(id=semester_id)
+        except Semester.DoesNotExist:
+            pass
+            
+    if not selected_semester:
+        selected_semester = Semester.objects.filter(is_active=True).first() or semesters.first()
+
+    weeks = []
+    target_date = timezone.now().date()
+    
+    if selected_semester:
+        # Find the Monday of the week containing start_date
+        sem_start_monday = selected_semester.start_date - timedelta(days=selected_semester.start_date.weekday())
+        sem_end_sunday = selected_semester.end_date + timedelta(days=6 - selected_semester.end_date.weekday())
         
+        total_weeks = (sem_end_sunday - sem_start_monday).days // 7 + 1
+        for w in range(total_weeks):
+            w_monday = sem_start_monday + timedelta(weeks=w)
+            w_sunday = w_monday + timedelta(days=6)
+            weeks.append({
+                'number': w + 1,
+                'monday': w_monday,
+                'sunday': w_sunday,
+                'label': f"Tuần {w + 1} ({w_monday.strftime('%d/%m/%Y')} - {w_sunday.strftime('%d/%m/%Y')})"
+            })
+            
+        week_num = request.GET.get('week')
+        if week_num:
+            try:
+                week_idx = int(week_num) - 1
+                if 0 <= week_idx < len(weeks):
+                    target_date = weeks[week_idx]['monday']
+            except ValueError:
+                pass
+        else:
+            # If no week selected, try to find current week, else default to week 1
+            today = timezone.now().date()
+            current_week = next((w for w in weeks if w['monday'] <= today <= w['sunday']), None)
+            if current_week:
+                target_date = current_week['monday']
+            else:
+                target_date = weeks[0]['monday'] if weeks else today
+                
     monday = target_date - timedelta(days=target_date.weekday())
     sunday = monday + timedelta(days=6)
+    
+    selected_week = next((w for w in weeks if w['monday'] == monday), None)
     
     week_days = []
     for i in range(7):
@@ -348,7 +394,6 @@ def timetable_view(request):
         date__range=[monday, sunday]
     )
     
-    # Phân quyền: Nếu là Giảng Viên thì chỉ xem lịch dạy của mình
     if hasattr(request.user, 'teacher'):
         schedules = schedules.filter(course_class__teacher=request.user.teacher)
     
@@ -361,6 +406,10 @@ def timetable_view(request):
 
     context = {
         'active_menu': 'timetable',
+        'semesters': semesters,
+        'selected_semester': selected_semester,
+        'weeks': weeks,
+        'selected_week': selected_week,
         'target_date': target_date.strftime('%Y-%m-%d'),
         'monday': monday,
         'sunday': sunday,

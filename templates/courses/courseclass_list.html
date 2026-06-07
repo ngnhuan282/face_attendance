@@ -112,34 +112,40 @@
         </table>
     </div>
 
-    {% if page_obj.has_other_pages %}
-    <div class="table-card-footer" style="justify-content: center;">
-        <div style="display: flex; gap: 8px; align-items: center;">
-            {% if page_obj.has_previous %}
-            <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Về đầu">&laquo;</a>
-            <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Trước">&lsaquo;</a>
-            {% else %}
-            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&laquo;</span>
-            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&lsaquo;</span>
-            {% endif %}
-            
-            <span style="font-size: 13px; font-weight: 600; padding: 0 8px;">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
-            
-            {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Tiếp">&rsaquo;</a>
-            <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Về cuối">&raquo;</a>
-            {% else %}
-            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&rsaquo;</span>
-            <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&raquo;</span>
+    <div class="table-card-footer pagination-centered-footer">
+        <div class="footer-info">
+            <span>Hiển thị {{ page_obj.object_list|length }} / {{ page_obj.paginator.count }} lớp học phần</span>
+        </div>
+        <div class="footer-pagination">
+            {% if page_obj.has_other_pages %}
+            <div class="pagination-buttons">
+                {% if page_obj.has_previous %}
+                <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Về đầu">&laquo;</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Trước">&lsaquo;</a>
+                {% else %}
+                <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&laquo;</span>
+                <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&lsaquo;</span>
+                {% endif %}
+
+                <span style="font-size: 13px; font-weight: 600; padding: 0 8px;">Hiển thị {{ page_obj.start_index|default:"0" }} - {{ page_obj.end_index|default:"0" }} / {{ page_obj.paginator.count }} lớp học phần</span>
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Tiếp">&rsaquo;</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Về cuối">&raquo;</a>
+                {% else %}
+                <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&rsaquo;</span>
+                <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&raquo;</span>
+                {% endif %}
+            </div>
             {% endif %}
         </div>
+        <div class="footer-spacer"></div>
     </div>
-    {% endif %}
 </div>
 
 <!-- Modal Create CourseClass -->
 <div id="courseclassModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center;">
-    <div class="card" style="width: 700px; max-height: 90vh; overflow-y: auto;">
+    <div class="card" style="width: 600px; max-height: 90vh; overflow-y: auto;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
             <div class="card-title" style="margin: 0;">Thêm Mới Lớp Học Phần</div>
             <button type="button" onclick="closeCourseClassModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light);">×</button>
@@ -214,7 +220,7 @@
                 </div>
 
                 <!-- Buttons -->
-                <div style="display: flex; gap: 12px; margin-top: 24px;">
+                <div style="display: flex; justify-content: center; gap: 12px; margin-top: 24px;">
                     <button type="submit" class="btn-primary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; text-decoration: none;">
                         Tạo Mới
                     </button>
@@ -229,7 +235,7 @@
 
 <!-- Modal Edit CourseClass -->
 <div id="editCourseclassModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center;">
-    <div class="card" style="width: 700px; max-height: 90vh; overflow-y: auto;">
+    <div class="card" style="width: 600px; max-height: 90vh; overflow-y: auto;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
             <div class="card-title" style="margin: 0;">Chỉnh Sửa Lớp Học Phần</div>
             <button type="button" onclick="closeEditCourseClassModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light);">×</button>
@@ -295,7 +301,7 @@
                 </div>
 
                 <!-- Buttons -->
-                <div style="display: flex; gap: 12px; margin-top: 24px;">
+                <div style="display: flex; justify-content: center; gap: 12px; margin-top: 24px;">
                     <button type="submit" class="btn-primary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; text-decoration: none;">
                         Cập Nhật
                     </button>

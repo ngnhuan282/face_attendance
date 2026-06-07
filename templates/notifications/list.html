@@ -219,7 +219,7 @@
                 style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&lsaquo;</span>
             {% endif %}
 
-            <span style="font-size: 13px; font-weight: 600; padding: 0 8px;">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+            <span style="font-size: 13px; font-weight: 600; padding: 0 8px;">Hiển thị {{ page_obj.start_index }} - {{ page_obj.end_index }} / {{ page_obj.paginator.count }} thông báo</span>
 
             {% if page_obj.has_next %}
             <a href="?page={{ page_obj.next_page_number }}{% if filter_type %}&type={{ filter_type }}{% endif %}{% if filter_sem %}&semester={{ filter_sem }}{% endif %}{% if show_unread %}&unread={{ show_unread }}{% endif %}"

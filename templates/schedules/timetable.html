@@ -4,19 +4,59 @@
 {% block page_title %}Thời Khóa Biểu{% endblock %}
 {% block breadcrumb %}Quản Lý / Lịch Học / Thời Khóa Biểu{% endblock %}
 
+{% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+<style>
+.select2-container .select2-selection--single {
+    height: 38px !important;
+    border: 1px solid var(--border-color, #e5e7eb) !important;
+    border-radius: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    font-family: var(--font-base) !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    padding-left: 12px !important;
+    padding-right: 24px !important;
+    line-height: normal !important;
+    color: var(--text-dark, #1f2937) !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 36px !important;
+    right: 6px !important;
+}
+.select2-container--default.select2-container--focus .select2-selection--single,
+.select2-container--default.select2-container--open .select2-selection--single {
+    border-color: var(--primary-green, #1a6b3c) !important;
+    box-shadow: 0 0 0 3px rgba(26, 107, 60, 0.1) !important;
+    background: #fff !important;
+}
+</style>
+{% endblock %}
+
 {% block page_content %}
 
 <div class="card" style="margin-bottom: 24px; padding: 20px;">
     <form method="get" style="display: flex; gap: 16px; align-items: center; justify-content: space-between;">
         <div style="display: flex; gap: 16px; align-items: center;">
-            <div style="font-weight: 600; color: var(--text-dark);">Tuần từ:</div>
-            <div style="font-weight: 700; color: var(--primary-blue);">{{ monday|date:"d/m/Y" }}</div>
-            <div style="font-weight: 600; color: var(--text-dark);">Đến:</div>
-            <div style="font-weight: 700; color: var(--primary-blue);">{{ sunday|date:"d/m/Y" }}</div>
+            <div style="font-weight: 600; color: var(--text-dark);">Học kỳ:</div>
+            <select name="semester" class="form-control select2-filter" style="width: 250px;">
+                {% for sem in semesters %}
+                    <option value="{{ sem.id }}" {% if selected_semester and sem.id == selected_semester.id %}selected{% endif %}>{{ sem.academic_year.name }} - HK{{ sem.semester_num }}</option>
+                {% endfor %}
+            </select>
+
+            <div style="font-weight: 600; color: var(--text-dark);">Tuần:</div>
+            <select name="week" class="form-control select2-filter" style="width: 320px;">
+                {% for w in weeks %}
+                    <option value="{{ w.number }}" {% if selected_week and w.number == selected_week.number %}selected{% endif %}>{{ w.label }}</option>
+                {% endfor %}
+            </select>
         </div>
         <div style="display: flex; gap: 12px; align-items: center;">
-            <input type="date" name="date" class="form-input" value="{{ target_date }}" style="padding: 8px 12px; width: auto;" onchange="this.form.submit()">
-            <a href="?date={% now 'Y-m-d' %}" class="btn-secondary" style="padding: 8px 16px; text-decoration: none; font-weight: 500;">Tuần Hiện Tại</a>
+            <a href="?semester={% if selected_semester %}{{ selected_semester.id }}{% endif %}" class="btn-secondary" style="padding: 8px 16px; text-decoration: none; font-weight: 500;">Tuần Hiện Tại</a>
         </div>
     </form>
 </div>
@@ -151,5 +191,19 @@
         document.getElementById('scheduleDetailModal').style.display = 'none';
     }
 </script>
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('.select2-filter').select2({
+        minimumResultsForSearch: 5
+    }).on('change', function() {
+        $(this).closest('form').submit();
+    });
+});
+</script>
+{% endblock %}
 
 {% endblock %}
