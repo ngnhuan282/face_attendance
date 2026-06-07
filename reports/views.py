@@ -65,6 +65,13 @@ def report_index(request):
             .select_related('course', 'teacher__user')
             .order_by('class_code')
         )
+        # GV chỉ được xem lớp mình dạy
+        if request.is_teacher_group and not request.is_admin_group:
+            teacher = getattr(request.user, 'teacher', None)
+            if teacher:
+                course_classes = course_classes.filter(teacher=teacher)
+            else:
+                course_classes = CourseClass.objects.none()
         from django.core.paginator import Paginator
         paginator = Paginator(course_classes, 10)
         page_number = request.GET.get('page', 1)
@@ -86,6 +93,13 @@ def report_class(request, class_id):
         CourseClass.objects.select_related('course', 'semester', 'teacher__user'),
         pk=class_id,
     )
+
+    # GV chỉ được xem báo cáo lớp mình dạy
+    if request.is_teacher_group and not request.is_admin_group:
+        teacher = getattr(request.user, 'teacher', None)
+        if teacher is None or course_class.teacher != teacher:
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied
 
     if request.GET.get('refresh') == '1':
         refresh_class_reports(course_class)
@@ -159,6 +173,13 @@ def export_excel(request, class_id):
         CourseClass.objects.select_related('course', 'semester', 'teacher__user'),
         pk=class_id,
     )
+
+    # GV chỉ được xuất báo cáo lớp mình dạy
+    if request.is_teacher_group and not request.is_admin_group:
+        teacher = getattr(request.user, 'teacher', None)
+        if teacher is None or course_class.teacher != teacher:
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied
 
     reports = (
         AttendanceReport.objects
@@ -402,6 +423,20 @@ def student_attendance(request, student_id):
         .select_related('course_class__course', 'course_class__semester')
         .order_by('-course_class__semester__start_date')
     )
+
+    # GV chỉ được xem SV trong lớp mình dạy
+    if request.is_teacher_group and not request.is_admin_group:
+        teacher = getattr(request.user, 'teacher', None)
+        if teacher:
+            is_allowed = enrollments.filter(course_class__teacher=teacher, is_active=True).exists()
+            if not is_allowed:
+                from django.core.exceptions import PermissionDenied
+                raise PermissionDenied
+            # Chỉ hiện enrollment thuộc lớp mình dạy
+            enrollments = enrollments.filter(course_class__teacher=teacher)
+        else:
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied
 
     selected_class = None
     class_id = request.GET.get('class')

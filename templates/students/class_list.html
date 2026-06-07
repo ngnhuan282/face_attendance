@@ -156,7 +156,7 @@
 
     <div class="table-card-footer pagination-centered-footer">
         <div class="footer-info">
-            <span>Hiển thị {{ classes|length }} / {{ paginator.count }} lớp sinh hoạt</span>
+            <span>Hiển thị {{ page_obj.start_index }} - {{ page_obj.end_index }} / {{ page_obj.paginator.count }} lớp sinh hoạt</span>
         </div>
         <div class="footer-pagination">
             {% if page_obj.has_other_pages %}
@@ -169,7 +169,7 @@
                 <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&lsaquo;</span>
                 {% endif %}
 
-                <span style="font-size: 13px; font-weight: 600; padding: 0 8px;">Hiển thị {{ page_obj.start_index }} - {{ page_obj.end_index }} / {{ page_obj.paginator.count }} lớp</span>
+                <span style="font-size: 13px; font-weight: 600; padding: 0 8px;">Trang {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
 
                 {% if page_obj.has_next %}
                 <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Tiếp">&rsaquo;</a>

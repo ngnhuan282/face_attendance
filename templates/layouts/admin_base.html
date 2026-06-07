@@ -51,6 +51,7 @@
             </a>
             {% endif %}
 
+            {% if request.is_admin_group %}
             <a href="{% url 'students:list' %}" class="sidebar-link {% if active_menu == 'students' %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -60,6 +61,7 @@
                 </svg>
                 Sinh Viên
             </a>
+            {% endif %}
             <a href="{% url 'attendance:demo' %}" class="sidebar-link {% if active_menu == 'attendance' %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="9 11 12 14 22 4"/>
@@ -67,12 +69,14 @@
                 </svg>
                 Điểm Danh
             </a>
+            {% if request.is_admin_group %}
             <a href="{% url 'courses:course_list' %}" class="sidebar-link {% if active_menu == 'courses' %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 7l9-4 9 4"/><line x1="12" y1="7" x2="12" y2="20"/>
                 </svg>
                 Học Phần
             </a>
+            {% endif %}
             <a href="{% url 'courses:courseclass_list' %}" class="sidebar-link {% if active_menu == 'courseclasses' %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="2" y="3" width="20" height="14" rx="2"/>
@@ -81,6 +85,7 @@
                 </svg>
                 Lớp Học Phần
             </a>
+            {% if request.is_admin_group %}
             <a href="{% url 'courses:enrollment_all_list' %}" class="sidebar-link {% if active_menu == 'enrollments' %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
@@ -89,7 +94,9 @@
                 </svg>
                 Đăng Ký HP
             </a>
+            {% endif %}
 
+            {% if request.is_admin_group %}
             <div class="sidebar-nav-label">Quản Lý Lịch Học</div>
             <a href="{% url 'schedules:room_list' %}" class="sidebar-link {% if active_menu == 'rooms' %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -117,6 +124,7 @@
                 </svg>
                 Thời Khóa Biểu
             </a>
+            {% endif %}
 
             <div class="sidebar-nav-label">Phân Tích</div>
             <a href="{% url 'reports:index' %}" class="sidebar-link {% if active_menu == 'reports' %}active{% endif %}">

@@ -395,6 +395,13 @@ def courseclass_detail(request, pk):
     """Chi tiết lớp học phần - xem danh sách sinh viên đã đăng ký"""
     courseclass = get_object_or_404(CourseClass, pk=pk)
     
+    # GV chỉ được xem chi tiết lớp mình dạy
+    if request.is_teacher_group and not request.is_admin_group:
+        teacher = getattr(request.user, 'teacher', None)
+        if teacher is None or courseclass.teacher != teacher:
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied
+    
     # Get enrolled students
     enrollments = courseclass.enrollments.select_related('student').filter(is_active=True)
     

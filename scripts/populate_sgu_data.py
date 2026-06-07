@@ -5,7 +5,7 @@ import random
 import datetime
 import pandas as pd
 import json
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.contrib.auth.hashers import make_password
 
 # Import Django models
@@ -220,6 +220,10 @@ def run():
             last_name=last_name,
             password=make_password("123456")
         )
+        # Assign to GiangVien group
+        from accounts.constants import TEACHER_GROUP_NAME
+        gv_group, _ = Group.objects.get_or_create(name=TEACHER_GROUP_NAME)
+        user.groups.add(gv_group)
         
         # Assign to random department
         dep = random.choice(departments_list)
