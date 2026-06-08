@@ -155,7 +155,7 @@
             <button type="button" onclick="closeCourseClassModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light);">×</button>
         </div>
         
-        <form method="post" action="{% url 'courses:courseclass_create' %}" onsubmit="submitCourseClassForm(event)">
+        <form method="post" action="{% url 'courses:courseclass_create' %}" onsubmit="submitCourseClassForm(event)" novalidate>
             {% csrf_token %}
             
             <div id="create_error_message" style="display: none; padding: 12px; background: #fee2e2; border: 1.5px solid #fca5a5; border-radius: 6px; margin-bottom: 16px; color: #dc2626; font-size: 13px;"></div>
@@ -245,7 +245,7 @@
             <button type="button" onclick="closeEditCourseClassModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light);">×</button>
         </div>
         
-        <form method="post" id="editCourseclassForm" style="display: none;" onsubmit="submitEditCourseClassForm(event)">
+        <form method="post" id="editCourseclassForm" style="display: none;" onsubmit="submitEditCourseClassForm(event)" novalidate>
             {% csrf_token %}
             <input type="hidden" name="courseclass_id" id="edit_courseclass_id">
             
@@ -333,7 +333,7 @@
 
         <div id="delete_error_message" style="display: none; padding: 12px; background: #fee2e2; border: 1.5px solid #fca5a5; border-radius: 6px; margin-bottom: 16px; color: #dc2626; font-size: 13px;"></div>
 
-        <form method="post" id="deleteCourseclassForm" style="display: flex; gap: 12px;" onsubmit="submitDeleteCourseClassForm(event)">
+        <form method="post" id="deleteCourseclassForm" style="display: flex; gap: 12px;" onsubmit="submitDeleteCourseClassForm(event)" novalidate>
             {% csrf_token %}
             <button type="submit" class="btn-primary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; background: #dc2626; flex: 1;">
                 Có, Xóa

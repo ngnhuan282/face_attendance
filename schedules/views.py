@@ -224,6 +224,17 @@ def schedule_create_bulk(request):
             if overlapping:
                 return JsonResponse({'error': f'Phòng {room.room_code} đã có lớp {overlapping.course_class.class_code} học từ tiết {overlapping.start_period}-{overlapping.end_period} vào ngày {d.strftime("%d/%m/%Y")}.'}, status=400)
                 
+            # 3. Trùng giảng viên
+            if course_class.teacher:
+                overlapping_teacher = Schedule.objects.filter(
+                    course_class__teacher=course_class.teacher,
+                    date=d,
+                    start_period__lte=end_period,
+                    end_period__gte=start_period
+                ).first()
+                if overlapping_teacher:
+                    return JsonResponse({'error': f'Giảng viên {course_class.teacher} đang có lịch dạy lớp {overlapping_teacher.course_class.class_code} từ tiết {overlapping_teacher.start_period}-{overlapping_teacher.end_period} vào ngày {d.strftime("%d/%m/%Y")}.'}, status=400)
+                
         last_schedule = Schedule.objects.filter(course_class=course_class).order_by('-session_number').first()
         session_num = (last_schedule.session_number + 1) if last_schedule else 1
         
@@ -292,6 +303,17 @@ def schedule_edit(request, pk):
         ).exclude(pk=pk).first()
         if overlapping:
             return JsonResponse({'error': f'Phòng {overlapping.room.room_code} đã có lớp {overlapping.course_class.class_code} học từ tiết {overlapping.start_period}-{overlapping.end_period} vào ngày {date_obj.strftime("%d/%m/%Y")}.'}, status=400)
+            
+        # Check teacher overlap
+        if schedule.course_class.teacher:
+            overlapping_teacher = Schedule.objects.filter(
+                course_class__teacher=schedule.course_class.teacher,
+                date=date_obj,
+                start_period__lte=int(end_period),
+                end_period__gte=int(start_period)
+            ).exclude(pk=pk).first()
+            if overlapping_teacher:
+                return JsonResponse({'error': f'Giảng viên {schedule.course_class.teacher} đang có lịch dạy lớp {overlapping_teacher.course_class.class_code} từ tiết {overlapping_teacher.start_period}-{overlapping_teacher.end_period} vào ngày {date_obj.strftime("%d/%m/%Y")}.'}, status=400)
             
         schedule.room_id = room_id
         schedule.start_period = int(start_period)

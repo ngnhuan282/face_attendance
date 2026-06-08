@@ -117,7 +117,7 @@
             <button type="button" onclick="closeRoomModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light); line-height: 1;">×</button>
         </div>
 
-        <form method="post" action="{% url 'schedules:room_create' %}" id="createRoomForm" onsubmit="submitRoomForm(event)">
+        <form method="post" action="{% url 'schedules:room_create' %}" id="createRoomForm" onsubmit="submitRoomForm(event)" novalidate>
             {% csrf_token %}
             <div id="create_error_message" style="display: none; padding: 12px; background: #fee2e2; border: 1px solid #fca5a5; border-radius: 6px; margin-bottom: 16px; color: #dc2626; font-size: 13px;"></div>
             
@@ -165,7 +165,7 @@
             <button type="button" onclick="closeEditRoomModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light); line-height: 1;">×</button>
         </div>
 
-        <form method="post" action="" id="editRoomForm" onsubmit="submitEditRoomForm(event)">
+        <form method="post" action="" id="editRoomForm" onsubmit="submitEditRoomForm(event)" novalidate>
             {% csrf_token %}
             <div id="edit_error_message" style="display: none; padding: 12px; background: #fee2e2; border: 1px solid #fca5a5; border-radius: 6px; margin-bottom: 16px; color: #dc2626; font-size: 13px;"></div>
             

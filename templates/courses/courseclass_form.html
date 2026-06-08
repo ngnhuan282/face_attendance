@@ -9,7 +9,7 @@
 <div class="card" style="max-width: 600px;">
     <div class="card-title">{% if is_edit %}Chỉnh Sửa Lớp Học Phần{% else %}Tạo Mới Lớp Học Phần{% endif %}</div>
     
-    <form method="post" action="">
+    <form method="post" action="" novalidate>
         {% csrf_token %}
         
         <div style="display: grid; gap: 16px;">

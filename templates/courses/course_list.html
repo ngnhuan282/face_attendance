@@ -140,7 +140,7 @@
             <button type="button" onclick="closeCourseModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light);">×</button>
         </div>
         
-        <form method="post" action="{% url 'courses:course_create' %}" onsubmit="submitCourseForm(event)">
+        <form method="post" action="{% url 'courses:course_create' %}" onsubmit="submitCourseForm(event)" novalidate>
             {% csrf_token %}
             
             <div id="create_error_message" style="display: none; padding: 12px; background: #fee2e2; border: 1.5px solid #fca5a5; border-radius: 6px; margin-bottom: 16px; color: #dc2626; font-size: 13px;"></div>
@@ -225,7 +225,7 @@
             <button type="button" onclick="closeEditCourseModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light);">×</button>
         </div>
         
-        <form method="post" id="editCourseForm" style="display: none;" onsubmit="submitEditCourseForm(event)">
+        <form method="post" id="editCourseForm" style="display: none;" onsubmit="submitEditCourseForm(event)" novalidate>
             {% csrf_token %}
             <input type="hidden" name="course_id" id="edit_course_id">
             
@@ -318,7 +318,7 @@
 
         <div id="delete_error_message" style="display: none; padding: 12px; background: #fee2e2; border: 1.5px solid #fca5a5; border-radius: 6px; margin-bottom: 16px; color: #dc2626; font-size: 13px;"></div>
 
-        <form method="post" id="deleteCourseForm" style="display: flex; gap: 12px;" onsubmit="submitDeleteCourseForm(event)">
+        <form method="post" id="deleteCourseForm" style="display: flex; gap: 12px;" onsubmit="submitDeleteCourseForm(event)" novalidate>
             {% csrf_token %}
             <button type="submit" class="btn-primary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; background: #dc2626; flex: 1;">
                 Có, Xóa

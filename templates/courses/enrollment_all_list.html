@@ -161,7 +161,7 @@
         <div id="create_error_message" style="display: none; padding: 12px; background: #fee2e2; border: 1.5px solid #fca5a5; border-radius: 6px; margin-bottom: 16px; color: #dc2626; font-size: 13px;"></div>
         <div id="create_success_message" style="display: none; padding: 12px; background: #dcfce7; border: 1.5px solid #86efac; border-radius: 6px; margin-bottom: 16px; color: #166534; font-size: 13px;"></div>
 
-        <form method="post" action="{% url 'courses:enrollment_add' %}" onsubmit="submitEnrollmentForm(event)">
+        <form method="post" action="{% url 'courses:enrollment_add' %}" onsubmit="submitEnrollmentForm(event)" novalidate>
             {% csrf_token %}
             
             <div style="display: grid; gap: 16px;">
@@ -220,7 +220,7 @@
 
         <div id="delete_error_message" style="display: none; padding: 12px; background: #fee2e2; border: 1.5px solid #fca5a5; border-radius: 6px; margin-bottom: 16px; color: #dc2626; font-size: 13px;"></div>
 
-        <form method="post" id="deleteEnrollmentForm" style="display: flex; gap: 12px;" onsubmit="submitDeleteEnrollmentForm(event)">
+        <form method="post" id="deleteEnrollmentForm" style="display: flex; gap: 12px;" onsubmit="submitDeleteEnrollmentForm(event)" novalidate>
             {% csrf_token %}
             <button type="submit" class="btn-primary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; background: #dc2626; flex: 1;">
                 Có, Xóa
@@ -248,7 +248,7 @@
         <div id="import_error_message" style="display: none; padding: 12px; background: #fee2e2; border: 1.5px solid #fca5a5; border-radius: 6px; margin-bottom: 16px; color: #dc2626; font-size: 13px; max-height: 150px; overflow-y: auto; white-space: pre-wrap;"></div>
         <div id="import_success_message" style="display: none; padding: 12px; background: #dcfce7; border: 1.5px solid #86efac; border-radius: 6px; margin-bottom: 16px; color: #166534; font-size: 13px;"></div>
 
-        <form method="post" action="{% url 'courses:enrollment_import_all' %}" enctype="multipart/form-data" id="importForm" onsubmit="submitImportForm(event)">
+        <form method="post" action="{% url 'courses:enrollment_import_all' %}" enctype="multipart/form-data" id="importForm" onsubmit="submitImportForm(event)" novalidate>
             {% csrf_token %}
             <div style="margin-bottom: 20px;">
                 <input type="file" name="csv_file" accept=".csv" required style="width: 100%; padding: 10px; border: 1.5px dashed var(--border-color); border-radius: 6px; cursor: pointer; font-family: var(--font-base); font-size: 13px;">
@@ -640,7 +640,7 @@ function submitEditEnrollmentForm(e) {
             <button type="button" onclick="closeEditEnrollmentModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light); line-height: 1;">×</button>
         </div>
 
-        <form method="post" action="" id="editEnrollmentForm" onsubmit="submitEditEnrollmentForm(event)">
+        <form method="post" action="" id="editEnrollmentForm" onsubmit="submitEditEnrollmentForm(event)" novalidate>
             {% csrf_token %}
             <div id="edit_error_message" style="display: none; padding: 12px; background: #fee2e2; border: 1px solid #fca5a5; border-radius: 6px; margin-bottom: 16px; color: #dc2626; font-size: 13px;"></div>
             
