@@ -445,7 +445,7 @@ Hệ thống gồm **10 bảng** chia thành 7 app, theo đúng thứ tự phụ
 |---|---|---| </br>
 Nguyễn Văn Nhuận </br>
 Vũ Hoàng </br>
-Phạm Minh Hoàng </br>
+Phạm Minh Hoàng đẹp trai</br>
 Võ Ngọc Nguyên </br>
 
 ---

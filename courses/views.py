@@ -513,23 +513,24 @@ def enrollment_add(request):
         courseclass_id = request.POST.get('courseclass_id')
         student_id = request.POST.get('student_id')
         
-        courseclass = get_object_or_404(CourseClass, pk=courseclass_id)
-        student = get_object_or_404(Student, pk=student_id)
-        
-        # Check if already enrolled
-        if Enrollment.objects.filter(course_class=courseclass, student=student).exists():
-            return JsonResponse({'error': 'Sinh viên đã đăng ký lớp này'}, status=400)
-        
-        # Check max students
-        current_count = courseclass.enrollments.filter(is_active=True).count()
-        if current_count >= courseclass.max_students:
-            return JsonResponse({'error': 'Lớp đã đầy'}, status=400)
-        
-        enrollment = Enrollment.objects.create(
-            course_class=courseclass,
-            student=student,
-            is_active=True
-        )
+        with transaction.atomic():
+            courseclass = get_object_or_404(CourseClass.objects.select_for_update(), pk=courseclass_id)
+            student = get_object_or_404(Student, pk=student_id)
+            
+            # Check if already enrolled
+            if Enrollment.objects.filter(course_class=courseclass, student=student).exists():
+                return JsonResponse({'error': 'Sinh viên đã đăng ký lớp này'}, status=400)
+            
+            # Check max students
+            current_count = courseclass.enrollments.filter(is_active=True).count()
+            if current_count >= courseclass.max_students:
+                return JsonResponse({'error': 'Lớp đã đầy'}, status=400)
+            
+            enrollment = Enrollment.objects.create(
+                course_class=courseclass,
+                student=student,
+                is_active=True
+            )
         
         return JsonResponse({
             'success': True,
@@ -596,37 +597,40 @@ def enrollment_import(request, courseclass_id):
             errors = []
             
             with transaction.atomic():
+                # Lock courseclass for the entire import
+                courseclass_locked = CourseClass.objects.select_for_update().get(pk=courseclass.pk)
                 for row_num, row in enumerate(csv_reader, start=2):
                     try:
-                        student_code = row.get('student_code', '').strip() or row.get('student_id', '').strip()
-                        
-                        if not student_code:
-                            errors.append(f'Dòng {row_num}: Mã sinh viên trống')
-                            continue
-                        
-                        try:
-                            student = Student.objects.get(student_id=student_code)
-                        except Student.DoesNotExist:
-                            errors.append(f'Dòng {row_num}: Không tìm thấy sinh viên {student_code}')
-                            continue
-                        
-                        # Check if already enrolled
-                        if Enrollment.objects.filter(course_class=courseclass, student=student).exists():
-                            errors.append(f'Dòng {row_num}: {student_code} đã đăng ký')
-                            continue
-                        
-                        # Check max students
-                        current_count = courseclass.enrollments.filter(is_active=True).count()
-                        if current_count >= courseclass.max_students:
-                            errors.append(f'Dòng {row_num}: Lớp đã đầy')
-                            continue
-                        
-                        Enrollment.objects.create(
-                            course_class=courseclass,
-                            student=student,
-                            is_active=True
-                        )
-                        imported_count += 1
+                        with transaction.atomic():
+                            student_code = row.get('student_code', '').strip() or row.get('student_id', '').strip()
+                            
+                            if not student_code:
+                                errors.append(f'Dòng {row_num}: Mã sinh viên trống')
+                                continue
+                            
+                            try:
+                                student = Student.objects.get(student_id=student_code)
+                            except Student.DoesNotExist:
+                                errors.append(f'Dòng {row_num}: Không tìm thấy sinh viên {student_code}')
+                                continue
+                            
+                            # Check if already enrolled
+                            if Enrollment.objects.filter(course_class=courseclass_locked, student=student).exists():
+                                errors.append(f'Dòng {row_num}: {student_code} đã đăng ký')
+                                continue
+                            
+                            # Check max students
+                            current_count = courseclass_locked.enrollments.filter(is_active=True).count()
+                            if current_count >= courseclass_locked.max_students:
+                                errors.append(f'Dòng {row_num}: Lớp đã đầy')
+                                continue
+                            
+                            Enrollment.objects.create(
+                                course_class=courseclass_locked,
+                                student=student,
+                                is_active=True
+                            )
+                            imported_count += 1
                     except Exception as e:
                         errors.append(f'Dòng {row_num}: {str(e)}')
             
@@ -710,42 +714,43 @@ def enrollment_import_all(request):
             with transaction.atomic():
                 for row_num, row in enumerate(csv_reader, start=2):
                     try:
-                        student_code = row.get('student_code', '').strip() or row.get('student_id', '').strip() or row.get('MSSV', '').strip()
-                        class_code = row.get('class_code', '').strip() or row.get('Ma Lop HP', '').strip()
-                        
-                        if not student_code or not class_code:
-                            errors.append(f'Dòng {row_num}: Mã sinh viên hoặc Mã lớp trống')
-                            continue
-                        
-                        try:
-                            student = Student.objects.get(student_id=student_code)
-                        except Student.DoesNotExist:
-                            errors.append(f'Dòng {row_num}: Không tìm thấy SV {student_code}')
-                            continue
+                        with transaction.atomic():
+                            student_code = row.get('student_code', '').strip() or row.get('student_id', '').strip() or row.get('MSSV', '').strip()
+                            class_code = row.get('class_code', '').strip() or row.get('Ma Lop HP', '').strip()
                             
-                        try:
-                            course_class = CourseClass.objects.get(class_code=class_code)
-                        except CourseClass.DoesNotExist:
-                            errors.append(f'Dòng {row_num}: Không tìm thấy Lớp HP {class_code}')
-                            continue
-                        except CourseClass.MultipleObjectsReturned:
-                            course_class = CourseClass.objects.filter(class_code=class_code).order_by('-id').first()
-                        
-                        if Enrollment.objects.filter(course_class=course_class, student=student).exists():
-                            errors.append(f'Dòng {row_num}: {student_code} đã đ.ký {class_code}')
-                            continue
-                        
-                        current_count = course_class.enrollments.filter(is_active=True).count()
-                        if current_count >= course_class.max_students:
-                            errors.append(f'Dòng {row_num}: Lớp {class_code} đã đầy')
-                            continue
-                        
-                        Enrollment.objects.create(
-                            course_class=course_class,
-                            student=student,
-                            is_active=True
-                        )
-                        imported_count += 1
+                            if not student_code or not class_code:
+                                errors.append(f'Dòng {row_num}: Mã sinh viên hoặc Mã lớp trống')
+                                continue
+                            
+                            try:
+                                student = Student.objects.get(student_id=student_code)
+                            except Student.DoesNotExist:
+                                errors.append(f'Dòng {row_num}: Không tìm thấy SV {student_code}')
+                                continue
+                                
+                            try:
+                                course_class = CourseClass.objects.select_for_update().get(class_code=class_code)
+                            except CourseClass.DoesNotExist:
+                                errors.append(f'Dòng {row_num}: Không tìm thấy Lớp HP {class_code}')
+                                continue
+                            except CourseClass.MultipleObjectsReturned:
+                                course_class = CourseClass.objects.select_for_update().filter(class_code=class_code).order_by('-id').first()
+                            
+                            if Enrollment.objects.filter(course_class=course_class, student=student).exists():
+                                errors.append(f'Dòng {row_num}: {student_code} đã đ.ký {class_code}')
+                                continue
+                            
+                            current_count = course_class.enrollments.filter(is_active=True).count()
+                            if current_count >= course_class.max_students:
+                                errors.append(f'Dòng {row_num}: Lớp {class_code} đã đầy')
+                                continue
+                            
+                            Enrollment.objects.create(
+                                course_class=course_class,
+                                student=student,
+                                is_active=True
+                            )
+                            imported_count += 1
                     except Exception as e:
                         errors.append(f'Dòng {row_num}: {str(e)}')
             
