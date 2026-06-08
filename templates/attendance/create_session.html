@@ -189,8 +189,7 @@
     }
 
     .roster-scroll {
-        max-height: 610px;
-        overflow: auto;
+        overflow: visible;
     }
 
     .roster-count {
@@ -300,7 +299,7 @@
             <div class="table-card-header">
                 <div>
                     <div class="table-card-title">Danh Sách Sinh Viên</div>
-                    <div class="capture-status">{{ students|length }} sinh viên trong lớp</div>
+                    <div class="capture-status">{{ page_obj.paginator.count }} sinh viên trong lớp</div>
                 </div>
                 <div class="roster-count">
                     <strong id="presentCount">0</strong>
@@ -317,7 +316,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for row in student_rows %}
+                        {% for row in page_obj %}
                             {% with student=row.student record=row.record %}
                             <tr id="student-row-{{ student.student_id }}" class="{% if record and record.status == 'present' %}is-present{% endif %}" data-present="{% if record and record.status == 'present' %}true{% else %}false{% endif %}">
                                 <td style="font-weight:600;color:var(--text-dark);font-family:monospace;">{{ student.student_id }}</td>
@@ -346,6 +345,35 @@
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
+            <div class="table-card-footer pagination-centered-footer">
+                <div class="footer-info">
+                    <span>Hiển thị {{ page_obj.start_index }} - {{ page_obj.end_index }} / {{ page_obj.paginator.count }} sinh viên</span>
+                </div>
+                <div class="footer-pagination">
+                    {% if page_obj.has_other_pages %}
+                    <div class="pagination-buttons">
+                        {% if page_obj.has_previous %}
+                        <a href="?session_id={{ selected_session.id }}&page=1" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Về đầu">&laquo;</a>
+                        <a href="?session_id={{ selected_session.id }}&page={{ page_obj.previous_page_number }}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Trước">&lsaquo;</a>
+                        {% else %}
+                        <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&laquo;</span>
+                        <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&lsaquo;</span>
+                        {% endif %}
+
+                        <span style="font-size: 13px; font-weight: 600; padding: 0 8px;">Trang {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+
+                        {% if page_obj.has_next %}
+                        <a href="?session_id={{ selected_session.id }}&page={{ page_obj.next_page_number }}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Tiếp">&rsaquo;</a>
+                        <a href="?session_id={{ selected_session.id }}&page={{ page_obj.paginator.num_pages }}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Về cuối">&raquo;</a>
+                        {% else %}
+                        <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&rsaquo;</span>
+                        <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&raquo;</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="footer-spacer"></div>
             </div>
         </div>
 
@@ -421,7 +449,6 @@
         if (statusCell) {
             statusCell.innerHTML = '<span class="badge badge-green"><span class="badge-dot"></span>Có mặt</span>';
         }
-        updatePresentCount();
     }
 
     async function refreshRecords() {
@@ -430,6 +457,9 @@
             const response = await fetch(`${recordsUrl}?session_id=${sessionId}`);
             if (!response.ok) return;
             const data = await response.json();
+            if (presentCount) {
+                presentCount.textContent = data.results.filter((record) => record.status === "present").length;
+            }
             data.results.filter((record) => record.status === "present").forEach(markPresent);
         } catch (error) {
             setStatus("Mất kết nối cập nhật điểm danh");
@@ -506,7 +536,7 @@
         setStatus("Không mở được livestream camera");
     });
     window.addEventListener("beforeunload", stopCamera);
-    updatePresentCount();
+    if (presentCount) presentCount.textContent = "{{ present_records_count|default:0 }}";
     if (sessionId) refreshRecords();
 </script>
 {% endblock %}

@@ -29,6 +29,35 @@ def setup_django():
     django.setup()
 
 
+def encode_student_photo(student):
+    if not student.photo or not Path(student.photo.path).exists():
+        print(f"Bo qua {student}: khong tim thay anh.")
+        return None
+
+    try:
+        image = np.array(Image.open(student.photo.path).convert("RGB"), dtype=np.uint8)
+        image = np.ascontiguousarray(image, dtype=np.uint8)
+        face_locations = face_recognition.face_locations(image, model="hog")
+        face_encodings = face_recognition.face_encodings(image, face_locations)
+    except Exception as exc:
+        print(f"Bo qua {student}: loi xu ly anh ({exc}).")
+        return None
+
+    if not face_encodings:
+        print(f"Bo qua {student}: khong tim thay khuon mat.")
+        return None
+
+    if len(face_encodings) > 1:
+        print(f"{student}: tim thay nhieu khuon mat, lay khuon mat dau tien.")
+
+    encoding = face_encodings[0]
+    if len(encoding) != 128:
+        print(f"Bo qua {student}: vector khong phai 128 chieu.")
+        return None
+
+    return encoding
+
+
 def encode_students(output_file: Path = ENCODINGS_FILE):
     setup_django()
 
@@ -39,29 +68,8 @@ def encode_students(output_file: Path = ENCODINGS_FILE):
     students = Student.objects.filter(is_active=True).exclude(photo="").exclude(photo__isnull=True)
 
     for student in students:
-        if not student.photo or not Path(student.photo.path).exists():
-            print(f"Bo qua {student}: khong tim thay anh.")
-            continue
-
-        try:
-            image = np.array(Image.open(student.photo.path).convert("RGB"), dtype=np.uint8)
-            image = np.ascontiguousarray(image, dtype=np.uint8)
-            face_locations = face_recognition.face_locations(image, model="hog")
-            face_encodings = face_recognition.face_encodings(image, face_locations)
-        except Exception as exc:
-            print(f"Bo qua {student}: loi xu ly anh ({exc}).")
-            continue
-
-        if not face_encodings:
-            print(f"Bo qua {student}: khong tim thay khuon mat.")
-            continue
-
-        if len(face_encodings) > 1:
-            print(f"{student}: tim thay nhieu khuon mat, lay khuon mat dau tien.")
-
-        encoding = face_encodings[0]
-        if len(encoding) != 128:
-            print(f"Bo qua {student}: vector khong phai 128 chieu.")
+        encoding = encode_student_photo(student)
+        if encoding is None:
             continue
 
         data["encodings"].append(encoding)

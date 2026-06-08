@@ -1,9 +1,8 @@
-from pathlib import Path
-
-from django.db.models.signals import post_save, pre_save
+from django.db import transaction
+from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 
-from recognition.face_encoder import encode_students
+from recognition.encoding_tasks import enqueue_student_encoding_update
 
 from .models import Student
 
@@ -59,7 +58,15 @@ def rebuild_face_encodings(sender, instance, created, raw=False, update_fields=N
     if not face_data_changed:
         return
 
-    if current_state["photo"] and not Path(instance.photo.path).exists():
-        return
+    previous_student_id = previous_state["student_id"] if previous_state else None
 
-    encode_students()
+    transaction.on_commit(
+        lambda: enqueue_student_encoding_update(instance.pk, previous_student_id)
+    )
+
+
+@receiver(post_delete, sender=Student)
+def remove_deleted_student_encoding(sender, instance, **kwargs):
+    transaction.on_commit(
+        lambda: enqueue_student_encoding_update(instance.pk, instance.student_id)
+    )

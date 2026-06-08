@@ -1,4 +1,6 @@
+import os
 import pickle
+import tempfile
 from pathlib import Path
 
 
@@ -16,8 +18,11 @@ def create_empty_encodings():
 def save_encodings(data, encodings_file: Path = ENCODINGS_FILE):
     encodings_file.parent.mkdir(parents=True, exist_ok=True)
 
-    with encodings_file.open("wb") as file:
+    with tempfile.NamedTemporaryFile("wb", delete=False, dir=encodings_file.parent) as file:
         pickle.dump(data, file)
+        temp_name = file.name
+
+    os.replace(temp_name, encodings_file)
 
     return encodings_file
 

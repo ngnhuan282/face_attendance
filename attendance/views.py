@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 import cv2
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.http import JsonResponse, StreamingHttpResponse
@@ -149,6 +150,10 @@ def attendance_demo(request):
             }
             for student in students
         ]
+        paginator = Paginator(student_rows, 10)
+        page_obj = paginator.get_page(request.GET.get("page"))
+    else:
+        page_obj = None
 
     return render(
         request,
@@ -160,6 +165,10 @@ def attendance_demo(request):
             "session_id_json": selected_session.id if selected_session else None,
             "students": students,
             "student_rows": student_rows,
+            "page_obj": page_obj,
+            "present_records_count": sum(
+                1 for record in records_by_student.values() if record.status == "present"
+            ),
             "error_message": error_message,
         },
     )
@@ -175,7 +184,7 @@ def _resize_stream_frame(frame):
 
 
 def _record_face_attendance(session, student, confidence, note):
-    """Mark a student present once, without refreshing an existing check-in."""
+    """Mark a student present, but never override manual late/absent decisions."""
     with transaction.atomic():
         locked_session = AttendanceSession.objects.select_for_update().get(pk=session.pk)
         if locked_session.status != "open":
@@ -194,6 +203,9 @@ def _record_face_attendance(session, student, confidence, note):
         )
         if created or record.status == "present":
             return record, created, not created
+
+        if record.method == "manual" and record.status in {"late", "absent"}:
+            return record, False, False
 
         record.status = "present"
         record.method = "face"
@@ -226,7 +238,7 @@ def _mark_recognized_students(session, enrolled_students, marked_students, match
                 match["confidence"],
                 "Auto recognized from MJPEG stream",
             )
-            if record and record.status == "present":
+            if record:
                 marked_students.add(student.student_id)
 
     return labels
