@@ -525,15 +525,16 @@ def student_import_csv(request):
                 phone = row.get('phone', '').strip()
 
                 try:
-                    Student.objects.create(
-                        student_id=student_id,
-                        full_name=full_name,
-                        student_class=student_class,
-                        date_of_birth=dob,
-                        email=email,
-                        phone=phone,
-                        is_active=True,
-                    )
+                    with transaction.atomic():
+                        Student.objects.create(
+                            student_id=student_id,
+                            full_name=full_name,
+                            student_class=student_class,
+                            date_of_birth=dob,
+                            email=email,
+                            phone=phone,
+                            is_active=True,
+                        )
                     created_count += 1
                 except Exception as e:
                     errors.append({'row': row_num, 'msg': f'{student_id}: Lỗi tạo bản ghi — {str(e)}'})
