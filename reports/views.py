@@ -135,11 +135,16 @@ def report_class(request, class_id):
         chart_present.append(present)
         chart_absent.append(absent)
 
+    from django.core.paginator import Paginator
+    paginator = Paginator(matrix, 10)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+
     return render(request, 'reports/class_report.html', {
         'course_class'  : course_class,
         'reports'       : reports,
         'sessions'      : sessions,
-        'matrix'        : matrix,
+        'page_obj'      : page_obj,
         'total_students': total_students,
         'good_count'    : good_count,
         'banned_count'  : banned_count,

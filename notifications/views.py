@@ -39,7 +39,7 @@ def notification_list(request):
     semesters = Semester.objects.order_by('-start_date')
 
     from django.core.paginator import Paginator
-    paginator = Paginator(notifications, 15)
+    paginator = Paginator(notifications, 10)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
 
