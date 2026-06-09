@@ -1,0 +1,567 @@
+Mẫu in: X5110AB.006
+-oOo-
+TRƯỜNG ĐẠI HỌC SÀI GÒN
+Quản lý kế hoạch giảng dạy
+Học kỳ 2 - Năm học 2025 - 2026
+Thời khóa biểu đăng ký môn học
+Trang 1
+Lưu ý: mỗi ký tự trong dãy 123456789123456 ...(trong tuần dạy) diễn tả cho 1 tuần lễ. Ký tự 1 đầu tiên diễn tả tuần thứ 1 của học kỳ (Tuần 17). Các ký tự 1 kế tiếp nếu có diên tả tuần thứ 11,21... của học
+kỳ. Ngày bắt đầu học kỳ: 22/12/2025
+STT Mã MH Tên môn học Số
+TC Sỉ số Họ và tên Mã viên
+chức Nhóm Tổ TH Thứ Tiết
+BĐ Số tiết Mã phòng Tên lớp Tuần học
+1
+841048 Phân tích thiết kế hệ thống thông tin
+4 90 Phan Nguyệt Minh 11541
+01
+4 6 2 C.E402 DKP1241 1234567---12-------------
+2 4 90 Phan Nguyệt Minh 11541 4 8 3 C.E402 DKP1241 1234567---12-------------
+3 841048 Phân tích thiết kế hệ thống thông tin 4 90 Phan Nguyệt Minh 11541 01 01 5 3 3 C.E503 DKP1241 1234567---123------------
+4
+841048 Phân tích thiết kế hệ thống thông tin
+4 90 Phan Nguyệt Minh 11541
+02
+3 1 3 C.HB406 DCT1242 1234567---12-------------
+5 4 90 Phan Nguyệt Minh 11541 3 4 2 C.HB406 DCT1242 1234567---12-------------
+6 841048 Phân tích thiết kế hệ thống thông tin 4 90 Phan Nguyệt Minh 11541 02 01 5 6 3 C.E201 DCT1242 1234567---123------------
+7
+841048 Phân tích thiết kế hệ thống thông tin
+4 90 Phan Nguyệt Minh 11541
+03
+2 6 3 C.E403 DCT1243 1234567---12-------------
+8 4 90 Phan Nguyệt Minh 11541 2 9 2 C.E403 DCT1243 1234567---12-------------
+9 841048 Phân tích thiết kế hệ thống thông tin 4 90 Phan Nguyệt Minh 11541 03 01 6 6 3 C.E201 DCT1243 1234567---123------------
+10
+841048 Phân tích thiết kế hệ thống thông tin
+4 90 Huỳnh Nguyễn Khắc Huy 11556
+04
+5 1 2 C.HB406 DCT1244 1234567---12-------------
+11 4 90 Huỳnh Nguyễn Khắc Huy 11556 5 3 3 C.HB406 DCT1244 1234567---12-------------
+12 841048 Phân tích thiết kế hệ thống thông tin 4 90 Huỳnh Nguyễn Khắc Huy 11556 04 01 6 1 3 C.C107 DCT1244 1234567---123------------
+13
+841048 Phân tích thiết kế hệ thống thông tin
+4 90 Trương Tấn Khoa 11384
+05
+4 6 3 C.E403 DCT1241 1234567---12-------------
+14 4 90 Trương Tấn Khoa 11384 4 9 2 C.E403 DCT1241 1234567---12-------------
+15 841048 Phân tích thiết kế hệ thống thông tin 4 90 Trương Tấn Khoa 11384 05 01 5 8 3 C.C107 DCT1241 1234567---123------------
+16
+841048 Phân tích thiết kế hệ thống thông tin
+4 90 Trương Tấn Khoa 11384
+06
+5 1 2 C.E402 DCT1245 1234567---12-------------
+17 4 90 Trương Tấn Khoa 11384 5 3 3 C.E402 DCT1245 1234567---12-------------
+18 841048 Phân tích thiết kế hệ thống thông tin 4 90 Trương Tấn Khoa 11384 06 01 4 1 5 C.A308 DCT1245 123456-------------------
+19
+841058 Hệ điều hành mã nguồn mở
+3 80 Lương Minh Huấn 11364
+01
+6 6 2 C.E503 DCT1241 1234567---123------------
+20 3 80 Lương Minh Huấn 11364 7 4 2 C.E603 DCT1241 1234567---123------------
+21 841058 Hệ điều hành mã nguồn mở 3 80 Lương Minh Huấn 11364 01 01 5 6 2 C.HB403 DCT1241 1234567---123------------
+22
+841058 Hệ điều hành mã nguồn mở
+3 120 Lương Minh Huấn 11364
+02
+2 1 2 C.E001 DCT1242 1234567---123------------
+23 3 120 Lương Minh Huấn 11364 6 1 2 C.E304 DCT1242 1234567---123------------
+24 841058 Hệ điều hành mã nguồn mở 3 120 Lương Minh Huấn 11364 02 01 5 9 2 C.E001 DCT1242 1234567---123------------
+Học kỳ 2 - Năm học 2025 - 2026
+Thời khóa biểu đăng ký môn học
+Trang 2
+Lưu ý: mỗi ký tự trong dãy 123456789123456 ...(trong tuần dạy) diễn tả cho 1 tuần lễ. Ký tự 1 đầu tiên diễn tả tuần thứ 1 của học kỳ (Tuần 17). Các ký tự 1 kế tiếp nếu có diên tả tuần thứ 11,21... của học
+kỳ. Ngày bắt đầu học kỳ: 22/12/2025
+STT Mã MH Tên môn học Số
+TC Sỉ số Họ và tên Mã viên
+chức Nhóm Tổ TH Thứ Tiết
+BĐ Số tiết Mã phòng Tên lớp Tuần học
+25
+841058 Hệ điều hành mã nguồn mở
+3 80 Nguyễn Trung Tín 11377
+03
+3 9 2 C.C101 DKP1241 1234567---123------------
+26 3 80 Nguyễn Trung Tín 11377 6 1 2 C.E205 DKP1241 1234567---123------------
+27 841058 Hệ điều hành mã nguồn mở 3 80 Nguyễn Trung Tín 11377 03 01 6 4 2 C.D401 DKP1241 1234567---123------------
+28 841068 Hệ thống thông tin doanh nghiệp 3 90 Lê Nhị Lãm Thúy 11363 01 4 8 3 C.A303 DCT1233,DK
+P1231 ----------1234567890-----
+29 841068 Hệ thống thông tin doanh nghiệp 3 90 Lê Nhị Lãm Thúy 11363 01 01 2 6 2 C.E402 DCT1233,DK
+P1231 ---4567---12345678901----
+30
+841070 Thực tập tốt nghiệp (DCT)
+6 400
+01
+2 1 5 TTSP29 DCT1225 -----------23456789------
+31 6 400 2 6 5 TTSP29 DCT1225 -----------23456789------
+32 6 400 3 1 5 TTSP29 DCT1225 -----------23456789------
+33 6 400 3 6 5 TTSP29 DCT1225 -----------23456789------
+34 6 400 4 1 5 TTSP29 DCT1225 -----------23456789------
+35 6 400 4 6 5 TTSP29 DCT1225 -----------23456789------
+36 6 400 5 1 5 TTSP29 DCT1225 -----------23456789------
+37 6 400 5 6 5 TTSP29 DCT1225 -----------23456789------
+38 6 400 6 1 5 TTSP29 DCT1225 -----------23456789------
+39 6 400 6 6 5 TTSP29 DCT1225 -----------23456789------
+40 6 400 7 1 5 TTSP29 DCT1225 -----------23456789------
+41 6 400 7 6 5 TTSP29 DCT1225 -----------23456789------
+42 6 400 8 1 5 TTSP03 DCT1225 -----------23456789------
+43 6 400 8 6 5 TTSP03 DCT1225 -----------23456789------
+44 841072 Các công nghệ lập trình hiện đại 3 120 Phạm Thi Vương 11426 01 7 6 2 C.E603 DCT1221 ---4567---12345678901----
+45 841072 Các công nghệ lập trình hiện đại 3 120 Phạm Thi Vương 11426 01 01 7 8 2 C.E403 DCT1221 ---4567---12345678901----
+46 841072 Các công nghệ lập trình hiện đại 3 120 Phạm Thi Vương 11426 02 7 2 2 C.E603 DKP1221 ---4567---12345678901----
+47 841072 Các công nghệ lập trình hiện đại 3 120 Phạm Thi Vương 11426 02 01 7 4 2 C.HB406 DKP1221 ---4567---12345678901----
+48
+841107 Ngôn ngữ lập trình Java
+4 100 Nguyễn Thị Hồng Anh 11271
+01
+2 1 3 C.E402 DCT1241 1234567---12-------------
+49 4 100 Nguyễn Thị Hồng Anh 11271 2 4 2 C.E402 DCT1241 1234567---12-------------
+50 841107 Ngôn ngữ lập trình Java 4 100 Nguyễn Thị Hồng Anh 11271 01 01 4 1 3 C.E205 DCT1241 1234567---123------------
+51
+841107 Ngôn ngữ lập trình Java
+4 80 Nguyễn Thị Hồng Anh 11271
+02
+4 6 3 C.HB403 DCT1242 1234567---12-------------
+52 4 80 Nguyễn Thị Hồng Anh 11271 4 9 2 C.HB403 DCT1242 1234567---12-------------
+Học kỳ 2 - Năm học 2025 - 2026
+Thời khóa biểu đăng ký môn học
+Trang 3
+Lưu ý: mỗi ký tự trong dãy 123456789123456 ...(trong tuần dạy) diễn tả cho 1 tuần lễ. Ký tự 1 đầu tiên diễn tả tuần thứ 1 của học kỳ (Tuần 17). Các ký tự 1 kế tiếp nếu có diên tả tuần thứ 11,21... của học
+kỳ. Ngày bắt đầu học kỳ: 22/12/2025
+STT Mã MH Tên môn học Số
+TC Sỉ số Họ và tên Mã viên
+chức Nhóm Tổ TH Thứ Tiết
+BĐ Số tiết Mã phòng Tên lớp Tuần học
+53 841107 Ngôn ngữ lập trình Java 4 80 Nguyễn Thị Hồng Anh 11271 02 01 6 6 3 C.A308 DCT1242 1234567---123------------
+54
+841107 Ngôn ngữ lập trình Java
+4 80 Nguyễn Thanh Sang 10991
+03
+2 1 2 C.HB406 DCT1243 1234567---12-------------
+55 4 80 Nguyễn Thanh Sang 10991 2 3 3 C.HB406 DCT1243 1234567---12-------------
+56 841107 Ngôn ngữ lập trình Java 4 80 Nguyễn Thanh Sang 10991 03 01 5 3 3 C.E403 DCT1243 1234567---123------------
+57
+841107 Ngôn ngữ lập trình Java
+4 100 Nguyễn Thanh Sang 10991
+04
+3 1 3 C.E402 DCT1244 1234567---12-------------
+58 4 100 Nguyễn Thanh Sang 10991 6 9 2 C.HB406 DCT1244 1234567---12-------------
+59 841107 Ngôn ngữ lập trình Java 4 10 Nguyễn Thanh Sang 10991 04 01 6 6 3 C.HB406 DCT1244 1234567---123------------
+60
+841107 Ngôn ngữ lập trình Java
+4 80 Phùng Thái Thiên Trang 10227
+05
+2 6 3 C.HB403 DKP1241 1234567---12-------------
+61 4 80 Phùng Thái Thiên Trang 10227 2 9 2 C.HB403 DKP1241 1234567---12-------------
+62 841107 Ngôn ngữ lập trình Java 4 80 Phùng Thái Thiên Trang 10227 05 01 6 8 3 1.C004 DKP1241 --34567---12345----------
+63
+841107 Ngôn ngữ lập trình Java
+4 100 Phùng Thái Thiên Trang 10227
+06
+4 1 3 C.HB406 DNT1241 1234567---12-------------
+64 4 100 Phùng Thái Thiên Trang 10227 4 4 2 C.HB406 DNT1241 1234567---12-------------
+65 841107 Ngôn ngữ lập trình Java 4 100 Phùng Thái Thiên Trang 10227 06 01 3 6 3 1.C004 DNT1241 --34567---12345----------
+66
+841108 Cấu trúc dữ liệu và giải thuật
+4 80 Nguyễn Duy Hàm 11717
+01
+3 1 2 C.HB403 DCT1251 1234567---12-------------
+67 4 80 Nguyễn Duy Hàm 11717 3 3 3 C.HB403 DCT1251 1234567---12-------------
+68 841108 Cấu trúc dữ liệu và giải thuật 4 80 Nguyễn Duy Hàm 11717 01 01 4 3 3 C.D401 DCT1251 1234567---123------------
+69
+841108 Cấu trúc dữ liệu và giải thuật
+4 100 Nguyễn Duy Hàm 11717
+02
+3 6 3 C.E402 DCT1252 1234567---12-------------
+70 4 100 Nguyễn Duy Hàm 11717 3 9 2 C.E402 DCT1252 1234567---12-------------
+71 841108 Cấu trúc dữ liệu và giải thuật 4 100 Nguyễn Duy Hàm 11717 02 01 4 6 3 C.E205 DCT1252 1234567---123------------
+72
+841108 Cấu trúc dữ liệu và giải thuật
+4 80 Nguyễn Thanh Phước 11675
+03
+2 1 2 C.HB403 DCT1253 1234567---12-------------
+73 4 80 Nguyễn Thanh Phước 11675 2 3 3 C.HB403 DCT1253 1234567---12-------------
+74 841108 Cấu trúc dữ liệu và giải thuật 4 80 Nguyễn Thanh Phước 11675 03 01 7 1 3 C.E103 DCT1253 1234567---123------------
+75
+841108 Cấu trúc dữ liệu và giải thuật
+4 80 Lê Tấn Long 11610
+04
+6 6 2 C.HB403 DKP1251 1234567---12-------------
+76 4 80 Lê Tấn Long 11610 6 8 3 C.HB403 DKP1251 1234567---12-------------
+77 841108 Cấu trúc dữ liệu và giải thuật 4 80 Lê Tấn Long 11610 04 01 4 8 3 C.E302 DKP1251 1234567---123------------
+78
+841108 Cấu trúc dữ liệu và giải thuật
+4 120 Phạm Thế Bảo 11381
+05
+3 6 3 C.E403 DNT1251 1234567---12-------------
+79 4 120 Phạm Thế Bảo 11381 3 9 2 C.E403 DNT1251 1234567---12-------------
+80 841108 Cấu trúc dữ liệu và giải thuật 4 120 Phạm Thế Bảo 11381 05 01 2 6 3 C.E205 DNT1251 1234567---123------------
+81 841110 Cơ sở trí tuệ nhân tạo 4 80 Đỗ Như Tài 11742 01 7 6 2 C.D401 DCT1245 1234567---12-------------
+Học kỳ 2 - Năm học 2025 - 2026
+Thời khóa biểu đăng ký môn học
+Trang 4
+Lưu ý: mỗi ký tự trong dãy 123456789123456 ...(trong tuần dạy) diễn tả cho 1 tuần lễ. Ký tự 1 đầu tiên diễn tả tuần thứ 1 của học kỳ (Tuần 17). Các ký tự 1 kế tiếp nếu có diên tả tuần thứ 11,21... của học
+kỳ. Ngày bắt đầu học kỳ: 22/12/2025
+STT Mã MH Tên môn học Số
+TC Sỉ số Họ và tên Mã viên
+chức Nhóm Tổ TH Thứ Tiết
+BĐ Số tiết Mã phòng Tên lớp Tuần học
+82 841110 Cơ sở trí tuệ nhân tạo 4 80 Đỗ Như Tài 11742 01 7 8 3 C.E001 DCT1245 1234567---12-------------
+83 841110 Cơ sở trí tuệ nhân tạo 4 80 Đỗ Như Tài 11742 01 01 2 1 3 C.C101 DCT1245 1234567---123------------
+84
+841110 Cơ sở trí tuệ nhân tạo
+4 100 Đỗ Như Tài 11742
+02
+2 6 2 C.HB406 DCT1241 1234567---12-------------
+85 4 100 Đỗ Như Tài 11742 2 8 3 C.HB406 DCT1241 1234567---12-------------
+86 841110 Cơ sở trí tuệ nhân tạo 4 100 Đỗ Như Tài 11742 02 01 7 1 3 C.E304 DCT1241 1234567---123------------
+87
+841110 Cơ sở trí tuệ nhân tạo
+4 80 Huỳnh Minh Trí 20766
+03
+4 1 3 C.HB403 DCT1243 1234567---12-------------
+88 4 80 Huỳnh Minh Trí 20766 4 4 2 C.HB403 DCT1243 1234567---12-------------
+89 841110 Cơ sở trí tuệ nhân tạo 4 80 Huỳnh Minh Trí 20766 03 01 6 1 3 C.B107 DCT1243 1234567---123------------
+90
+841110 Cơ sở trí tuệ nhân tạo
+4 120 Huỳnh Minh Trí 20766
+04
+4 6 3 C.HB406 DCT1244 ---4567---12345----------
+91 4 120 Huỳnh Minh Trí 20766 4 9 2 C.HB406 DCT1244 ---4567---12345----------
+92 841110 Cơ sở trí tuệ nhân tạo 4 120 Huỳnh Minh Trí 20766 04 01 7 6 3 C.E201 DCT1244 --34567---12345----------
+93
+841110 Cơ sở trí tuệ nhân tạo
+4 80 Huỳnh Minh Trí 20766
+05
+5 8 3 1.A201 DCT1245 --34567---1234-----------
+94 4 80 Huỳnh Minh Trí 20766 7 4 2 C.E203 DCT1245 --34567---1234-----------
+95 841110 Cơ sở trí tuệ nhân tạo 4 80 Huỳnh Minh Trí 20766 05 01 7 1 3 C.E203 DCT1245 --34567---12345----------
+96
+841110 Cơ sở trí tuệ nhân tạo
+4 100 Lê Tấn Long 11610
+06
+3 4 2 C.E402 DKP1241 1234567---12-------------
+97 4 100 Lê Tấn Long 11610 3 6 3 C.HB406 DKP1241 1234567---12-------------
+98 841110 Cơ sở trí tuệ nhân tạo 4 100 Lê Tấn Long 11610 06 01 7 6 3 C.E205 DKP1241 1234567---123------------
+99
+841110 Cơ sở trí tuệ nhân tạo
+4 90 Lê Tấn Long 11610
+07
+7 4 2 C.HB403 DNT1241 1234567---12-------------
+100 4 90 Lê Tấn Long 11610 7 9 2 C.HB403 DNT1241 1234567---12-------------
+101 841110 Cơ sở trí tuệ nhân tạo 4 90 Lê Tấn Long 11610 07 01 3 1 3 C.E205 DNT1241 1234567---123------------
+102 841113 Phát triển phần mềm mã nguồn mở 3 90 Từ Lãng Phiêu 11636 01 2 6 3 C.A308 DCT1231 ----------1234567890-----
+103 841113 Phát triển phần mềm mã nguồn mở 3 90 Từ Lãng Phiêu 11636 01 01 4 9 2 C.D401 DCT1231 ---4567---12345678901----
+104 841113 Phát triển phần mềm mã nguồn mở 3 90 Từ Lãng Phiêu 11636 02 2 3 3 C.A303 DCT1232 ----------1234567890-----
+105 841113 Phát triển phần mềm mã nguồn mở 3 90 Từ Lãng Phiêu 11636 02 01 5 4 2 C.HB403 DCT1232 ---4567---12345678901----
+106 841113 Phát triển phần mềm mã nguồn mở 3 90 Từ Lãng Phiêu 11636 03 4 3 3 C.A303 DKP1231 ----------1234567890-----
+107 841113 Phát triển phần mềm mã nguồn mở 3 90 Từ Lãng Phiêu 11636 03 01 5 1 2 C.E403 DKP1231 ---4567---12345678901----
+108
+841303 Kỹ thuật lập trình
+4 50 Trịnh Tấn Đạt 11383
+01
+5 1 3 C.E501 DCT1251 1234567---12-------------
+109 4 50 Trịnh Tấn Đạt 11383 5 4 2 C.E501 DCT1251 1234567---12-------------
+110 841303 Kỹ thuật lập trình 4 50 Nguyễn Trung Tín 11377 01 01 3 6 3 C.A209 DCT1251 1234567---123------------
+Học kỳ 2 - Năm học 2025 - 2026
+Thời khóa biểu đăng ký môn học
+Trang 5
+Lưu ý: mỗi ký tự trong dãy 123456789123456 ...(trong tuần dạy) diễn tả cho 1 tuần lễ. Ký tự 1 đầu tiên diễn tả tuần thứ 1 của học kỳ (Tuần 17). Các ký tự 1 kế tiếp nếu có diên tả tuần thứ 11,21... của học
+kỳ. Ngày bắt đầu học kỳ: 22/12/2025
+STT Mã MH Tên môn học Số
+TC Sỉ số Họ và tên Mã viên
+chức Nhóm Tổ TH Thứ Tiết
+BĐ Số tiết Mã phòng Tên lớp Tuần học
+111
+841303 Kỹ thuật lập trình
+4 50 Phan Tấn Quốc 10631
+02
+2 1 3 C.A109 DCT1252 1234567---12-------------
+112 4 50 Phan Tấn Quốc 10631 2 4 2 C.A109 DCT1252 1234567---12-------------
+113 841303 Kỹ thuật lập trình 4 50 Nguyễn Trung Tín 11377 02 01 6 6 3 C.A109 DCT1252 1234567---123------------
+114
+841303 Kỹ thuật lập trình
+4 50 Lai Đình Khải 10063
+03
+4 1 2 C.E504 DCT1253 1234567---12-------------
+115 4 50 Lai Đình Khải 10063 5 3 3 C.A108 DCT1253 1234567---12-------------
+116 841303 Kỹ thuật lập trình 4 50 Lai Đình Khải 10063 03 01 4 3 3 C.A209 DCT1253 1234567---123------------
+117
+841303 Kỹ thuật lập trình
+4 50 Hà Thanh Dũng 11544
+04
+3 6 2 C.E103 DCT1254 1234567---12-------------
+118 4 50 Hà Thanh Dũng 11544 3 8 3 C.E501 DCT1254 1234567---12-------------
+119 841303 Kỹ thuật lập trình 4 50 Hà Thanh Dũng 11544 04 01 2 8 3 C.D401 DCT1254 1234567---123------------
+120
+841303 Kỹ thuật lập trình
+4 50 Hà Thanh Dũng 11544
+05
+2 1 3 C.E601 DCT1255 1234567---12-------------
+121 4 50 Hà Thanh Dũng 11544 2 4 2 C.B003 DCT1255 1234567---12-------------
+122 841303 Kỹ thuật lập trình 4 50 Hà Thanh Dũng 11544 05 01 3 3 3 C.A209 DCT1255 1234567---123------------
+123
+841303 Kỹ thuật lập trình
+4 50 Trần Việt Chương 11798
+06
+3 6 3 C.A109 DKP1251 1234567---12-------------
+124 4 50 Trần Việt Chương 11798 3 9 2 C.A109 DKP1251 1234567---12-------------
+125 841303 Kỹ thuật lập trình 4 50 Trần Việt Chương 11798 06 01 2 3 3 C.A209 DKP1251 1234567---123------------
+126
+841303 Kỹ thuật lập trình
+4 50 Trần Nguyễn Minh Hiếu 10615
+07
+4 1 2 C.E103 DKP1252 1234567---1234-----------
+127 4 50 Trần Nguyễn Minh Hiếu 10615 5 1 2 C.E103 DKP1252 1234567---1234-----------
+128 841303 Kỹ thuật lập trình 4 50 Trần Nguyễn Minh Hiếu 10615 07 01 5 3 3 C.D401 DKP1252 1234567---123------------
+129
+841303 Kỹ thuật lập trình
+4 50 Trịnh Tấn Đạt 11383
+08
+5 6 2 C.E103 DNT1251 1234567---12-------------
+130 4 50 Trịnh Tấn Đạt 11383 5 8 3 C.E103 DNT1251 1234567---12-------------
+131 841303 Kỹ thuật lập trình 4 50 Nguyễn Trung Tín 11377 08 01 4 6 3 C.D401 DNT1251 1234567---123------------
+132 841404 Mạng máy tính 3 50 Lương Minh Huấn 11364 01 6 3 3 C.E103 DCT1251 1234567---123------------
+133 841404 Mạng máy tính 3 50 Lương Minh Huấn 11364 01 01 2 3 3 C.D401 DCT1251 1234567---123------------
+134 841404 Mạng máy tính 3 50 Trần Việt Chương 11798 02 3 3 3 C.A210 DCT1252 1234567---123------------
+135 841404 Mạng máy tính 3 50 Trần Việt Chương 11798 02 01 2 6 3 C.A109 DCT1252 1234567---123------------
+136 841404 Mạng máy tính 3 50 Nguyễn Quốc Phong 11562 03 3 8 3 C.B103 DCT1253 1234567---123------------
+137 841404 Mạng máy tính 3 50 Nguyễn Quốc Phong 11562 03 01 6 3 3 C.A210 DCT1253 1234567---123------------
+138 841404 Mạng máy tính 3 50 Nguyễn Quốc Phong 11562 04 2 1 3 C.E504 DCT1254 1234567---123------------
+139 841404 Mạng máy tính 3 50 Nguyễn Quốc Phong 11562 04 01 4 6 3 C.A209 DCT1254 1234567---123------------
+Học kỳ 2 - Năm học 2025 - 2026
+Thời khóa biểu đăng ký môn học
+Trang 6
+Lưu ý: mỗi ký tự trong dãy 123456789123456 ...(trong tuần dạy) diễn tả cho 1 tuần lễ. Ký tự 1 đầu tiên diễn tả tuần thứ 1 của học kỳ (Tuần 17). Các ký tự 1 kế tiếp nếu có diên tả tuần thứ 11,21... của học
+kỳ. Ngày bắt đầu học kỳ: 22/12/2025
+STT Mã MH Tên môn học Số
+TC Sỉ số Họ và tên Mã viên
+chức Nhóm Tổ TH Thứ Tiết
+BĐ Số tiết Mã phòng Tên lớp Tuần học
+140 841404 Mạng máy tính 3 50 Cổ Tồn Minh Đăng 10094 05 4 8 3 C.B003 DCT1255 1234567---123------------
+141 841404 Mạng máy tính 3 50 Cổ Tồn Minh Đăng 10094 05 01 5 6 3 C.A209 DCT1255 1234567---123------------
+142 841404 Mạng máy tính 3 50 Cổ Tồn Minh Đăng 10094 06 2 6 3 C.E103 DKP1251 1234567---123------------
+143 841404 Mạng máy tính 3 50 Cổ Tồn Minh Đăng 10094 06 01 6 1 3 C.HB403 DKP1251 1234567---123------------
+144
+841407 Các hệ quản trị cơ sở dữ liệu
+4 80 Lê Nhị Lãm Thúy 11363
+01
+4 6 2 C.A308 DCT1233 ----------12345678901----
+145 4 80 Lê Nhị Lãm Thúy 11363 6 1 2 C.A308 DCT1233 ----------12345678901----
+146 841407 Các hệ quản trị cơ sở dữ liệu 4 80 Lê Nhị Lãm Thúy 11363 01 01 5 6 3 C.A103 DCT1233 ----------1234567890-----
+147
+841407 Các hệ quản trị cơ sở dữ liệu
+4 100 Lê Nhị Lãm Thúy 11363
+02
+3 6 2 C.A102 DKP1231 ----------12345678901----
+148 4 100 Lê Nhị Lãm Thúy 11363 6 3 2 C.A308 DKP1231 ----------12345678901----
+149 841407 Các hệ quản trị cơ sở dữ liệu 4 100 Lê Nhị Lãm Thúy 11363 02 01 3 8 3 C.A102 DKP1231 ----------1234567890-----
+150
+841408 Kiểm thử phần mềm
+4 90 Từ Lãng Phiêu 11636
+01
+3 1 2 C.A303 DKP1231 ----------12345678901----
+151 4 90 Từ Lãng Phiêu 11636 4 6 2 C.A303 DKP1231 ----------12345678901----
+152 841408 Kiểm thử phần mềm 4 90 Từ Lãng Phiêu 11636 01 01 3 3 3 C.A308 DKP1231 ----------1234567890-----
+153 841410 An ninh mạng máy tính 4 90 Nguyễn Võ Lam Giang 10944 01 5 6 3 C.E304 DCT1234,DK
+P1231 ---4567---12345678901----
+154 841410 An ninh mạng máy tính 4 90 Nguyễn Võ Lam Giang 10944 01 01 5 9 2 C.E304 DCT1234,DK
+P1231 ---4567---12345678901----
+155
+841413 Cơ sở dữ liệu phân tán
+4 90 Huỳnh Nguyễn Khắc Huy 11556
+01
+3 3 2 C.A303 DCT1233 ----------1234567890-----
+156 4 90 Huỳnh Nguyễn Khắc Huy 11556 6 4 2 C.E304 DCT1233 ----------1234567890-----
+157 841413 Cơ sở dữ liệu phân tán 4 90 Huỳnh Nguyễn Khắc Huy 11556 01 01 3 1 2 C.E403 DCT1233 ---4567---12345678901----
+158
+841414 Thiết kế và phân tích giải thuật
+3 130 Nguyễn Hòa 10943
+01
+2 1 2 1.A202 DCT1231 ---4567---1234567--------
+159 3 130 Nguyễn Hòa 10943 3 4 2 1.B101 DCT1231 ---4567---1234567--------
+160
+841414 Thiết kế và phân tích giải thuật
+3 120 Nguyễn Hòa 10943
+02
+3 9 2 1.A101 DCT1232 ---4567---1234567--------
+161 3 120 Nguyễn Hòa 10943 4 4 2 1.A202 DCT1232 ---4567---1234567--------
+162
+841414 Thiết kế và phân tích giải thuật
+3 110 Nguyễn Hòa 10943
+03
+2 9 2 1.B003 DCT1233 ---4567---1234567--------
+163 3 110 Nguyễn Hòa 10943 5 4 2 1.C004 DCT1233 ---4567---1234567--------
+164
+841414 Thiết kế và phân tích giải thuật
+3 120 Nguyễn Hòa 10943
+04
+3 1 2 1.A202 DCT1234 ---4567---1234567--------
+165 3 120 Nguyễn Hòa 10943 4 6 2 1.B003 DCT1234 ---4567---1234567--------
+166
+841414 Thiết kế và phân tích giải thuật
+3 120 Nguyễn Hòa 10943
+05
+4 9 2 1.A202 DCT1235 ---4567---1234567--------
+167 3 120 Nguyễn Hòa 10943 5 9 2 1.A202 DCT1235 ---4567---1234567--------
+Học kỳ 2 - Năm học 2025 - 2026
+Thời khóa biểu đăng ký môn học
+Trang 7
+Lưu ý: mỗi ký tự trong dãy 123456789123456 ...(trong tuần dạy) diễn tả cho 1 tuần lễ. Ký tự 1 đầu tiên diễn tả tuần thứ 1 của học kỳ (Tuần 17). Các ký tự 1 kế tiếp nếu có diên tả tuần thứ 11,21... của học
+kỳ. Ngày bắt đầu học kỳ: 22/12/2025
+STT Mã MH Tên môn học Số
+TC Sỉ số Họ và tên Mã viên
+chức Nhóm Tổ TH Thứ Tiết
+BĐ Số tiết Mã phòng Tên lớp Tuần học
+168 841415 Luật pháp và CNTT 2 140 Quách Thị Ngọc Thiện 11657 01 3 6 3 C.C103 DCT1241 1234567---123------------
+169 841415 Luật pháp và CNTT 2 100 Quách Thị Ngọc Thiện 11657 02 4 3 3 C.A208 DKP1241 1234567---1--45----------
+170
+841423 Ngôn ngữ lập trình C#
+4 90 Từ Lãng Phiêu 11636
+01
+2 9 2 C.A308 DCT1231 ----------12345678901----
+171 4 90 Từ Lãng Phiêu 11636 3 9 2 C.A303 DCT1231 ----------12345678901----
+172 841423 Ngôn ngữ lập trình C# 4 90 Từ Lãng Phiêu 11636 01 01 3 6 2 C.D401 DCT1231 ---4567---12345678901----
+173 841423 Ngôn ngữ lập trình C# 4 90 Từ Lãng Phiêu 11636 02 7 1 3 C.A308 DCT1232 ---4567---12345678901----
+174 841423 Ngôn ngữ lập trình C# 4 90 Từ Lãng Phiêu 11636 02 01 2 1 2 C.D401 DCT1232 ---4567---12345678901----
+175 841434 Thương mại điện tử và ứng dụng 4 120 Hoàng Mạnh Hà 10875 01 2 3 3 C.E403 DKP1231 ---4567---12345678901----
+176 841434 Thương mại điện tử và ứng dụng 4 120 Hoàng Mạnh Hà 10875 01 01 2 1 2 C.E403 DKP1231 ---4567---12345678901----
+177 841438 Lập trình ứng dụng mạng 4 70 Nguyễn Võ Lam Giang 10944 01 6 6 3 C.E103 DCT1234 ---4567---12345678901----
+178 841438 Lập trình ứng dụng mạng 4 70 Nguyễn Võ Lam Giang 10944 01 01 6 9 2 C.E103 DCT1234 ---4567---12345678901----
+179 841439 Mạng không dây 4 40 Nguyễn Trung Tín 11377 01 5 6 3 1.C105 DCT1224 ---4567---12345678901----
+180 841439 Mạng không dây 4 40 Nguyễn Trung Tín 11377 01 01 5 9 2 1.C105 DCT1224 ---4567---12345678901----
+181
+841440 Phân tích và thiết kế mạng máy tính
+4 90 Lương Minh Huấn 11364
+01
+5 1 2 C.A308 DCT1234 ----------12345678901----
+182 4 90 Lương Minh Huấn 11364 7 1 2 C.E201 DCT1234 ----------12345678901----
+183 841440 Phân tích và thiết kế mạng máy tính 4 90 Lương Minh Huấn 11364 01 01 5 3 3 C.A308 DCT1234 ----------1234567890-----
+184 841442 Mạng đa phương tiện và di động (ngành
+CNTT) 3 40 Huỳnh Lê Minh Thiện 11137 01 6 1 3 1.C101 DCT1224 ---4567---12345678901----
+185 841446 Phân tích và xử lý ảnh 4 90 Phạm Thế Bảo 11381 01 3 1 3 C.E001 DCT1235 ---4567---12345678901----
+186 841446 Phân tích và xử lý ảnh 4 90 Phạm Thế Bảo 11381 01 01 2 9 2 C.E402 DCT1235 ---4567---12345678901----
+187
+841447 Khai thác dữ liệu và ứng dụng
+4 90 Nguyễn Thanh Phước 11675
+01
+4 1 2 C.A308 DCT1235 ----------12345678901----
+188 4 90 Nguyễn Thanh Phước 11675 5 3 2 C.A303 DCT1235 ----------12345678901----
+189 841447 Khai thác dữ liệu và ứng dụng 4 90 Nguyễn Thanh Phước 11675 01 01 4 3 3 C.A308 DCT1235 ----------1234567890-----
+190
+841447 Khai thác dữ liệu và ứng dụng
+4 90 Nguyễn Thanh Phước 11675
+02
+3 6 2 C.A308 DCT1236 ----------12345678901----
+191 4 90 Nguyễn Thanh Phước 11675 5 1 2 C.A303 DCT1236 ----------12345678901----
+192 841447 Khai thác dữ liệu và ứng dụng 4 90 Nguyễn Thanh Phước 11675 02 01 3 8 3 C.A308 DCT1236 ----------1234567890-----
+193
+841448 Xử lý ngôn ngữ tự nhiên
+4 90 Nguyễn Tuấn Đăng 11453
+01
+6 1 2 1.C004 DNT1241 --34567---1234-----------
+194 4 90 Nguyễn Tuấn Đăng 11453 7 1 3 C.A411 DNT1241 --34567---1234-----------
+195 841448 Xử lý ngôn ngữ tự nhiên 4 90 Nguyễn Tuấn Đăng 11453 01 01 7 6 3 C.HB403 DNT1241 --34567---12345----------
+196 841456 Công nghệ tri thức 4 90 Huỳnh Minh Trí 20766 01 7 9 3 C.E503 DCT1235 ---4567---12345678901----
+Học kỳ 2 - Năm học 2025 - 2026
+Thời khóa biểu đăng ký môn học
+Trang 8
+Lưu ý: mỗi ký tự trong dãy 123456789123456 ...(trong tuần dạy) diễn tả cho 1 tuần lễ. Ký tự 1 đầu tiên diễn tả tuần thứ 1 của học kỳ (Tuần 17). Các ký tự 1 kế tiếp nếu có diên tả tuần thứ 11,21... của học
+kỳ. Ngày bắt đầu học kỳ: 22/12/2025
+STT Mã MH Tên môn học Số
+TC Sỉ số Họ và tên Mã viên
+chức Nhóm Tổ TH Thứ Tiết
+BĐ Số tiết Mã phòng Tên lớp Tuần học
+197 841456 Công nghệ tri thức 4 90 Huỳnh Minh Trí 20766 01 01 6 4 2 C.HB406 DCT1235 ---4567---12345678901----
+198
+841462 Phát triển ứng dụng trên thiết bị di động
+(ngành KTPM)
+4 90 Trần Đình Nghĩa 10601
+01
+2 1 2 C.A308 DKP1221 ----------12345678901----
+199 4 90 Trần Đình Nghĩa 10601 3 1 2 C.A308 DKP1221 ----------12345678901----
+200 841462 Phát triển ứng dụng trên thiết bị di động
+(ngành KTPM) 4 90 Trần Đình Nghĩa 10601 01 01 2 3 3 C.A308 DKP1221 ----------1234567890-----
+201 841463 Phát triển ứng dụng trên thiết bị di động
+nâng cao 4 120 Phan Nguyệt Minh 11541 01 2 3 3 C.B108 DCT1221 ---4567---12345678901----
+202 841463 Phát triển ứng dụng trên thiết bị di động
+nâng cao 4 120 Phan Nguyệt Minh 11541 01 01 2 1 2 C.E304 DCT1221 ---4567---12345678901----
+203 841463 Phát triển ứng dụng trên thiết bị di động
+nâng cao 4 120 Phan Nguyệt Minh 11541 02 4 1 3 C.E403 DCT1222 ---4567---12345678901----
+204 841463 Phát triển ứng dụng trên thiết bị di động
+nâng cao 4 120 Phan Nguyệt Minh 11541 02 01 4 4 2 C.E403 DCT1222 ---4567---12345678901----
+205 841463 Phát triển ứng dụng trên thiết bị di động
+nâng cao 4 120 Phan Nguyệt Minh 11541 03 6 1 3 C.E402 DCT1223 ---4567---12345678901----
+206 841463 Phát triển ứng dụng trên thiết bị di động
+nâng cao 4 120 Phan Nguyệt Minh 11541 03 01 6 4 2 C.E402 DCT1223 ---4567---12345678901----
+207
+841464 Lập trình Web và ứng dụng nâng cao
+4 90 Cao Thái Phương Thanh 10220
+01
+7 1 2 C.E205 DCT1242 1234567---12345----------
+208 4 90 Cao Thái Phương Thanh 10220 7 3 3 C.E205 DCT1242 1234567---12345----------
+209
+841464 Lập trình Web và ứng dụng nâng cao
+4 90 Nguyễn Thanh Sang 10991
+02
+6 1 3 C.E503 DCT1241 1234567---12345----------
+210 4 90 Nguyễn Thanh Sang 10991 6 4 2 C.E503 DCT1241 1234567---12345----------
+211
+841464 Lập trình Web và ứng dụng nâng cao
+4 90 Nguyễn Thanh Sang 10991
+03
+5 6 2 C.E503 DKP1241 1234567---12345----------
+212 4 90 Nguyễn Thanh Sang 10991 5 8 3 C.E503 DKP1241 1234567---12345----------
+213
+841464 Lập trình Web và ứng dụng nâng cao
+4 90 Nguyễn Thanh Sang 10991
+04
+7 1 3 C.E503 DCT1243 1234567---12345----------
+214 4 90 Nguyễn Thanh Sang 10991 7 4 2 C.E503 DCT1243 1234567---12345----------
+215
+841476 Đồ án chuyên ngành (ngành CNTT, ngành
+KTPM)
+4 80 Phan Tấn Quốc 10631
+01
+7 1 3 C.A412 DCT1221 ---4567---12345678-------
+216 4 80 Phan Tấn Quốc 10631 7 4 2 C.A412 DCT1221 ---4567---12345678-------
+217
+841476 Đồ án chuyên ngành (ngành CNTT, ngành
+KTPM)
+4 80 Trịnh Tấn Đạt 11383
+02
+3 6 2 1.C102 DCT1222 ---4567---12345678-------
+218 4 80 Trịnh Tấn Đạt 11383 3 8 3 1.C202 DCT1222 ---4567---12345678-------
+Học kỳ 2 - Năm học 2025 - 2026
+Thời khóa biểu đăng ký môn học
+Ngày in : 17/11/2025 16:38 Trang 9
+Lưu ý: mỗi ký tự trong dãy 123456789123456 ...(trong tuần dạy) diễn tả cho 1 tuần lễ. Ký tự 1 đầu tiên diễn tả tuần thứ 1 của học kỳ (Tuần 17). Các ký tự 1 kế tiếp nếu có diên tả tuần thứ 11,21... của học
+kỳ. Ngày bắt đầu học kỳ: 22/12/2025
+STT Mã MH Tên môn học Số
+TC Sỉ số Họ và tên Mã viên
+chức Nhóm Tổ TH Thứ Tiết
+BĐ Số tiết Mã phòng Tên lớp Tuần học
+219
+841476 Đồ án chuyên ngành (ngành CNTT, ngành
+KTPM)
+4 80 Trần Đình Nghĩa 10601
+03
+3 6 2 1.C105 DKP1221 ---4567---12345678-------
+220 4 80 Trần Đình Nghĩa 10601 3 8 3 1.C105 DKP1221 ---4567---12345678-------
+221 841480 Xây dựng phần mềm theo mô hình phân lớp 
+(2020) 4 90 Cao Minh Thành 10011 01 6 6 3 C.E403 DCT1231 ---4567---12345678901----
+222 841480 Xây dựng phần mềm theo mô hình phân lớp 
+(2020) 4 90 Cao Minh Thành 10011 01 01 6 9 2 C.E403 DCT1231 ---4567---12345678901----
+223 841480 Xây dựng phần mềm theo mô hình phân lớp 
+(2020) 4 90 Cao Minh Thành 10011 02 5 6 3 C.E403 DCT1232 ---4567---12345678901----
+224 841480 Xây dựng phần mềm theo mô hình phân lớp 
+(2020) 4 90 Cao Minh Thành 10011 02 01 5 9 2 C.E403 DCT1232 ---4567---12345678901----
+225 841481 Thiết kế giao diện 4 90 Phạm Thi Vương 11426 01 5 6 3 C.E603 DCT1231 ---4567---12345678901----
+226 841481 Thiết kế giao diện 4 90 Phạm Thi Vương 11426 01 01 5 9 2 C.E402 DCT1231 ---4567---12345678901----
+227 841481 Thiết kế giao diện 4 90 Phạm Thi Vương 11426 02 6 6 3 C.E603 DKP1231 ---4567---12345678901----
+228 841481 Thiết kế giao diện 4 90 Phạm Thi Vương 11426 02 01 6 9 2 C.E402 DKP1231 ---4567---12345678901----
+229 841482 Seminar chuyên đề (ngành CNTT, ngành
+KTPM) 3 120 Nguyễn Quốc Huy 10600 01 7 6 3 C.E502 DCT1222 ---4567---12345678901----
+230 841482 Seminar chuyên đề (ngành CNTT, ngành
+KTPM) 3 120 Nguyễn Tuấn Đăng 11453 02 6 9 3 1.A202 DKP1221 ---4567---12345678901----
+Ngày.......tháng........năm..........
+Người lập biểu

@@ -247,7 +247,7 @@ def run():
     print("Generating Rooms from DKMH data...")
     
     # Load raw text from dkmh_all_lines.txt
-    dkmh_file = 'C:\\Users\\VAN NHUAN\\.gemini\\antigravity-ide\\brain\\6e5a9946-7f2a-470b-91bd-d631bab28720\\scratch\\dkmh_all_lines.txt'
+    dkmh_file = 'dkmh_all_lines.txt'
     with open(dkmh_file, 'r', encoding='utf-8') as f:
         dkmh_text = f.read()
         
