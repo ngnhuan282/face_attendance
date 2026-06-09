@@ -12,7 +12,7 @@ ABSENT_DANGER_THRESHOLD  = 40.0
 def check_and_notify(
     student: Student,
     course_class: CourseClass,
-    report, 
+    report,
 ) -> Notification | None:
     absent_pct = report.absent_rate
 
@@ -27,7 +27,7 @@ def check_and_notify(
         ).delete()
         return None
 
-    noti, created = Notification.objects.update_or_create(
+    noti, created = Notification.objects.get_or_create(
         student=student,
         course_class=course_class,
         defaults={
@@ -38,6 +38,32 @@ def check_and_notify(
             'is_read'        : False,
         },
     )
+
+    if created:
+        return noti
+
+    should_mark_unread = (
+        noti.noti_type != noti_type
+        or report.absent_count > noti.absent_count
+    )
+
+    noti.noti_type = noti_type
+    noti.absent_count = report.absent_count
+    noti.total_sessions = report.total_sessions
+    noti.absent_percent = absent_pct
+
+    update_fields = [
+        'noti_type',
+        'absent_count',
+        'total_sessions',
+        'absent_percent',
+    ]
+
+    if should_mark_unread:
+        noti.is_read = False
+        update_fields.append('is_read')
+
+    noti.save(update_fields=update_fields)
     return noti
 
 

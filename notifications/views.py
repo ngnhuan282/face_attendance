@@ -15,7 +15,7 @@ def notification_list(request):
             'course_class__course',
             'course_class__semester',
         )
-        .order_by('-created_at')
+        .order_by('is_read', '-created_at')
     )
 
     total_count   = notifications.count()

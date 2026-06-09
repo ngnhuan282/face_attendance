@@ -131,7 +131,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for item in history %}
+                {% for item in history_page_obj %}
                 <tr id="row-{{ item.session.pk }}">
                     <td style="font-family:monospace;font-weight:600;font-size:12px;">
                         {{ item.session.course_class.class_code }}
@@ -188,8 +188,35 @@
         </table>
     </div>
 
-    <div class="table-card-footer">
-        <span>{{ history|length }} buổi học</span>
+    <div class="table-card-footer pagination-centered-footer">
+        <div class="footer-info">
+            {% if history_page_obj.paginator.count > 0 %}
+            <span>Hiển thị {{ history_page_obj.start_index }} - {{ history_page_obj.end_index }} / {{ history_page_obj.paginator.count }} buổi học</span>
+            {% else %}
+            <span>0 buổi học</span>
+            {% endif %}
+        </div>
+        <div class="footer-pagination">
+            <div class="pagination-buttons" style="display:flex;gap:8px;align-items:center;">
+                {% if history_page_obj.has_previous %}
+                <a href="?page=1{% if selected_class %}&class={{ selected_class.pk }}{% endif %}" class="btn-secondary" style="padding:6px 12px;font-size:14px;text-decoration:none;font-weight:bold;" title="Về đầu">&laquo;</a>
+                <a href="?page={{ history_page_obj.previous_page_number }}{% if selected_class %}&class={{ selected_class.pk }}{% endif %}" class="btn-secondary" style="padding:6px 12px;font-size:14px;text-decoration:none;font-weight:bold;" title="Trước">&lsaquo;</a>
+                {% else %}
+                <span class="btn-secondary" style="padding:6px 12px;font-size:14px;opacity:0.5;cursor:not-allowed;font-weight:bold;">&laquo;</span>
+                <span class="btn-secondary" style="padding:6px 12px;font-size:14px;opacity:0.5;cursor:not-allowed;font-weight:bold;">&lsaquo;</span>
+                {% endif %}
+
+                <span style="font-size:13px;font-weight:600;padding:0 8px;">Trang {{ history_page_obj.number }} / {{ history_page_obj.paginator.num_pages }}</span>
+
+                {% if history_page_obj.has_next %}
+                <a href="?page={{ history_page_obj.next_page_number }}{% if selected_class %}&class={{ selected_class.pk }}{% endif %}" class="btn-secondary" style="padding:6px 12px;font-size:14px;text-decoration:none;font-weight:bold;" title="Tiếp">&rsaquo;</a>
+                <a href="?page={{ history_page_obj.paginator.num_pages }}{% if selected_class %}&class={{ selected_class.pk }}{% endif %}" class="btn-secondary" style="padding:6px 12px;font-size:14px;text-decoration:none;font-weight:bold;" title="Về cuối">&raquo;</a>
+                {% else %}
+                <span class="btn-secondary" style="padding:6px 12px;font-size:14px;opacity:0.5;cursor:not-allowed;font-weight:bold;">&rsaquo;</span>
+                <span class="btn-secondary" style="padding:6px 12px;font-size:14px;opacity:0.5;cursor:not-allowed;font-weight:bold;">&raquo;</span>
+                {% endif %}
+            </div>
+        </div>
     </div>
 </div>
 

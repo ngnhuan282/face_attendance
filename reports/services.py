@@ -23,11 +23,21 @@ def compute_attendance_rate(
     student: Student,
     course_class: CourseClass,
 ) -> dict:
-    # Lấy tất cả session đã đóng của lớp HP này
-    closed_sessions = AttendanceSession.objects.filter(
-        course_class=course_class,
-        status='closed',
-    )
+    from courses.models import Enrollment
+
+    enrollment = Enrollment.objects.filter(student=student, course_class=course_class).first()
+
+    if enrollment:
+        closed_sessions = AttendanceSession.objects.filter(
+            course_class=course_class,
+            status='closed',
+            started_at__date__gte=enrollment.enrolled_at.date()
+        )
+    else:
+        closed_sessions = AttendanceSession.objects.filter(
+            course_class=course_class,
+            status='closed',
+        )
     total_sessions = closed_sessions.count()
 
     if total_sessions == 0:

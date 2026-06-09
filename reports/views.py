@@ -31,21 +31,54 @@ def _build_session_columns(course_class: CourseClass):
 
 def _build_matrix(reports, sessions):
     session_ids = [s.pk for s in sessions]
+    student_ids = [r.student_id for r in reports]
 
     # Lấy tất cả record
     records = AttendanceRecord.objects.filter(
         session_id__in=session_ids,
-        student__in=[r.student_id for r in reports],
+        student__in=student_ids,
     ).values('session_id', 'student_id', 'status')
 
     # Index: (session_id, student_id) → status
     rec_map = {(r['session_id'], r['student_id']): r['status'] for r in records}
 
+    # Fetch enrollments to know when each student enrolled
+    course_class_id = sessions[0].course_class_id if sessions else None
+    enrollments = {}
+    if course_class_id:
+        enr_list = Enrollment.objects.filter(
+            course_class_id=course_class_id,
+            student_id__in=student_ids,
+            is_active=True,
+        ).values('student_id', 'enrolled_at')
+        enrollments = {e['student_id']: e['enrolled_at'].date() for e in enr_list}
+
     rows = []
     for rpt in reports:
-        cells = [rec_map.get((s.pk, rpt.student_id), 'absent') for s in sessions]
+        enrolled_date = enrollments.get(rpt.student_id)
+        cells = []
+        for s in sessions:
+            # Nếu buổi học diễn ra trước khi SV đăng ký, không tính vắng
+            if enrolled_date and s.started_at.date() < enrolled_date:
+                cells.append('not_enrolled')
+            else:
+                cells.append(rec_map.get((s.pk, rpt.student_id), 'absent'))
         rows.append({'report': rpt, 'cells': cells})
     return rows
+
+
+def _get_active_reports(course_class: CourseClass):
+    return (
+        AttendanceReport.objects
+        .filter(
+            course_class=course_class,
+            student__enrollments__course_class=course_class,
+            student__enrollments__is_active=True,
+        )
+        .select_related('student__student_class')
+        .order_by('student__full_name')
+        .distinct()
+    )
 
 
 # Trang chọn học kỳ + lớp HP
@@ -104,12 +137,7 @@ def report_class(request, class_id):
     if request.GET.get('refresh') == '1':
         refresh_class_reports(course_class)
 
-    reports = (
-        AttendanceReport.objects
-        .filter(course_class=course_class)
-        .select_related('student__student_class')
-        .order_by('student__full_name')
-    )
+    reports = _get_active_reports(course_class)
 
     sessions = _build_session_columns(course_class)
     matrix   = _build_matrix(reports, sessions)
@@ -124,14 +152,30 @@ def report_class(request, class_id):
     if total_students:
         avg_rate = round(sum(r.attendance_rate for r in reports) / total_students, 1)
 
-    # Dữ liệu biểu đồ cột: mỗi buổi → số có mặt
+    # Fetch active enrollments once for chart calculation
+    enr_list = Enrollment.objects.filter(
+        course_class=course_class,
+        is_active=True
+    ).values('student_id', 'enrolled_at')
+    enrollment_dates = {e['student_id']: e['enrolled_at'].date() for e in enr_list}
+
     chart_labels  = [f"Buổi {i+1}" for i in range(len(sessions))]
     chart_present = []
     chart_absent  = []
     for s in sessions:
-        recs = AttendanceRecord.objects.filter(session=s)
-        present = recs.filter(status__in=['present', 'late']).count()
-        absent  = total_students - present
+        # Chỉ đếm những sinh viên đã đăng ký trước hoặc trong ngày buổi học diễn ra
+        eligible_student_ids = [
+            student_id
+            for student_id, enr_date in enrollment_dates.items()
+            if enr_date <= s.started_at.date()
+        ]
+        present = AttendanceRecord.objects.filter(
+            session=s,
+            student_id__in=eligible_student_ids,
+            status__in=['present', 'late'],
+        ).count()
+        absent  = len(eligible_student_ids) - present
+
         chart_present.append(present)
         chart_absent.append(absent)
 
@@ -186,12 +230,7 @@ def export_excel(request, class_id):
             from django.core.exceptions import PermissionDenied
             raise PermissionDenied
 
-    reports = (
-        AttendanceReport.objects
-        .filter(course_class=course_class)
-        .select_related('student__student_class')
-        .order_by('student__full_name')
-    )
+    reports = _get_active_reports(course_class)
     sessions = _build_session_columns(course_class)
     matrix   = _build_matrix(reports, sessions)
 
@@ -481,6 +520,10 @@ def student_attendance(request, student_id):
             'rec_id': rec_id
         })
 
+    from django.core.paginator import Paginator
+    history_paginator = Paginator(history, 10)
+    history_page_obj = history_paginator.get_page(request.GET.get('page', 1))
+
     # Tổng hợp theo lớp HP
     reports = (
         AttendanceReport.objects
@@ -496,6 +539,7 @@ def student_attendance(request, student_id):
         'enrollments'   : enrollments,
         'selected_class': selected_class,
         'history'       : history,
+        'history_page_obj': history_page_obj,
         'reports'       : reports,
         'active_menu'   : 'reports',
     })
