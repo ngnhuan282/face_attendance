@@ -4,6 +4,9 @@ from . import views
 app_name = 'students'
 
 urlpatterns = [
+    # ── Student Profile (self-service) ───────────
+    path('profile/', views.student_profile, name='student_profile'),
+
     # ── Students ─────────────────────────────────
     path('', views.student_list, name='list'),
     path('create/', views.student_create, name='create'),

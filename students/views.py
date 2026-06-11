@@ -575,3 +575,110 @@ def student_import_csv_template(request):
     writer.writerow(['SV220002', 'Trần Thị B', '15/03/2004', 'svb@email.com', '0902345678', 'DHKTPM17A'])
     writer.writerow(['SV220003', 'Lê Văn C', '', '', '', ''])
     return response
+
+
+# ──────────────────────────────────────────────
+# HỒ SƠ SINH VIÊN (STUDENT SELF-SERVICE)
+# ──────────────────────────────────────────────
+
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import update_session_auth_hash
+
+
+def _student_required(view_func):
+    """Decorator: yêu cầu đăng nhập và phải có student profile."""
+    from functools import wraps
+    from django.core.exceptions import PermissionDenied
+
+    @login_required
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        student = getattr(request.user, 'student', None)
+        if student is None:
+            raise PermissionDenied
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+@_student_required
+def student_profile(request):
+    """Trang hồ sƠ cá nh​n cầu sinh viên.
+
+    3 action (POST):
+      - update_info : cập nhật email, phone
+      - update_photo: đổi ảnh khuôn mật → re-encode
+      - change_password: đổi mật khẩu
+    """
+    from .forms import StudentInfoForm, StudentPhotoForm, StudentPasswordForm
+    from recognition.encoding_tasks import enqueue_student_encoding_update
+    from courses.models import Enrollment
+    from academics.models import Semester
+
+    user = request.user
+    student = user.student
+
+    # --- Lấy học kỳ hiện tại (is_active=True) ---
+    current_semester = Semester.objects.filter(is_active=True).first()
+    enrollments = []
+    if current_semester:
+        enrollments = (
+            Enrollment.objects
+            .filter(student=student, course_class__semester=current_semester, is_active=True)
+            .select_related(
+                'course_class__course',
+                'course_class__semester',
+                'course_class__teacher__user',
+                'course_class__course__room',
+            )
+            .order_by('course_class__course__course_code')
+        )
+
+    # Khởi tạo các form
+    info_form = StudentInfoForm(initial={'email': student.email, 'phone': student.phone})
+    photo_form = StudentPhotoForm()
+    password_form = StudentPasswordForm(user_instance=user)
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+
+        # ---- Cập nhật thông tin liên lạc ----
+        if action == 'update_info':
+            info_form = StudentInfoForm(request.POST)
+            if info_form.is_valid():
+                student.email = info_form.cleaned_data['email']
+                student.phone = info_form.cleaned_data.get('phone', '')
+                student.save(update_fields=['email', 'phone'])
+                messages.success(request, 'Cập nhật thông tin thành công!')
+                return redirect('students:student_profile')
+
+        # ---- Cập nhật ảnh khuôn mật ----
+        elif action == 'update_photo':
+            photo_form = StudentPhotoForm(request.POST, request.FILES)
+            if photo_form.is_valid():
+                student.photo = photo_form.cleaned_data['photo']
+                student.save(update_fields=['photo'])
+                # Re-encode async
+                enqueue_student_encoding_update(student.pk)
+                messages.success(request, 'Đã cập nhật ảnh khuôn mật! Hệ thống đang xử lý nhận diện...')
+                return redirect('students:student_profile')
+
+        # ---- Đổi mật khẩu ----
+        elif action == 'change_password':
+            password_form = StudentPasswordForm(request.POST, user_instance=user)
+            if password_form.is_valid():
+                user.set_password(password_form.cleaned_data['new_password'])
+                user.save()
+                update_session_auth_hash(request, user)
+                messages.success(request, 'Đổi mật khẩu thành công!')
+                return redirect('students:student_profile')
+
+    context = {
+        'student': student,
+        'user': user,
+        'info_form': info_form,
+        'photo_form': photo_form,
+        'password_form': password_form,
+        'enrollments': enrollments,
+        'current_semester': current_semester,
+    }
+    return render(request, 'students/student_profile.html', context)

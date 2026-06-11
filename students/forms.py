@@ -126,3 +126,101 @@ class StudentForm(forms.ModelForm):
                 'required': 'Họ tên không được để trống.',
             },
         }
+
+
+
+class StudentInfoForm(forms.Form):
+    """Form de sinh vien tu cap nhat thong tin lien lac."""
+
+    email = forms.EmailField(
+        label='Email',
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'id': 'id_sv_email',
+            'placeholder': 'example@sgu.edu.vn',
+        }),
+        error_messages={
+            'required': 'Email khong duoc de trong.',
+            'invalid': 'Email khong hop le.',
+        }
+    )
+    phone = forms.CharField(
+        max_length=15,
+        required=False,
+        label='So dien thoai',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'id': 'id_sv_phone',
+            'placeholder': '0912 345 678',
+        })
+    )
+
+
+class StudentPhotoForm(forms.Form):
+    """Form de sinh vien tu cap nhat anh khuon mat."""
+
+    photo = forms.ImageField(
+        label='Anh khuon mat moi',
+        widget=forms.ClearableFileInput(attrs={
+            'class': 'form-control',
+            'id': 'id_sv_photo',
+            'accept': 'image/*',
+        }),
+        error_messages={'required': 'Vui long chon anh.'}
+    )
+
+    def clean_photo(self):
+        photo = self.cleaned_data.get('photo')
+        if photo and photo.size > 5 * 1024 * 1024:
+            raise forms.ValidationError('Anh khong duoc vuot qua 5MB.')
+        return photo
+
+
+class StudentPasswordForm(forms.Form):
+    """Form de sinh vien tu doi mat khau."""
+
+    current_password = forms.CharField(
+        label='Mat khau hien tai',
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'id': 'id_sv_current_pw',
+            'placeholder': 'Mat khau hien tai',
+        }),
+    )
+    new_password = forms.CharField(
+        label='Mat khau moi',
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'id': 'id_sv_new_pw',
+            'placeholder': 'Mat khau moi',
+        }),
+        min_length=6,
+        error_messages={'min_length': 'Mat khau moi phai it nhat 6 ky tu.'}
+    )
+    confirm_password = forms.CharField(
+        label='Xac nhan mat khau moi',
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'id': 'id_sv_confirm_pw',
+            'placeholder': 'Xac nhan mat khau moi',
+        }),
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.user_instance = kwargs.pop('user_instance', None)
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        current_pw = cleaned_data.get('current_password')
+        new_pw = cleaned_data.get('new_password')
+        confirm_pw = cleaned_data.get('confirm_password')
+
+        if current_pw and self.user_instance:
+            if not self.user_instance.check_password(current_pw):
+                self.add_error('current_password', 'Mat khau hien tai khong dung.')
+
+        if new_pw and confirm_pw and new_pw != confirm_pw:
+            self.add_error('confirm_password', 'Mat khau xac nhan khong khop.')
+
+        return cleaned_data

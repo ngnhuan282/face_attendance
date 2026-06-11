@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 from academics.models import Department
 
 class StudentClass(models.Model):
@@ -23,6 +24,14 @@ class StudentClass(models.Model):
 
 class Student(models.Model):
     """Sinh viên"""
+    user = models.OneToOneField(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='student',
+        verbose_name='Tài khoản'
+    )
     student_class = models.ForeignKey(
         StudentClass,
         on_delete=models.SET_NULL,
