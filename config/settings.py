@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'attendance',
     'notifications',
     'reports',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
