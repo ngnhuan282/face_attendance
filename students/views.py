@@ -246,14 +246,21 @@ def studentclass_detail(request, pk):
         StudentClass.objects.select_related('department'),
         pk=pk
     )
-    students = sc.students.order_by('full_name')
+    students_qs = sc.students.order_by('full_name')
     # Lấy tất cả sinh viên không thuộc lớp này để hiển thị trong phần thêm sinh viên
     available_students = Student.objects.exclude(student_class=sc).select_related('student_class').order_by('student_id')
+
+    # Phân trang – 10 dòng / trang
+    paginator = Paginator(students_qs, 10)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
 
     return render(request, 'students/class_detail.html', {
         'active_menu': 'students',
         'sc': sc,
-        'students': students,
+        'students': page_obj,
+        'page_obj': page_obj,
+        'paginator': paginator,
         'available_students': available_students,
     })
 

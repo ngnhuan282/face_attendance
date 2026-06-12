@@ -1,10 +1,65 @@
 {% extends 'layouts/admin_base.html' %}
 
 {% block title %}EduFace - Dashboard{% endblock %}
-{% block page_title %}Dashboard{% endblock %}
-{% block breadcrumb %}Tổng Quan{% endblock %}
+{% block page_title %}Dashboard Tổng Quan{% endblock %}
+{% block breadcrumb %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+.charts-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+@media (max-width: 1024px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+.chart-container {
+    background: #fff;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.chart-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 16px;
+}
+.ranking-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+@media (max-width: 768px) {
+    .ranking-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+{% endblock %}
 
 {% block page_content %}
+<!-- Báo học kỳ -->
+<div class="table-card" style="margin-bottom:20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid var(--border-color, #e2e8f0); background: #fff; border-radius: 12px;">
+    <div style="padding:16px 20px;display:flex;gap:16px;align-items:center;">
+        <div style="font-size:14px;font-weight:600;color:var(--text-dark);">Dữ liệu thống kê theo:</div>
+        <form method="get" style="display:flex;gap:12px;align-items:center;margin:0;">
+            <select name="semester" class="filter-select" style="min-width:240px;padding:8px 12px;border-radius:6px;border:1px solid #e2e8f0;outline:none;background:#f8fafc;font-size:14px;color:var(--text-dark);" onchange="this.form.submit()">
+                {% for sem in semesters %}
+                <option value="{{ sem.pk }}" {% if active_semester and active_semester.pk == sem.pk %}selected{% endif %}>
+                    {{ sem }}
+                </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+</div>
 
 <!-- Stat Cards -->
 <div class="stats-grid">
@@ -18,9 +73,8 @@
             </svg>
         </div>
         <div class="stat-info">
-            <div class="stat-value">1,248</div>
-            <div class="stat-label">Tổng Sinh Viên</div>
-            <div class="stat-change up">↑ 24 sinh viên mới</div>
+            <div class="stat-value">{{ total_students }}</div>
+            <div class="stat-label">Tổng Sinh Viên (Active)</div>
         </div>
     </div>
     <div class="stat-card">
@@ -33,21 +87,8 @@
             </svg>
         </div>
         <div class="stat-info">
-            <div class="stat-value">24</div>
-            <div class="stat-label">Lớp Học</div>
-            <div class="stat-change up">↑ 3 lớp học kỳ mới</div>
-        </div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-icon orange">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-            </svg>
-        </div>
-        <div class="stat-info">
-            <div class="stat-value">87.3%</div>
-            <div class="stat-label">Tỉ Lệ Điểm Danh</div>
-            <div class="stat-change up">↑ 2.1% so với tuần trước</div>
+            <div class="stat-value">{{ total_classes }}</div>
+            <div class="stat-label">Lớp Học Phần</div>
         </div>
     </div>
     <div class="stat-card">
@@ -58,82 +99,152 @@
             </svg>
         </div>
         <div class="stat-info">
-            <div class="stat-value">8</div>
+            <div class="stat-value">{{ today_sessions }}</div>
             <div class="stat-label">Ca Học Hôm Nay</div>
-            <div class="stat-change">3 đã hoàn thành</div>
+            <div class="stat-change">{{ completed_sessions }} đã hoàn thành</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon orange">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-value">{{ avg_attendance }}%</div>
+            <div class="stat-label">Tỉ Lệ Chuyên Cần TB</div>
         </div>
     </div>
 </div>
 
-<!-- Bottom Row -->
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-
-    <!-- Điểm danh theo lớp -->
-    <div class="card">
-        <div class="card-title">Tỉ Lệ Điểm Danh Theo Lớp</div>
-        <div class="progress-item">
-            <div class="progress-label"><span>CNTT-K22A</span><span class="progress-value">94%</span></div>
-            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:94%"></div></div>
-        </div>
-        <div class="progress-item">
-            <div class="progress-label"><span>CNTT-K22B</span><span class="progress-value">88%</span></div>
-            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:88%"></div></div>
-        </div>
-        <div class="progress-item">
-            <div class="progress-label"><span>KTPM-K22A</span><span class="progress-value">82%</span></div>
-            <div class="progress-bar-bg"><div class="progress-bar-fill blue" style="width:82%"></div></div>
-        </div>
-        <div class="progress-item">
-            <div class="progress-label"><span>HTTT-K22A</span><span class="progress-value">76%</span></div>
-            <div class="progress-bar-bg"><div class="progress-bar-fill orange" style="width:76%"></div></div>
-        </div>
-        <div class="progress-item">
-            <div class="progress-label"><span>MMT-K21A</span><span class="progress-value">91%</span></div>
-            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:91%"></div></div>
-        </div>
+<!-- Charts Row -->
+<div class="charts-grid">
+    <!-- Trend Chart -->
+    <div class="chart-container">
+        <div class="chart-title">Xu Hướng Điểm Danh (7 Ngày Qua)</div>
+        <canvas id="trendChart" height="100"></canvas>
     </div>
-
-    <!-- Hoạt động gần đây -->
-    <div class="card">
-        <div class="card-title">Hoạt Động Gần Đây</div>
-        <ul class="activity-list">
-            <li class="activity-item">
-                <div class="activity-dot"></div>
-                <div>
-                    <div class="activity-text">Điểm danh lớp <strong>CNTT-K22A</strong> hoàn thành — 42/45 sinh viên</div>
-                    <div class="activity-time">5 phút trước</div>
-                </div>
-            </li>
-            <li class="activity-item">
-                <div class="activity-dot blue"></div>
-                <div>
-                    <div class="activity-text">Sinh viên <strong>Nguyễn Văn An</strong> đã đăng ký khuôn mặt mới</div>
-                    <div class="activity-time">18 phút trước</div>
-                </div>
-            </li>
-            <li class="activity-item">
-                <div class="activity-dot"></div>
-                <div>
-                    <div class="activity-text">Điểm danh lớp <strong>KTPM-K22A</strong> hoàn thành — 38/40 sinh viên</div>
-                    <div class="activity-time">1 giờ trước</div>
-                </div>
-            </li>
-            <li class="activity-item">
-                <div class="activity-dot orange"></div>
-                <div>
-                    <div class="activity-text"><strong>Trần Thị Bình</strong> vắng mặt không phép lần 3</div>
-                    <div class="activity-time">2 giờ trước</div>
-                </div>
-            </li>
-            <li class="activity-item">
-                <div class="activity-dot blue"></div>
-                <div>
-                    <div class="activity-text">Tài khoản giảng viên <strong>Lê Văn Cường</strong> được tạo mới</div>
-                    <div class="activity-time">3 giờ trước</div>
-                </div>
-            </li>
-        </ul>
+    <!-- Dept Chart -->
+    <div class="chart-container">
+        <div class="chart-title">Chuyên Cần Theo Khoa/Ngành</div>
+        <canvas id="deptChart" height="200"></canvas>
     </div>
-
 </div>
+
+<!-- Bottom Row: Rankings -->
+<div class="ranking-grid">
+    <!-- Top Best -->
+    <div class="card">
+        <div class="card-title" style="color: #1a6b3c;">Top 5 Lớp Học Đi Học Tốt Nhất</div>
+        {% for c in top_best %}
+        <div class="progress-item">
+            <div class="progress-label">
+                <span title="{{ c.course_class__class_code }}" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80%;">
+                    {{ c.course_class__course__course_name }} ({{ c.course_class__class_code }})
+                </span>
+                <span class="progress-value">{{ c.avg_rate|floatformat:1 }}%</span>
+            </div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:{{ c.avg_rate|stringformat:'.0f' }}%"></div></div>
+        </div>
+        {% empty %}
+        <div style="color:var(--text-muted);font-size:13px;padding:10px 0;">Chưa có dữ liệu</div>
+        {% endfor %}
+    </div>
+
+    <!-- Top Worst -->
+    <div class="card">
+        <div class="card-title" style="color: #ef4444;">Top 5 Lớp Học Cần Lưu Ý (Vắng Nhiều)</div>
+        {% for c in top_worst %}
+        <div class="progress-item">
+            <div class="progress-label">
+                <span title="{{ c.course_class__class_code }}" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80%;">
+                    {{ c.course_class__course__course_name }} ({{ c.course_class__class_code }})
+                </span>
+                <span class="progress-value">{{ c.avg_rate|floatformat:1 }}%</span>
+            </div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill orange" style="width:{{ c.avg_rate|stringformat:'.0f' }}%"></div></div>
+        </div>
+        {% empty %}
+        <div style="color:var(--text-muted);font-size:13px;padding:10px 0;">Chưa có dữ liệu</div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Trend Chart (Line)
+    const trendLabels = JSON.parse('{{ trend_labels|escapejs }}');
+    const trendPresent = JSON.parse('{{ trend_present|escapejs }}');
+    const trendAbsent = JSON.parse('{{ trend_absent|escapejs }}');
+    
+    new Chart(document.getElementById('trendChart'), {
+        type: 'line',
+        data: {
+            labels: trendLabels,
+            datasets: [
+                {
+                    label: 'Có mặt / Trễ',
+                    data: trendPresent,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3
+                },
+                {
+                    label: 'Vắng mặt',
+                    data: trendAbsent,
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' }
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { precision: 0 } }
+            }
+        }
+    });
+
+    // 2. Department Chart (Bar)
+    const deptLabels = JSON.parse('{{ dept_labels|escapejs }}');
+    const deptRates = JSON.parse('{{ dept_rates|escapejs }}');
+    
+    new Chart(document.getElementById('deptChart'), {
+        type: 'bar',
+        data: {
+            labels: deptLabels,
+            datasets: [{
+                label: 'Tỉ Lệ %',
+                data: deptRates,
+                backgroundColor: '#3b82f6',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { 
+                    beginAtZero: true, 
+                    max: 100,
+                    ticks: { callback: function(value) { return value + "%" } }
+                }
+            }
+        }
+    });
+});
+</script>
 {% endblock %}
