@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Lịch Sử Điểm Danh — Sinh Viên{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/student_profile.css' %}?v=2">
+<style>
+/* Additional styles for Attendance History */
+.sp-report-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+.sp-report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #f3f4f6;
+    background: #fafafa;
+}
+.sp-report-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.sp-report-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+.sp-select {
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #374151;
+    background-color: #fff;
+    outline: none;
+    transition: border-color 0.2s;
+    min-width: 250px;
+}
+.sp-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+.sp-report-body {
+    padding: 24px;
+}
+.sp-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+.sp-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+}
+.sp-table th, .sp-table td {
+    padding: 14px 16px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+.sp-table th {
+    background: #f9fafb;
+    font-weight: 600;
+    color: #4b5563;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.sp-table tr:last-child td {
+    border-bottom: none;
+}
+.sp-table tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+/* Status Badges */
+.sp-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+.sp-status.present { background: #dcfce7; color: #166534; }
+.sp-status.absent { background: #fee2e2; color: #991b1b; }
+.sp-status.late { background: #fef9c3; color: #854d0e; }
+.sp-status.pending { background: #f3f4f6; color: #4b5563; }
+
+/* Report Summary Cards */
+.sp-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.sp-summary-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+}
+.sp-summary-label {
+    font-size: 0.85rem;
+    color: #6b7280;
+    font-weight: 500;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+.sp-summary-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.sp-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 9999px;
+    margin-top: 12px;
+    overflow: hidden;
+}
+.sp-progress-fill {
+    height: 100%;
+    border-radius: 9999px;
+    transition: width 0.5s ease;
+}
+.sp-progress-fill.good { background: #10b981; }
+.sp-progress-fill.warning { background: #f59e0b; }
+.sp-progress-fill.danger { background: #ef4444; }
+
+.sp-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+}
+.sp-pagination-info {
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+.sp-pagination-links {
+    display: flex;
+    gap: 8px;
+}
+.sp-page-link {
+    padding: 6px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: #374151;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+.sp-page-link:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
+.sp-page-link.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sp-shell">
+    {% include 'layouts/home_header.html' %}
+
+    <main class="sp-main">
+        <div class="sp-container">
+            
+            <div class="sp-report-card">
+                <div class="sp-report-header">
+                    <div class="sp-report-title">
+                        <div class="sp-card-icon green">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        </div>
+                        Lịch Sử Điểm Danh
+                    </div>
+                    <div class="sp-report-controls">
+                        <form method="get" id="filter-form" style="display:flex; gap:12px; margin:0;">
+                            <select name="class" class="sp-select" onchange="document.getElementById('filter-form').submit()">
+                                <option value="">--- Tất cả lớp học phần ---</option>
+                                {% for enr in enrollments %}
+                                <option value="{{ enr.course_class.id }}" {% if selected_class and selected_class.id == enr.course_class.id %}selected{% endif %}>
+                                    {{ enr.course_class.course.course_name }} ({{ enr.course_class.class_code }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="sp-report-body">
+                    {% if reports %}
+                        <!-- Summaries -->
+                        {% for report in reports %}
+                        {% if selected_class == None or selected_class.id == report.course_class.id %}
+                        <div style="margin-bottom: 24px;">
+                            <h3 style="font-size: 1.1rem; font-weight: 600; color: #1f2937; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #e5e7eb;">
+                                Lớp: {{ report.course_class.course.course_name }} <span style="font-size: 0.9rem; color: #6b7280; font-weight: normal;">({{ report.course_class.class_code }})</span>
+                            </h3>
+                            <div class="sp-summary-grid">
+                                <div class="sp-summary-card">
+                                    <div class="sp-summary-label">Tỉ lệ chuyên cần</div>
+                                    <div class="sp-summary-value" style="color: {% if report.attendance_rate >= 80 %}#10b981{% elif report.attendance_rate >= 60 %}#f59e0b{% else %}#ef4444{% endif %};">
+                                        {{ report.attendance_rate|floatformat:1 }}%
+                                    </div>
+                                    <div class="sp-progress-bar">
+                                        <div class="sp-progress-fill {% if report.attendance_rate >= 80 %}good{% elif report.attendance_rate >= 60 %}warning{% else %}danger{% endif %}" style="width: {{ report.attendance_rate }}%;"></div>
+                                    </div>
+                                </div>
+                                <div class="sp-summary-card">
+                                    <div class="sp-summary-label">Có mặt</div>
+                                    <div class="sp-summary-value" style="color: #10b981;">{{ report.present_count }}</div>
+                                </div>
+                                <div class="sp-summary-card">
+                                    <div class="sp-summary-label">Vắng</div>
+                                    <div class="sp-summary-value" style="color: #ef4444;">{{ report.absent_count }}</div>
+                                </div>
+                                <div class="sp-summary-card">
+                                    <div class="sp-summary-label">Đi trễ</div>
+                                    <div class="sp-summary-value" style="color: #f59e0b;">{{ report.late_count }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- Table -->
+                    <div class="sp-table-wrap">
+                        <table class="sp-table">
+                            <thead>
+                                <tr>
+                                    <th>STT</th>
+                                    <th>Buổi Học</th>
+                                    <th>Thời Gian Bắt Đầu</th>
+                                    <th>Phòng</th>
+                                    <th>Lớp Học Phần</th>
+                                    <th>Trạng Thái</th>
+                                    <th>Ghi Chú</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in history_page_obj %}
+                                <tr>
+                                    <td style="color: #6b7280;">{{ history_page_obj.start_index|add:forloop.counter0 }}</td>
+                                    <td style="font-weight: 500;">Buổi {{ item.session.session_number }}</td>
+                                    <td>{{ item.session.started_at|date:"d/m/Y H:i" }}</td>
+                                    <td>{{ item.session.room.room_code }}</td>
+                                    <td>{{ item.session.course_class.class_code }}</td>
+                                    <td>
+                                        {% if item.status == 'present' %}
+                                            <span class="sp-status present"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;"></span> Có mặt</span>
+                                        {% elif item.status == 'absent' %}
+                                            <span class="sp-status absent"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;"></span> Vắng</span>
+                                        {% elif item.status == 'late' %}
+                                            <span class="sp-status late"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;"></span> Đi trễ</span>
+                                        {% else %}
+                                            <span class="sp-status pending"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;"></span> Chưa chốt</span>
+                                        {% endif %}
+                                    </td>
+                                    <td style="color: #6b7280; font-size: 0.9rem;">
+                                        {% if item.method == 'face' %}Nhận diện khuôn mặt{% elif item.method == 'manual' %}Điểm danh tay{% endif %}
+                                        {% if item.note %}<br><span style="color: #9ca3af;">{{ item.note }}</span>{% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" style="text-align: center; padding: 40px; color: #6b7280;">
+                                        Chưa có dữ liệu điểm danh nào cho thời gian này.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if history_page_obj.has_other_pages %}
+                    <div class="sp-pagination">
+                        <div class="sp-pagination-info">
+                            Hiển thị <strong>{{ history_page_obj.start_index }}</strong> đến <strong>{{ history_page_obj.end_index }}</strong> trong số <strong>{{ history_page_obj.paginator.count }}</strong> buổi học
+                        </div>
+                        <div class="sp-pagination-links">
+                            {% if history_page_obj.has_previous %}
+                                <a href="?page={{ history_page_obj.previous_page_number }}{% if selected_class %}&class={{ selected_class.id }}{% endif %}" class="sp-page-link">&laquo;</a>
+                            {% endif %}
+
+                            {% for num in history_page_obj.paginator.page_range %}
+                                {% if history_page_obj.number == num %}
+                                    <span class="sp-page-link active">{{ num }}</span>
+                                {% elif num > history_page_obj.number|add:'-3' and num < history_page_obj.number|add:'3' %}
+                                    <a href="?page={{ num }}{% if selected_class %}&class={{ selected_class.id }}{% endif %}" class="sp-page-link">{{ num }}</a>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if history_page_obj.has_next %}
+                                <a href="?page={{ history_page_obj.next_page_number }}{% if selected_class %}&class={{ selected_class.id }}{% endif %}" class="sp-page-link">&raquo;</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+{% endblock %}

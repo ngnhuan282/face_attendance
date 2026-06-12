@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Thời Khóa Biểu — Sinh Viên{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/student_profile.css' %}?v=2">
+<style>
+/* Additional styles for Timetable */
+.sp-timetable-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+.sp-timetable-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #f3f4f6;
+    background: #fafafa;
+}
+.sp-timetable-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.sp-timetable-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+.sp-select {
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #374151;
+    background-color: #fff;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.sp-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+.sp-timetable-body {
+    padding: 24px;
+    overflow-x: auto;
+}
+.sp-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 800px;
+}
+.sp-table th, .sp-table td {
+    border: 1px solid #e5e7eb;
+    padding: 12px;
+    text-align: center;
+}
+.sp-table th {
+    background: #f9fafb;
+    font-weight: 600;
+    color: #4b5563;
+    font-size: 0.9rem;
+}
+.sp-table th:first-child, .sp-table td:first-child {
+    background: #f9fafb;
+    font-weight: 600;
+    width: 80px;
+    position: sticky;
+    left: 0;
+    z-index: 10;
+}
+.sp-table td {
+    height: 80px;
+    vertical-align: top;
+    font-size: 0.85rem;
+    color: #374151;
+}
+.sp-cell-has-class {
+    background: #eff6ff;
+    border-left: 4px solid #3b82f6 !important;
+    text-align: left !important;
+    border-radius: 4px;
+}
+.sp-cell-course {
+    font-weight: 600;
+    color: #1e40af;
+    margin-bottom: 4px;
+    display: block;
+}
+.sp-cell-meta {
+    color: #4b5563;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.sp-cell-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.sp-cell-meta svg {
+    width: 12px;
+    height: 12px;
+    opacity: 0.7;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sp-shell">
+    {% include 'layouts/home_header.html' %}
+
+    <main class="sp-main">
+        <div class="sp-container">
+            <div class="sp-timetable-card">
+                <div class="sp-timetable-header">
+                    <div class="sp-timetable-title">
+                        <div class="sp-card-icon blue">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        </div>
+                        Lịch Học Của Bạn
+                    </div>
+                    <div class="sp-timetable-controls">
+                        <form method="get" id="timetable-form" style="display:flex; gap:12px; margin:0;">
+                            <select name="semester" class="sp-select" onchange="document.getElementById('timetable-form').submit()">
+                                {% for sem in semesters %}
+                                <option value="{{ sem.id }}" {% if selected_semester and selected_semester.id == sem.id %}selected{% endif %}>{{ sem }}</option>
+                                {% endfor %}
+                            </select>
+                            
+                            <select name="week" class="sp-select" onchange="document.getElementById('timetable-form').submit()">
+                                {% for w in weeks %}
+                                <option value="{{ w.number }}" {% if selected_week and selected_week.number == w.number %}selected{% endif %}>{{ w.label }}</option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    </div>
+                </div>
+                <div class="sp-timetable-body">
+                    <table class="sp-table">
+                        <thead>
+                            <tr>
+                                <th>Tiết</th>
+                                {% for day in week_days %}
+                                <th>
+                                    {{ day.day_name }}<br>
+                                    <span style="font-weight:400; font-size:0.8rem; color:#6b7280;">{{ day.date|date:"d/m" }}</span>
+                                </th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for period in periods %}
+                            <tr>
+                                <td>Tiết {{ period }}</td>
+                                {% for day_idx in "0123456"|make_list %}
+                                    {% with cell=grid|slice:period|last|slice:day_idx|first %}
+                                        {% if cell == 'spanned' %}
+                                            {# Do nothing, cell is spanned by previous schedule #}
+                                        {% elif cell %}
+                                            <td rowspan="{{ cell.end_period|add:'1'|add:'-'|add:cell.start_period }}" class="sp-cell-has-class">
+                                                <span class="sp-cell-course">{{ cell.course_class.course.course_name }}</span>
+                                                <div class="sp-cell-meta">
+                                                    <span>
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                                                        {{ cell.course_class.class_code }}
+                                                    </span>
+                                                    <span>
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                                                        Phòng: {{ cell.room.room_code }}
+                                                    </span>
+                                                    {% if cell.course_class.teacher %}
+                                                    <span>
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                                        GV: {{ cell.course_class.teacher.user.get_full_name }}
+                                                    </span>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        {% else %}
+                                            <td></td>
+                                        {% endif %}
+                                    {% endwith %}
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}

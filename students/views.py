@@ -687,5 +687,186 @@ def student_profile(request):
         'password_form': password_form,
         'enrollments': enrollments,
         'current_semester': current_semester,
+        'active_menu': 'profile',
     }
     return render(request, 'students/student_profile.html', context)
+
+@_student_required
+def student_timetable(request):
+    """Giao diện Thời Khóa Biểu dành riêng cho sinh viên"""
+    from academics.models import Semester
+    from schedules.models import Schedule
+    from datetime import datetime, timedelta
+    from django.utils import timezone
+    
+    student = request.user.student
+    semesters = Semester.objects.all().order_by('-academic_year__start_date', '-semester_num')
+    selected_semester = None
+    
+    semester_id = request.GET.get('semester')
+    if semester_id:
+        try:
+            selected_semester = Semester.objects.get(id=semester_id)
+        except Semester.DoesNotExist:
+            pass
+            
+    if not selected_semester:
+        selected_semester = Semester.objects.filter(is_active=True).first() or semesters.first()
+
+    weeks = []
+    target_date = timezone.now().date()
+    
+    if selected_semester:
+        sem_start_monday = selected_semester.start_date - timedelta(days=selected_semester.start_date.weekday())
+        sem_end_sunday = selected_semester.end_date + timedelta(days=6 - selected_semester.end_date.weekday())
+        
+        total_weeks = (sem_end_sunday - sem_start_monday).days // 7 + 1
+        for w in range(total_weeks):
+            w_monday = sem_start_monday + timedelta(weeks=w)
+            w_sunday = w_monday + timedelta(days=6)
+            weeks.append({
+                'number': w + 1,
+                'monday': w_monday,
+                'sunday': w_sunday,
+                'label': f"Tuần {w + 1} ({w_monday.strftime('%d/%m/%Y')} - {w_sunday.strftime('%d/%m/%Y')})"
+            })
+            
+        week_num = request.GET.get('week')
+        if week_num:
+            try:
+                week_idx = int(week_num) - 1
+                if 0 <= week_idx < len(weeks):
+                    target_date = weeks[week_idx]['monday']
+            except ValueError:
+                pass
+        else:
+            today = timezone.now().date()
+            current_week = next((w for w in weeks if w['monday'] <= today <= w['sunday']), None)
+            if current_week:
+                target_date = current_week['monday']
+            else:
+                target_date = weeks[0]['monday'] if weeks else today
+                
+    monday = target_date - timedelta(days=target_date.weekday())
+    sunday = monday + timedelta(days=6)
+    
+    selected_week = next((w for w in weeks if w['monday'] == monday), None)
+    
+    week_days = []
+    for i in range(7):
+        day = monday + timedelta(days=i)
+        week_days.append({
+            'date': day,
+            'day_name': f"Thứ {i+2}" if i < 6 else "Chủ Nhật"
+        })
+        
+    schedules = Schedule.objects.select_related(
+        'course_class', 'course_class__course', 'room', 'course_class__teacher__user'
+    ).filter(
+        date__range=[monday, sunday],
+        course_class__enrollments__student=student,
+        course_class__enrollments__is_active=True
+    )
+    
+    grid = [[None for _ in range(7)] for _ in range(10)]
+    for schedule in schedules:
+        day_idx = (schedule.date - monday).days
+        start_p = schedule.start_period - 1
+        end_p = schedule.end_period - 1
+        
+        if 0 <= day_idx < 7 and 0 <= start_p < 10:
+            grid[start_p][day_idx] = schedule
+            # Fill the spanned cells so the template can skip them
+            for p in range(start_p + 1, min(end_p + 1, 10)):
+                grid[p][day_idx] = 'spanned'
+
+    context = {
+        'active_menu': 'timetable',
+        'semesters': semesters,
+        'selected_semester': selected_semester,
+        'weeks': weeks,
+        'selected_week': selected_week,
+        'target_date': target_date.strftime('%Y-%m-%d'),
+        'monday': monday,
+        'sunday': sunday,
+        'week_days': week_days,
+        'grid': grid,
+        'periods': range(1, 11),
+    }
+    return render(request, 'students/timetable.html', context)
+
+@_student_required
+def student_attendance_history(request):
+    """Giao diện Lịch sử điểm danh dành riêng cho sinh viên"""
+    from attendance.models import AttendanceRecord, AttendanceSession
+    from courses.models import Enrollment, CourseClass
+    from reports.models import AttendanceReport
+    
+    student = request.user.student
+
+    # Lấy tất cả lớp HP SV đã đăng ký
+    enrollments = (
+        Enrollment.objects
+        .filter(student=student)
+        .select_related('course_class__course', 'course_class__semester')
+        .order_by('-course_class__semester__start_date')
+    )
+
+    selected_class = None
+    class_id = request.GET.get('class')
+    if class_id:
+        selected_class = get_object_or_404(CourseClass, pk=class_id)
+
+    # Lấy các session của lớp SV có đăng ký
+    sessions_qs = (
+        AttendanceSession.objects
+        .filter(course_class__enrollments__student=student, course_class__enrollments__is_active=True)
+        .select_related('course_class__course', 'course_class__semester')
+        .order_by('-started_at')
+    )
+    if selected_class:
+        sessions_qs = sessions_qs.filter(course_class=selected_class)
+        
+    records = AttendanceRecord.objects.filter(student=student, session__in=sessions_qs)
+    record_map = {r.session_id: r for r in records}
+
+    history = []
+    for s in sessions_qs:
+        rec = record_map.get(s.id)
+        if rec:
+            status, method, conf, note = rec.status, rec.method, rec.confidence, rec.note
+        else:
+            status = 'absent' if s.status == 'closed' else 'pending'
+            method, conf, note = '', 0.0, ''
+            
+        history.append({
+            'session': s,
+            'status': status,
+            'method': method,
+            'confidence': conf,
+            'note': note,
+        })
+
+    from django.core.paginator import Paginator
+    history_paginator = Paginator(history, 10)
+    history_page_obj = history_paginator.get_page(request.GET.get('page', 1))
+
+    # Tổng hợp theo lớp HP
+    reports = (
+        AttendanceReport.objects
+        .filter(student=student)
+        .select_related('course_class__course', 'course_class__semester')
+        .order_by('-course_class__semester__start_date')
+    )
+    if selected_class:
+        reports = reports.filter(course_class=selected_class)
+
+    return render(request, 'students/attendance_history.html', {
+        'student': student,
+        'enrollments': enrollments,
+        'selected_class': selected_class,
+        'history': history,
+        'history_page_obj': history_page_obj,
+        'reports': reports,
+        'active_menu': 'attendance_history',
+    })

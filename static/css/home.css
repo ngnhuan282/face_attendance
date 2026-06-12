@@ -77,7 +77,8 @@ body {
     transition: color 0.2s, background 0.2s;
 }
 
-.header-nav-link:hover {
+.header-nav-link:hover,
+.header-nav-link.active {
     color: var(--primary-green);
     background: var(--primary-green-light);
 }

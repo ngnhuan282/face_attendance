@@ -66,6 +66,29 @@
     border: 1px solid #c6e8d4;
 }
 
+/* Nav links */
+.header-nav {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.header-nav-link {
+    color: var(--text-light);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 7px 14px;
+    border-radius: 8px;
+    transition: color 0.2s, background 0.2s;
+}
+
+.header-nav-link:hover,
+.header-nav-link.active {
+    color: var(--primary-green);
+    background: var(--primary-green-light);
+}
+
 /* Wrapper giữ vị trí tương đối để dropdown biết mốc */
 .topbar-avatar-wrap {
     position: relative;

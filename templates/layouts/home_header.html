@@ -16,11 +16,12 @@
             <span>EduFace</span>
         </a>
 
-        {# ── Nav links (chỉ hiện trên trang home) ── #}
-        {% if request.resolver_match.url_name == 'home' %}
+        {# ── Nav links (Chỉ hiện cho Sinh Viên) ── #}
+        {% if request.is_student_group %}
         <nav class="header-nav">
-            <a href="#features" class="header-nav-link">Tính Năng</a>
-            <a href="#how-it-works" class="header-nav-link">Cách Hoạt Động</a>
+            <a href="{% url 'students:student_profile' %}" class="header-nav-link {% if active_menu == 'profile' %}active{% endif %}">Hồ Sơ Cá Nhân</a>
+            <a href="{% url 'students:timetable' %}" class="header-nav-link {% if active_menu == 'timetable' %}active{% endif %}">Thời Khóa Biểu</a>
+            <a href="{% url 'students:attendance_history' %}" class="header-nav-link {% if active_menu == 'attendance_history' %}active{% endif %}">Lịch Sử Điểm Danh</a>
         </nav>
         {% endif %}
 

@@ -6,6 +6,8 @@ app_name = 'students'
 urlpatterns = [
     # ── Student Profile (self-service) ───────────
     path('profile/', views.student_profile, name='student_profile'),
+    path('timetable/', views.student_timetable, name='timetable'),
+    path('attendance-history/', views.student_attendance_history, name='attendance_history'),
 
     # ── Students ─────────────────────────────────
     path('', views.student_list, name='list'),
