@@ -4,6 +4,7 @@ import io
 from datetime import datetime
 
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
@@ -81,6 +82,15 @@ def _get_active_reports(course_class: CourseClass):
     )
 
 
+def _teacher_scope(request):
+    if request.is_teacher_group and not request.is_admin_group:
+        teacher = getattr(request.user, 'teacher', None)
+        if teacher is None:
+            raise PermissionDenied
+        return teacher
+    return None
+
+
 # Trang chọn học kỳ + lớp HP
 @group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
 def report_index(request):
@@ -99,12 +109,9 @@ def report_index(request):
             .order_by('class_code')
         )
         # GV chỉ được xem lớp mình dạy
-        if request.is_teacher_group and not request.is_admin_group:
-            teacher = getattr(request.user, 'teacher', None)
-            if teacher:
-                course_classes = course_classes.filter(teacher=teacher)
-            else:
-                course_classes = CourseClass.objects.none()
+        teacher = _teacher_scope(request)
+        if teacher:
+            course_classes = course_classes.filter(teacher=teacher)
         from django.core.paginator import Paginator
         paginator = Paginator(course_classes, 10)
         page_number = request.GET.get('page', 1)
@@ -128,11 +135,9 @@ def report_class(request, class_id):
     )
 
     # GV chỉ được xem báo cáo lớp mình dạy
-    if request.is_teacher_group and not request.is_admin_group:
-        teacher = getattr(request.user, 'teacher', None)
-        if teacher is None or course_class.teacher != teacher:
-            from django.core.exceptions import PermissionDenied
-            raise PermissionDenied
+    teacher = _teacher_scope(request)
+    if teacher and course_class.teacher_id != teacher.pk:
+        raise PermissionDenied
 
     if request.GET.get('refresh') == '1':
         refresh_class_reports(course_class)
@@ -224,11 +229,9 @@ def export_excel(request, class_id):
     )
 
     # GV chỉ được xuất báo cáo lớp mình dạy
-    if request.is_teacher_group and not request.is_admin_group:
-        teacher = getattr(request.user, 'teacher', None)
-        if teacher is None or course_class.teacher != teacher:
-            from django.core.exceptions import PermissionDenied
-            raise PermissionDenied
+    teacher = _teacher_scope(request)
+    if teacher and course_class.teacher_id != teacher.pk:
+        raise PermissionDenied
 
     reports = _get_active_reports(course_class)
     sessions = _build_session_columns(course_class)
@@ -459,6 +462,7 @@ def student_attendance(request, student_id):
     Lọc theo lớp HP nếu có ?class=<id>.
     """
     student = get_object_or_404(Student.objects.select_related('student_class'), pk=student_id)
+    teacher = _teacher_scope(request)
 
     # Lấy tất cả lớp HP SV đã đăng ký
     enrollments = (
@@ -469,23 +473,18 @@ def student_attendance(request, student_id):
     )
 
     # GV chỉ được xem SV trong lớp mình dạy
-    if request.is_teacher_group and not request.is_admin_group:
-        teacher = getattr(request.user, 'teacher', None)
-        if teacher:
-            is_allowed = enrollments.filter(course_class__teacher=teacher, is_active=True).exists()
-            if not is_allowed:
-                from django.core.exceptions import PermissionDenied
-                raise PermissionDenied
-            # Chỉ hiện enrollment thuộc lớp mình dạy
-            enrollments = enrollments.filter(course_class__teacher=teacher)
-        else:
-            from django.core.exceptions import PermissionDenied
+    if teacher:
+        enrollments = enrollments.filter(course_class__teacher=teacher)
+        if not enrollments.filter(is_active=True).exists():
             raise PermissionDenied
 
     selected_class = None
     class_id = request.GET.get('class')
     if class_id:
-        selected_class = get_object_or_404(CourseClass, pk=class_id)
+        course_class_qs = CourseClass.objects.all()
+        if teacher:
+            course_class_qs = course_class_qs.filter(teacher=teacher)
+        selected_class = get_object_or_404(course_class_qs, pk=class_id)
 
     # Lấy các session của lớp SV có đăng ký
     sessions_qs = (
@@ -494,6 +493,8 @@ def student_attendance(request, student_id):
         .select_related('course_class__course', 'course_class__semester')
         .order_by('-started_at')
     )
+    if teacher:
+        sessions_qs = sessions_qs.filter(course_class__teacher=teacher)
     if selected_class:
         sessions_qs = sessions_qs.filter(course_class=selected_class)
         
@@ -531,6 +532,8 @@ def student_attendance(request, student_id):
         .select_related('course_class__course', 'course_class__semester')
         .order_by('-course_class__semester__start_date')
     )
+    if teacher:
+        reports = reports.filter(course_class__teacher=teacher)
     if selected_class:
         reports = reports.filter(course_class=selected_class)
 
@@ -557,8 +560,21 @@ def attendance_edit(request, session_id, student_id):
     from reports.services import refresh_report
     from notifications.services import check_and_notify
 
-    session = get_object_or_404(AttendanceSession, pk=session_id)
+    session = get_object_or_404(
+        AttendanceSession.objects.select_related('course_class__teacher'),
+        pk=session_id,
+    )
     student = get_object_or_404(Student, pk=student_id)
+    teacher = _teacher_scope(request)
+
+    if teacher and session.course_class.teacher_id != teacher.pk:
+        raise PermissionDenied
+    if not Enrollment.objects.filter(
+        course_class=session.course_class,
+        student=student,
+        is_active=True,
+    ).exists():
+        raise PermissionDenied
 
     new_status = request.POST.get('status')
     if new_status not in ('present', 'absent', 'late'):
