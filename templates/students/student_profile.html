@@ -391,50 +391,6 @@
     }
 })();
 
-// ── Header scroll effect ──
-(function() {
-    const header = document.getElementById('home-header');
-    if (header) {
-        window.addEventListener('scroll', function() {
-            header.classList.toggle('scrolled', window.scrollY > 30);
-        }, { passive: true });
-    }
-})();
 
-// ── Dropdown Avatar ──
-(function() {
-    function toggleAvatarDropdown(e) {
-        e.stopPropagation();
-        const btn  = document.getElementById('avatarDropdownBtn');
-        const drop = document.getElementById('avatarDropdown');
-        if (drop.classList.contains('open')) {
-            closeAvatarDropdown();
-        } else {
-            btn.classList.add('active');
-            drop.classList.add('open');
-        }
-    }
-    function closeAvatarDropdown() {
-        const btn  = document.getElementById('avatarDropdownBtn');
-        const drop = document.getElementById('avatarDropdown');
-        if (btn) btn.classList.remove('active');
-        if (drop) drop.classList.remove('open');
-    }
-    
-    window.toggleAvatarDropdown = toggleAvatarDropdown;
-    
-    // Close dropdown on click outside
-    document.addEventListener('click', function(e) {
-        const wrap = document.getElementById('avatarDropdownWrap');
-        if (wrap && !wrap.contains(e.target)) {
-            closeAvatarDropdown();
-        }
-    });
-    
-    // Close dropdown on Esc
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeAvatarDropdown();
-    });
-})();
 </script>
 {% endblock %}
