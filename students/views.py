@@ -797,35 +797,112 @@ def student_timetable(request):
 
 @_student_required
 def student_attendance_history(request):
-    """Giao diện Lịch sử điểm danh dành riêng cho sinh viên"""
+    """Giao diện lịch sử và thống kê điểm danh dành riêng cho sinh viên."""
     from attendance.models import AttendanceRecord, AttendanceSession
     from courses.models import Enrollment, CourseClass
-    from reports.models import AttendanceReport
+    from academics.models import Semester
     
     student = request.user.student
 
-    # Lấy tất cả lớp HP SV đã đăng ký
-    enrollments = (
-        Enrollment.objects
-        .filter(student=student)
-        .select_related('course_class__course', 'course_class__semester')
-        .order_by('-course_class__semester__start_date')
+    semesters = (
+        Semester.objects
+        .filter(course_classes__enrollments__student=student, course_classes__enrollments__is_active=True)
+        .distinct()
+        .order_by('-academic_year__start_date', '-semester_num')
     )
 
+    selected_semester = None
+    semester_id = request.GET.get('semester', '').strip()
+    if semester_id:
+        selected_semester = get_object_or_404(semesters, pk=semester_id)
+    else:
+        selected_semester = semesters.filter(is_active=True).first() or semesters.first()
+
+    enrollments = (
+        Enrollment.objects
+        .filter(student=student, is_active=True)
+        .select_related('course_class__course', 'course_class__semester', 'course_class__teacher__user')
+        .order_by('-course_class__semester__start_date')
+    )
+    if selected_semester:
+        enrollments = enrollments.filter(course_class__semester=selected_semester)
+
+    filter_enrollments = enrollments
+    display_enrollments = enrollments
     selected_class = None
     class_id = request.GET.get('class')
     if class_id:
-        selected_class = get_object_or_404(CourseClass, pk=class_id)
+        selected_class = get_object_or_404(
+            CourseClass.objects.filter(
+                enrollments__student=student,
+                enrollments__is_active=True,
+                enrollments__in=filter_enrollments,
+            ),
+            pk=class_id,
+        )
+        display_enrollments = display_enrollments.filter(course_class=selected_class)
 
-    # Lấy các session của lớp SV có đăng ký
+    course_classes = [enrollment.course_class for enrollment in display_enrollments]
+    course_class_ids = [course_class.id for course_class in course_classes]
+
+    summary_cards = []
+    total_sessions_all = 0
+    total_present_all = 0
+    total_late_all = 0
+    total_effective_present_all = 0
+    total_absent_all = 0
+
+    for enrollment in display_enrollments:
+        course_class = enrollment.course_class
+        closed_sessions = AttendanceSession.objects.filter(
+            course_class=course_class,
+            status='closed',
+            started_at__date__gte=enrollment.enrolled_at.date(),
+        )
+        total_sessions = closed_sessions.count()
+        records = AttendanceRecord.objects.filter(
+            session__in=closed_sessions,
+            student=student,
+        )
+        present_count = records.filter(status='present').count()
+        late_count = records.filter(status='late').count()
+        effective_present = present_count + late_count
+        absent_count = max(total_sessions - effective_present, 0)
+        attendance_rate = round(effective_present / total_sessions * 100, 1) if total_sessions else 0.0
+        absent_rate = round(absent_count / total_sessions * 100, 1) if total_sessions else 0.0
+
+        summary_cards.append({
+            'course_class': course_class,
+            'total_sessions': total_sessions,
+            'present_count': present_count,
+            'late_count': late_count,
+            'absent_count': absent_count,
+            'attendance_rate': attendance_rate,
+            'absent_rate': absent_rate,
+            'is_danger': absent_rate > 20,
+        })
+
+        total_sessions_all += total_sessions
+        total_present_all += present_count
+        total_late_all += late_count
+        total_effective_present_all += effective_present
+        total_absent_all += absent_count
+
+    overall_attendance_rate = round(total_effective_present_all / total_sessions_all * 100, 1) if total_sessions_all else 0.0
+    overall_absent_rate = round(total_absent_all / total_sessions_all * 100, 1) if total_sessions_all else 0.0
+    has_exam_risk = any(card['is_danger'] for card in summary_cards)
+
     sessions_qs = (
         AttendanceSession.objects
-        .filter(course_class__enrollments__student=student, course_class__enrollments__is_active=True)
-        .select_related('course_class__course', 'course_class__semester')
+        .filter(course_class_id__in=course_class_ids)
+        .select_related(
+            'course_class__course',
+            'course_class__semester',
+            'schedule',
+            'schedule__room',
+        )
         .order_by('-started_at')
     )
-    if selected_class:
-        sessions_qs = sessions_qs.filter(course_class=selected_class)
         
     records = AttendanceRecord.objects.filter(student=student, session__in=sessions_qs)
     record_map = {r.session_id: r for r in records}
@@ -838,35 +915,42 @@ def student_attendance_history(request):
         else:
             status = 'absent' if s.status == 'closed' else 'pending'
             method, conf, note = '', 0.0, ''
+
+        schedule = s.schedule
             
         history.append({
             'session': s,
+            'date': schedule.date if schedule else s.started_at.date(),
+            'period_text': f"{schedule.start_period} - {schedule.end_period}" if schedule else "—",
+            'room': schedule.room if schedule else None,
+            'session_number': schedule.session_number if schedule else None,
             'status': status,
             'method': method,
             'confidence': conf,
             'note': note,
         })
 
+    total_pending_all = sum(1 for item in history if item['status'] == 'pending')
+
     from django.core.paginator import Paginator
     history_paginator = Paginator(history, 10)
     history_page_obj = history_paginator.get_page(request.GET.get('page', 1))
 
-    # Tổng hợp theo lớp HP
-    reports = (
-        AttendanceReport.objects
-        .filter(student=student)
-        .select_related('course_class__course', 'course_class__semester')
-        .order_by('-course_class__semester__start_date')
-    )
-    if selected_class:
-        reports = reports.filter(course_class=selected_class)
-
     return render(request, 'students/attendance_history.html', {
         'student': student,
-        'enrollments': enrollments,
+        'semesters': semesters,
+        'selected_semester': selected_semester,
+        'enrollments': filter_enrollments,
         'selected_class': selected_class,
-        'history': history,
+        'summary_cards': summary_cards,
+        'overall_attendance_rate': overall_attendance_rate,
+        'overall_absent_rate': overall_absent_rate,
+        'total_sessions_all': total_sessions_all,
+        'total_present_all': total_present_all,
+        'total_late_all': total_late_all,
+        'total_absent_all': total_absent_all,
+        'total_pending_all': total_pending_all,
+        'has_exam_risk': has_exam_risk,
         'history_page_obj': history_page_obj,
-        'reports': reports,
         'active_menu': 'attendance_history',
     })

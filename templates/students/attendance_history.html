@@ -6,176 +6,362 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/student_profile.css' %}?v=2">
 <style>
-/* Additional styles for Attendance History */
-.sp-report-card {
+.att-shell {
+    display: grid;
+    gap: 18px;
+}
+
+.att-panel {
     background: #fff;
-    border-radius: 16px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
     overflow: hidden;
-    margin-bottom: 24px;
 }
-.sp-report-header {
+
+.att-panel-header {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: center;
-    padding: 20px 24px;
-    border-bottom: 1px solid #f3f4f6;
-    background: #fafafa;
+    gap: 16px;
+    padding: 18px 20px;
+    border-bottom: 1px solid #eef2f7;
+    background: #fbfdff;
 }
-.sp-report-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #1f2937;
+
+.att-title {
     display: flex;
     align-items: center;
     gap: 12px;
+    min-width: 0;
 }
-.sp-report-controls {
+
+.att-title h1,
+.att-title h2 {
+    margin: 0;
+    color: #111827;
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.att-title p {
+    margin: 3px 0 0;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.att-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    background: #eaf5ed;
+    color: #1a6b3c;
+    flex-shrink: 0;
+}
+
+.att-icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.att-filter-form {
     display: flex;
-    gap: 12px;
     align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 0;
 }
-.sp-select {
-    padding: 8px 12px;
+
+.att-select {
+    min-width: 220px;
+    min-height: 40px;
     border: 1px solid #d1d5db;
     border-radius: 8px;
-    font-size: 0.9rem;
+    background: #fff;
     color: #374151;
-    background-color: #fff;
+    font-size: 14px;
+    padding: 8px 10px;
     outline: none;
-    transition: border-color 0.2s;
-    min-width: 250px;
 }
-.sp-select:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+
+.att-select:focus {
+    border-color: #1a6b3c;
+    box-shadow: 0 0 0 3px rgba(26, 107, 60, 0.12);
 }
-.sp-report-body {
-    padding: 24px;
-}
-.sp-table-wrap {
-    width: 100%;
-    overflow-x: auto;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-}
-.sp-table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 600px;
-}
-.sp-table th, .sp-table td {
-    padding: 14px 16px;
-    text-align: left;
-    border-bottom: 1px solid #e5e7eb;
-}
-.sp-table th {
-    background: #f9fafb;
+
+.att-risk {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 18px;
+    border: 1px solid #fecaca;
+    border-left: 5px solid #ef4444;
+    background: #fef2f2;
+    color: #991b1b;
+    border-radius: 10px;
+    font-size: 14px;
     font-weight: 600;
-    color: #4b5563;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-.sp-table tr:last-child td {
-    border-bottom: none;
-}
-.sp-table tbody tr:hover {
-    background-color: #f9fafb;
 }
 
-/* Status Badges */
-.sp-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 10px;
-    border-radius: 9999px;
-    font-size: 0.85rem;
-    font-weight: 500;
+.att-risk svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    margin-top: 1px;
 }
-.sp-status.present { background: #dcfce7; color: #166534; }
-.sp-status.absent { background: #fee2e2; color: #991b1b; }
-.sp-status.late { background: #fef9c3; color: #854d0e; }
-.sp-status.pending { background: #f3f4f6; color: #4b5563; }
 
-/* Report Summary Cards */
-.sp-summary-grid {
+.att-overview {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-    margin-bottom: 24px;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px;
 }
-.sp-summary-card {
+
+.att-stat {
     background: #fff;
     border: 1px solid #e5e7eb;
-    border-radius: 12px;
+    border-radius: 10px;
     padding: 16px;
-    display: flex;
-    flex-direction: column;
 }
-.sp-summary-label {
-    font-size: 0.85rem;
+
+.att-stat-label {
     color: #6b7280;
-    font-weight: 500;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     margin-bottom: 8px;
 }
-.sp-summary-value {
-    font-size: 1.5rem;
-    font-weight: 700;
+
+.att-stat-value {
     color: #111827;
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1;
 }
 
-.sp-progress-bar {
-    width: 100%;
-    height: 8px;
+.att-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px;
+    padding: 18px 20px;
+}
+
+.att-course {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 16px;
+    background: #fff;
+}
+
+.att-course-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.att-course-name {
+    color: #111827;
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+.att-course-meta {
+    color: #6b7280;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.att-rate {
+    color: #16a34a;
+    font-size: 24px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.att-rate.danger {
+    color: #dc2626;
+}
+
+.att-progress {
+    height: 10px;
+    border-radius: 999px;
     background: #e5e7eb;
-    border-radius: 9999px;
-    margin-top: 12px;
     overflow: hidden;
 }
-.sp-progress-fill {
-    height: 100%;
-    border-radius: 9999px;
-    transition: width 0.5s ease;
-}
-.sp-progress-fill.good { background: #10b981; }
-.sp-progress-fill.warning { background: #f59e0b; }
-.sp-progress-fill.danger { background: #ef4444; }
 
-.sp-pagination {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 24px;
-    border-top: 1px solid #e5e7eb;
+.att-progress-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: #16a34a;
+    transition: width 0.35s ease;
 }
-.sp-pagination-info {
-    font-size: 0.9rem;
+
+.att-progress-fill.danger {
+    background: #ef4444;
+}
+
+.att-counts {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.att-count {
+    border-radius: 8px;
+    background: #f9fafb;
+    padding: 10px;
+    text-align: center;
+}
+
+.att-count strong {
+    display: block;
+    color: #111827;
+    font-size: 18px;
+}
+
+.att-count span {
     color: #6b7280;
+    font-size: 12px;
 }
-.sp-pagination-links {
+
+.att-table-wrap {
+    overflow-x: auto;
+}
+
+.att-table {
+    width: 100%;
+    min-width: 860px;
+    border-collapse: collapse;
+}
+
+.att-table th,
+.att-table td {
+    padding: 13px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: left;
+    font-size: 14px;
+}
+
+.att-table th {
+    background: #f9fafb;
+    color: #4b5563;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.att-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.att-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.att-badge::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: currentColor;
+}
+
+.att-badge.present {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.att-badge.late {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.att-badge.absent {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.att-badge.pending {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+.att-empty {
+    padding: 36px 20px;
+    color: #6b7280;
+    text-align: center;
+}
+
+.att-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 20px;
+    border-top: 1px solid #e5e7eb;
+    background: #fbfdff;
+}
+
+.att-page-links {
     display: flex;
     gap: 8px;
 }
-.sp-page-link {
-    padding: 6px 12px;
+
+.att-page {
+    min-width: 34px;
+    padding: 7px 10px;
     border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 0.9rem;
+    border-radius: 7px;
     color: #374151;
+    text-align: center;
     text-decoration: none;
-    transition: all 0.2s;
+    font-size: 13px;
+    font-weight: 700;
 }
-.sp-page-link:hover {
-    background: #f3f4f6;
-    border-color: #9ca3af;
+
+.att-page.active,
+.att-page:hover {
+    background: #1a6b3c;
+    border-color: #1a6b3c;
+    color: #fff;
 }
-.sp-page-link.active {
-    background: #3b82f6;
-    color: white;
-    border-color: #3b82f6;
+
+@media (max-width: 900px) {
+    .att-panel-header,
+    .att-pagination {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .att-filter-form,
+    .att-select {
+        width: 100%;
+    }
+
+    .att-overview {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 560px) {
+    .att-overview {
+        grid-template-columns: 1fr;
+    }
 }
 </style>
 {% endblock %}
@@ -185,145 +371,212 @@
     {% include 'layouts/home_header.html' %}
 
     <main class="sp-main">
-        <div class="sp-container">
-            
-            <div class="sp-report-card">
-                <div class="sp-report-header">
-                    <div class="sp-report-title">
-                        <div class="sp-card-icon green">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <div class="sp-container att-shell">
+            <section class="att-panel">
+                <div class="att-panel-header">
+                    <div class="att-title">
+                        <div class="att-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 11l3 3L22 4"></path>
+                                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                            </svg>
                         </div>
-                        Lịch Sử Điểm Danh
-                    </div>
-                    <div class="sp-report-controls">
-                        <form method="get" id="filter-form" style="display:flex; gap:12px; margin:0;">
-                            <select name="class" class="sp-select" onchange="document.getElementById('filter-form').submit()">
-                                <option value="">--- Tất cả lớp học phần ---</option>
-                                {% for enr in enrollments %}
-                                <option value="{{ enr.course_class.id }}" {% if selected_class and selected_class.id == enr.course_class.id %}selected{% endif %}>
-                                    {{ enr.course_class.course.course_name }} ({{ enr.course_class.class_code }})
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </form>
-                    </div>
-                </div>
-
-                <div class="sp-report-body">
-                    {% if reports %}
-                        <!-- Summaries -->
-                        {% for report in reports %}
-                        {% if selected_class == None or selected_class.id == report.course_class.id %}
-                        <div style="margin-bottom: 24px;">
-                            <h3 style="font-size: 1.1rem; font-weight: 600; color: #1f2937; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #e5e7eb;">
-                                Lớp: {{ report.course_class.course.course_name }} <span style="font-size: 0.9rem; color: #6b7280; font-weight: normal;">({{ report.course_class.class_code }})</span>
-                            </h3>
-                            <div class="sp-summary-grid">
-                                <div class="sp-summary-card">
-                                    <div class="sp-summary-label">Tỉ lệ chuyên cần</div>
-                                    <div class="sp-summary-value" style="color: {% if report.attendance_rate >= 80 %}#10b981{% elif report.attendance_rate >= 60 %}#f59e0b{% else %}#ef4444{% endif %};">
-                                        {{ report.attendance_rate|floatformat:1 }}%
-                                    </div>
-                                    <div class="sp-progress-bar">
-                                        <div class="sp-progress-fill {% if report.attendance_rate >= 80 %}good{% elif report.attendance_rate >= 60 %}warning{% else %}danger{% endif %}" style="width: {{ report.attendance_rate }}%;"></div>
-                                    </div>
-                                </div>
-                                <div class="sp-summary-card">
-                                    <div class="sp-summary-label">Có mặt</div>
-                                    <div class="sp-summary-value" style="color: #10b981;">{{ report.present_count }}</div>
-                                </div>
-                                <div class="sp-summary-card">
-                                    <div class="sp-summary-label">Vắng</div>
-                                    <div class="sp-summary-value" style="color: #ef4444;">{{ report.absent_count }}</div>
-                                </div>
-                                <div class="sp-summary-card">
-                                    <div class="sp-summary-label">Đi trễ</div>
-                                    <div class="sp-summary-value" style="color: #f59e0b;">{{ report.late_count }}</div>
-                                </div>
-                            </div>
+                        <div>
+                            <h1>Lịch Sử Điểm Danh</h1>
+                            <p>Xem thống kê các buổi điểm danh · {{ student.full_name }} · {{ student.student_id }}</p>
                         </div>
-                        {% endif %}
-                        {% endfor %}
-                    {% endif %}
-
-                    <!-- Table -->
-                    <div class="sp-table-wrap">
-                        <table class="sp-table">
-                            <thead>
-                                <tr>
-                                    <th>STT</th>
-                                    <th>Buổi Học</th>
-                                    <th>Thời Gian Bắt Đầu</th>
-                                    <th>Phòng</th>
-                                    <th>Lớp Học Phần</th>
-                                    <th>Trạng Thái</th>
-                                    <th>Ghi Chú</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for item in history_page_obj %}
-                                <tr>
-                                    <td style="color: #6b7280;">{{ history_page_obj.start_index|add:forloop.counter0 }}</td>
-                                    <td style="font-weight: 500;">Buổi {{ item.session.session_number }}</td>
-                                    <td>{{ item.session.started_at|date:"d/m/Y H:i" }}</td>
-                                    <td>{{ item.session.room.room_code }}</td>
-                                    <td>{{ item.session.course_class.class_code }}</td>
-                                    <td>
-                                        {% if item.status == 'present' %}
-                                            <span class="sp-status present"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;"></span> Có mặt</span>
-                                        {% elif item.status == 'absent' %}
-                                            <span class="sp-status absent"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;"></span> Vắng</span>
-                                        {% elif item.status == 'late' %}
-                                            <span class="sp-status late"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;"></span> Đi trễ</span>
-                                        {% else %}
-                                            <span class="sp-status pending"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;"></span> Chưa chốt</span>
-                                        {% endif %}
-                                    </td>
-                                    <td style="color: #6b7280; font-size: 0.9rem;">
-                                        {% if item.method == 'face' %}Nhận diện khuôn mặt{% elif item.method == 'manual' %}Điểm danh tay{% endif %}
-                                        {% if item.note %}<br><span style="color: #9ca3af;">{{ item.note }}</span>{% endif %}
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="7" style="text-align: center; padding: 40px; color: #6b7280;">
-                                        Chưa có dữ liệu điểm danh nào cho thời gian này.
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
                     </div>
 
-                    <!-- Pagination -->
-                    {% if history_page_obj.has_other_pages %}
-                    <div class="sp-pagination">
-                        <div class="sp-pagination-info">
-                            Hiển thị <strong>{{ history_page_obj.start_index }}</strong> đến <strong>{{ history_page_obj.end_index }}</strong> trong số <strong>{{ history_page_obj.paginator.count }}</strong> buổi học
-                        </div>
-                        <div class="sp-pagination-links">
-                            {% if history_page_obj.has_previous %}
-                                <a href="?page={{ history_page_obj.previous_page_number }}{% if selected_class %}&class={{ selected_class.id }}{% endif %}" class="sp-page-link">&laquo;</a>
-                            {% endif %}
-
-                            {% for num in history_page_obj.paginator.page_range %}
-                                {% if history_page_obj.number == num %}
-                                    <span class="sp-page-link active">{{ num }}</span>
-                                {% elif num > history_page_obj.number|add:'-3' and num < history_page_obj.number|add:'3' %}
-                                    <a href="?page={{ num }}{% if selected_class %}&class={{ selected_class.id }}{% endif %}" class="sp-page-link">{{ num }}</a>
-                                {% endif %}
+                    <form method="get" class="att-filter-form" id="attendanceFilterForm">
+                        <select name="semester" class="att-select" onchange="document.getElementById('attendanceFilterForm').submit()">
+                            {% for semester in semesters %}
+                            <option value="{{ semester.id }}" {% if selected_semester and selected_semester.id == semester.id %}selected{% endif %}>
+                                {{ semester }}
+                            </option>
+                            {% empty %}
+                            <option value="">Chưa có học kỳ</option>
                             {% endfor %}
+                        </select>
+                        <select name="class" class="att-select" onchange="document.getElementById('attendanceFilterForm').submit()">
+                            <option value="">Tất cả môn học</option>
+                            {% for enrollment in enrollments %}
+                            <option value="{{ enrollment.course_class.id }}" {% if selected_class and selected_class.id == enrollment.course_class.id %}selected{% endif %}>
+                                {{ enrollment.course_class.course.course_name }} ({{ enrollment.course_class.class_code }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </div>
+            </section>
 
-                            {% if history_page_obj.has_next %}
-                                <a href="?page={{ history_page_obj.next_page_number }}{% if selected_class %}&class={{ selected_class.id }}{% endif %}" class="sp-page-link">&raquo;</a>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endif %}
+            {% if has_exam_risk %}
+            <div class="att-risk">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <div>Bạn có nguy cơ không đủ điều kiện dự thi</div>
+            </div>
+            {% endif %}
 
+            <div class="att-overview">
+                <div class="att-stat">
+                    <div class="att-stat-label">Tổng buổi đã chốt</div>
+                    <div class="att-stat-value">{{ total_sessions_all }}</div>
+                </div>
+                <div class="att-stat">
+                    <div class="att-stat-label">Có mặt</div>
+                    <div class="att-stat-value" style="color:#16a34a;">{{ total_present_all }}</div>
+                </div>
+                <div class="att-stat">
+                    <div class="att-stat-label">Muộn</div>
+                    <div class="att-stat-value" style="color:#d97706;">{{ total_late_all }}</div>
+                </div>
+                <div class="att-stat">
+                    <div class="att-stat-label">Vắng</div>
+                    <div class="att-stat-value" style="color:#dc2626;">{{ total_absent_all }}</div>
+                </div>
+                <div class="att-stat">
+                    <div class="att-stat-label">Chưa chốt</div>
+                    <div class="att-stat-value" style="color:#6b7280;">{{ total_pending_all }}</div>
+                </div>
+                <div class="att-stat">
+                    <div class="att-stat-label">Tỉ lệ chuyên cần</div>
+                    <div class="att-stat-value" style="color:{% if overall_attendance_rate < 80 %}#dc2626{% else %}#16a34a{% endif %};">{{ overall_attendance_rate }}%</div>
                 </div>
             </div>
 
+            <section class="att-panel">
+                <div class="att-panel-header">
+                    <div class="att-title">
+                        <div>
+                            <h2>Tỉ lệ theo môn học</h2>
+                            <p>{% if selected_semester %}{{ selected_semester }}{% else %}Tất cả học kỳ đã đăng ký{% endif %}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="att-summary-grid">
+                    {% for item in summary_cards %}
+                    <article class="att-course">
+                        <div class="att-course-head">
+                            <div>
+                                <div class="att-course-name">{{ item.course_class.course.course_name }}</div>
+                                <div class="att-course-meta">{{ item.course_class.class_code }} · {{ item.course_class.semester }}</div>
+                            </div>
+                            <div class="att-rate {% if item.attendance_rate < 80 %}danger{% endif %}">{{ item.attendance_rate }}%</div>
+                        </div>
+                        <div class="att-progress" aria-label="Tỉ lệ chuyên cần">
+                            <div class="att-progress-fill {% if item.attendance_rate < 80 %}danger{% endif %}" style="width: {{ item.attendance_rate }}%;"></div>
+                        </div>
+                        {% if item.is_danger %}
+                        <div style="margin-top:10px;color:#dc2626;font-size:13px;font-weight:700;">Vắng {{ item.absent_rate }}% · vượt ngưỡng an toàn</div>
+                        {% endif %}
+                        <div class="att-counts">
+                            <div class="att-count">
+                                <strong style="color:#16a34a;">{{ item.present_count }}</strong>
+                                <span>Có mặt</span>
+                            </div>
+                            <div class="att-count">
+                                <strong style="color:#92400e;">{{ item.late_count }}</strong>
+                                <span>Muộn</span>
+                            </div>
+                            <div class="att-count">
+                                <strong style="color:#dc2626;">{{ item.absent_count }}</strong>
+                                <span>Vắng</span>
+                            </div>
+                        </div>
+                    </article>
+                    {% empty %}
+                    <div class="att-empty" style="grid-column:1 / -1;">Chưa có môn học nào trong bộ lọc hiện tại.</div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="att-panel">
+                <div class="att-panel-header">
+                    <div class="att-title">
+                        <div>
+                            <h2>Chi tiết các buổi điểm danh</h2>
+                            <p>Ngày học, tiết học và trạng thái điểm danh của từng buổi</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="att-table-wrap">
+                    <table class="att-table">
+                        <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Ngày</th>
+                                <th>Tiết</th>
+                                <th>Môn học</th>
+                                <th>Lớp HP</th>
+                                <th>Phòng</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in history_page_obj %}
+                            <tr>
+                                <td>{{ history_page_obj.start_index|add:forloop.counter0 }}</td>
+                                <td>
+                                    <strong>{{ item.date|date:"d/m/Y" }}</strong>
+                                    {% if item.session_number %}
+                                    <div style="color:#6b7280;font-size:12px;">Buổi {{ item.session_number }}</div>
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.period_text }}</td>
+                                <td>{{ item.session.course_class.course.course_name }}</td>
+                                <td style="font-family:monospace;font-weight:700;">{{ item.session.course_class.class_code }}</td>
+                                <td>{{ item.room.room_code|default:"—" }}</td>
+                                <td>
+                                    {% if item.status == 'present' %}
+                                    <span class="att-badge present">Có mặt</span>
+                                    {% elif item.status == 'late' %}
+                                    <span class="att-badge late">Muộn</span>
+                                    {% elif item.status == 'absent' %}
+                                    <span class="att-badge absent">Vắng</span>
+                                    {% else %}
+                                    <span class="att-badge pending">Chưa chốt</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7">
+                                    <div class="att-empty">Chưa có buổi điểm danh nào trong bộ lọc hiện tại.</div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if history_page_obj.has_other_pages %}
+                <div class="att-pagination">
+                    <div style="color:#6b7280;font-size:13px;">
+                        Hiển thị {{ history_page_obj.start_index }} - {{ history_page_obj.end_index }} / {{ history_page_obj.paginator.count }} buổi
+                    </div>
+                    <div class="att-page-links">
+                        {% if history_page_obj.has_previous %}
+                        <a class="att-page" href="?page={{ history_page_obj.previous_page_number }}{% if selected_semester %}&semester={{ selected_semester.id }}{% endif %}{% if selected_class %}&class={{ selected_class.id }}{% endif %}">&lsaquo;</a>
+                        {% endif %}
+                        {% for num in history_page_obj.paginator.page_range %}
+                            {% if history_page_obj.number == num %}
+                            <span class="att-page active">{{ num }}</span>
+                            {% elif num > history_page_obj.number|add:'-3' and num < history_page_obj.number|add:'3' %}
+                            <a class="att-page" href="?page={{ num }}{% if selected_semester %}&semester={{ selected_semester.id }}{% endif %}{% if selected_class %}&class={{ selected_class.id }}{% endif %}">{{ num }}</a>
+                            {% endif %}
+                        {% endfor %}
+                        {% if history_page_obj.has_next %}
+                        <a class="att-page" href="?page={{ history_page_obj.next_page_number }}{% if selected_semester %}&semester={{ selected_semester.id }}{% endif %}{% if selected_class %}&class={{ selected_class.id }}{% endif %}">&rsaquo;</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </section>
         </div>
     </main>
 </div>

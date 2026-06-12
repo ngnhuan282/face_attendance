@@ -2,15 +2,16 @@ import json
 import logging
 import time
 import unicodedata
+from datetime import datetime
+from io import BytesIO
 from concurrent.futures import ThreadPoolExecutor
 
 import cv2
 from django.contrib.auth.models import User
-from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
-from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
-from django.http import JsonResponse, StreamingHttpResponse
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -88,10 +89,47 @@ def _default_user(request):
     return User.objects.order_by("id").first()
 
 
+def _is_teacher_only(request):
+    return getattr(request, "is_teacher_group", False) and not getattr(request, "is_admin_group", False)
+
+
+def _teacher_for_request(request):
+    teacher = getattr(request.user, "teacher", None)
+    if not teacher:
+        raise PermissionDenied
+    return teacher
+
+
+def _scope_course_classes(request, queryset):
+    if _is_teacher_only(request):
+        return queryset.filter(teacher=_teacher_for_request(request))
+    return queryset
+
+
+def _scope_sessions(request, queryset):
+    if _is_teacher_only(request):
+        return queryset.filter(course_class__teacher=_teacher_for_request(request))
+    return queryset
+
+
+def _check_course_class_access(request, course_class):
+    if _is_teacher_only(request) and course_class.teacher_id != _teacher_for_request(request).id:
+        raise PermissionDenied
+    return course_class
+
+
+def _check_session_access(request, session):
+    _check_course_class_access(request, session.course_class)
+    return session
+
+
 @group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
 def attendance_demo(request):
-    course_classes = CourseClass.objects.select_related("course", "semester", "teacher").order_by(
-        "semester", "class_code"
+    course_classes = _scope_course_classes(
+        request,
+        CourseClass.objects.select_related("course", "semester", "teacher").order_by(
+            "semester", "class_code"
+        ),
     )
     selected_session = None
     students = []
@@ -108,6 +146,7 @@ def attendance_demo(request):
             if schedule_id:
                 schedule = get_object_or_404(Schedule, pk=schedule_id)
                 course_class = schedule.course_class
+                _check_course_class_access(request, course_class)
                 if hasattr(schedule, 'attendance_session') and schedule.attendance_session:
                     return redirect(f"{reverse('attendance:demo')}?session_id={schedule.attendance_session.id}")
                 selected_session = AttendanceSession.objects.create(
@@ -118,6 +157,7 @@ def attendance_demo(request):
                 )
             else:
                 course_class = get_object_or_404(CourseClass, pk=course_class_id)
+                _check_course_class_access(request, course_class)
                 selected_session = AttendanceSession.objects.create(
                     course_class=course_class,
                     created_by=request.user,
@@ -130,7 +170,15 @@ def attendance_demo(request):
     session_id = request.GET.get("session_id")
     if session_id:
         selected_session = get_object_or_404(
-            AttendanceSession.objects.select_related("course_class", "course_class__course", "created_by"),
+            _scope_sessions(
+                request,
+                AttendanceSession.objects.select_related(
+                    "course_class",
+                    "course_class__course",
+                    "course_class__teacher",
+                    "created_by",
+                ),
+            ),
             pk=session_id,
         )
         students = [
@@ -328,7 +376,10 @@ def _stream_frames(webcam, session, data):
 @require_http_methods(["GET"])
 def video_stream(request, session_id):
     session = get_object_or_404(
-        AttendanceSession.objects.select_related("course_class"),
+        _scope_sessions(
+            request,
+            AttendanceSession.objects.select_related("course_class", "course_class__teacher"),
+        ),
         pk=session_id,
     )
     if session.status != "open":
@@ -356,10 +407,19 @@ def video_stream(request, session_id):
 
 
 @csrf_exempt
+@group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
 @require_http_methods(["GET", "POST"])
 def session_list_create(request):
     if request.method == "GET":
-        sessions = AttendanceSession.objects.select_related("course_class", "schedule", "created_by")
+        sessions = _scope_sessions(
+            request,
+            AttendanceSession.objects.select_related(
+                "course_class",
+                "course_class__teacher",
+                "schedule",
+                "created_by",
+            ),
+        )
         return _ok({"results": [_session_payload(session) for session in sessions]})
 
     try:
@@ -368,10 +428,14 @@ def session_list_create(request):
         if not user:
             return _error("Can co it nhat 1 User de gan created_by.", status=400)
 
-        course_class = get_object_or_404(CourseClass, pk=data.get("course_class_id"))
+        course_class = _check_course_class_access(
+            request,
+            get_object_or_404(CourseClass, pk=data.get("course_class_id")),
+        )
         schedule = None
         if data.get("schedule_id"):
             schedule = get_object_or_404(Schedule, pk=data["schedule_id"])
+            _check_course_class_access(request, schedule.course_class)
 
         session = AttendanceSession.objects.create(
             course_class=course_class,
@@ -386,10 +450,19 @@ def session_list_create(request):
 
 
 @csrf_exempt
+@group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
 @require_http_methods(["GET", "PATCH", "PUT", "DELETE"])
 def session_detail(request, pk):
     session = get_object_or_404(
-        AttendanceSession.objects.select_related("course_class", "schedule", "created_by"),
+        _scope_sessions(
+            request,
+            AttendanceSession.objects.select_related(
+                "course_class",
+                "course_class__teacher",
+                "schedule",
+                "created_by",
+            ),
+        ),
         pk=pk,
     )
 
@@ -403,10 +476,17 @@ def session_detail(request, pk):
     try:
         data = _json_body(request)
         if "course_class_id" in data:
-            session.course_class = get_object_or_404(CourseClass, pk=data["course_class_id"])
+            session.course_class = _check_course_class_access(
+                request,
+                get_object_or_404(CourseClass, pk=data["course_class_id"]),
+            )
         if "schedule_id" in data:
             session.schedule = get_object_or_404(Schedule, pk=data["schedule_id"]) if data["schedule_id"] else None
+            if session.schedule:
+                _check_course_class_access(request, session.schedule.course_class)
         if "status" in data:
+            if data["status"] == "closed" and not data.get("confirm_close"):
+                return _error("Can xac nhan truoc khi ket thuc buoi diem danh.", status=400)
             session.status = data["status"]
             if data["status"] == "closed" and not session.ended_at:
                 session.ended_at = timezone.now()
@@ -420,10 +500,18 @@ def session_detail(request, pk):
 
 
 @csrf_exempt
+@group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
 @require_http_methods(["GET", "POST"])
 def record_list_create(request):
     if request.method == "GET":
-        records = AttendanceRecord.objects.select_related("session", "student")
+        records = AttendanceRecord.objects.select_related(
+            "session",
+            "session__course_class",
+            "session__course_class__teacher",
+            "student",
+        )
+        if _is_teacher_only(request):
+            records = records.filter(session__course_class__teacher=_teacher_for_request(request))
         session_id = request.GET.get("session_id")
         if session_id:
             records = records.filter(session_id=session_id)
@@ -431,7 +519,13 @@ def record_list_create(request):
 
     try:
         data = _json_body(request)
-        session = get_object_or_404(AttendanceSession, pk=data.get("session_id"))
+        session = _check_session_access(
+            request,
+            get_object_or_404(
+                AttendanceSession.objects.select_related("course_class", "course_class__teacher"),
+                pk=data.get("session_id"),
+            ),
+        )
         student = get_object_or_404(Student, pk=data.get("student_id"))
         record = AttendanceRecord.objects.create(
             session=session,
@@ -448,9 +542,19 @@ def record_list_create(request):
 
 
 @csrf_exempt
+@group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
 @require_http_methods(["GET", "PATCH", "PUT", "DELETE"])
 def record_detail(request, pk):
-    record = get_object_or_404(AttendanceRecord.objects.select_related("session", "student"), pk=pk)
+    record = get_object_or_404(
+        AttendanceRecord.objects.select_related(
+            "session",
+            "session__course_class",
+            "session__course_class__teacher",
+            "student",
+        ),
+        pk=pk,
+    )
+    _check_session_access(request, record.session)
 
     if request.method == "GET":
         return _ok(_record_payload(record))
@@ -462,7 +566,13 @@ def record_detail(request, pk):
     try:
         data = _json_body(request)
         if "session_id" in data:
-            record.session = get_object_or_404(AttendanceSession, pk=data["session_id"])
+            record.session = _check_session_access(
+                request,
+                get_object_or_404(
+                    AttendanceSession.objects.select_related("course_class", "course_class__teacher"),
+                    pk=data["session_id"],
+                ),
+            )
         if "student_id" in data:
             record.student = get_object_or_404(Student, pk=data["student_id"])
         for field in ["status", "method", "confidence", "note"]:
@@ -478,6 +588,7 @@ def record_detail(request, pk):
 
 
 @csrf_exempt
+@group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
 @require_http_methods(["POST"])
 def recognize_attendance(request):
     session_id = request.POST.get("session_id")
@@ -488,7 +599,13 @@ def recognize_attendance(request):
     if not image_file:
         return _error("Thieu file anh voi field name la image.", status=400)
 
-    session = get_object_or_404(AttendanceSession, pk=session_id)
+    session = _check_session_access(
+        request,
+        get_object_or_404(
+            AttendanceSession.objects.select_related("course_class", "course_class__teacher"),
+            pk=session_id,
+        ),
+    )
     if session.status != "open":
         return _error("Buoi diem danh da ket thuc.", status=409)
 
@@ -527,3 +644,159 @@ def recognize_attendance(request):
         },
         status=201 if created else 200,
     )
+
+
+@group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
+@require_http_methods(["GET"])
+def export_session_excel(request, session_id):
+    import openpyxl
+    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+    from openpyxl.utils import get_column_letter
+
+    session = get_object_or_404(
+        _scope_sessions(
+            request,
+            AttendanceSession.objects.select_related(
+                "course_class",
+                "course_class__course",
+                "course_class__semester",
+                "course_class__teacher",
+                "course_class__teacher__user",
+                "created_by",
+            ),
+        ),
+        pk=session_id,
+    )
+
+    enrollments = (
+        Enrollment.objects.filter(course_class=session.course_class, is_active=True)
+        .select_related("student", "student__student_class")
+        .order_by("student__student_id")
+    )
+    records = {
+        record.student_id: record
+        for record in AttendanceRecord.objects.filter(session=session).select_related("student")
+    }
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Ket Qua Diem Danh"
+
+    title_fill = PatternFill("solid", fgColor="1F4E79")
+    header_fill = PatternFill("solid", fgColor="D9EAF7")
+    present_fill = PatternFill("solid", fgColor="C6EFCE")
+    late_fill = PatternFill("solid", fgColor="FFEB9C")
+    absent_fill = PatternFill("solid", fgColor="FFC7CE")
+    pending_fill = PatternFill("solid", fgColor="E5E7EB")
+    thin = Side(style="thin", color="BFBFBF")
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+    center = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    left = Alignment(horizontal="left", vertical="center", wrap_text=True)
+
+    headers = ["STT", "MSSV", "Ho va ten", "Lop SH", "Trang thai", "Phuong thuc", "Do tin cay", "Thoi gian", "Ghi chu"]
+    total_cols = len(headers)
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=total_cols)
+    title = ws.cell(1, 1, f"KET QUA DIEM DANH - {session.course_class.class_code}")
+    title.font = Font(bold=True, color="FFFFFF", size=14)
+    title.fill = title_fill
+    title.alignment = center
+
+    teacher_name = session.course_class.teacher.user.get_full_name() or session.course_class.teacher.user.username
+    ended_text = session.ended_at.strftime("%d/%m/%Y %H:%M") if session.ended_at else "Chua ket thuc"
+    ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=total_cols)
+    info = ws.cell(
+        2,
+        1,
+        (
+            f"Hoc phan: {session.course_class.course.course_name} | "
+            f"Hoc ky: {session.course_class.semester} | "
+            f"Giang vien: {teacher_name} | "
+            f"Bat dau: {session.started_at.strftime('%d/%m/%Y %H:%M')} | "
+            f"Ket thuc: {ended_text}"
+        ),
+    )
+    info.font = Font(italic=True, size=10)
+    info.alignment = center
+
+    for col_idx, header in enumerate(headers, 1):
+        cell = ws.cell(4, col_idx, header)
+        cell.font = Font(bold=True)
+        cell.fill = header_fill
+        cell.alignment = center
+        cell.border = border
+
+    status_labels = {
+        "present": "Co mat",
+        "late": "Di tre",
+        "absent": "Vang",
+        "pending": "Cho diem danh",
+    }
+    status_fills = {
+        "present": present_fill,
+        "late": late_fill,
+        "absent": absent_fill,
+        "pending": pending_fill,
+    }
+    method_labels = {
+        "face": "Nhan dien khuon mat",
+        "manual": "Thu cong",
+    }
+
+    totals = {"present": 0, "late": 0, "absent": 0, "pending": 0}
+    for index, enrollment in enumerate(enrollments, 1):
+        student = enrollment.student
+        record = records.get(student.id)
+        status = record.status if record else ("absent" if session.status == "closed" else "pending")
+        totals[status] += 1
+        row = 4 + index
+        values = [
+            index,
+            student.student_id,
+            student.full_name,
+            student.student_class.class_code if student.student_class else "",
+            status_labels.get(status, status),
+            method_labels.get(record.method, record.method) if record else "",
+            record.confidence if record else "",
+            record.timestamp.strftime("%d/%m/%Y %H:%M:%S") if record and record.timestamp else "",
+            record.note if record else "",
+        ]
+        for col_idx, value in enumerate(values, 1):
+            cell = ws.cell(row, col_idx, value)
+            cell.border = border
+            cell.alignment = left if col_idx in {3, 9} else center
+            if col_idx == 5:
+                cell.fill = status_fills.get(status, pending_fill)
+
+    summary_row = 5 + len(enrollments)
+    ws.merge_cells(start_row=summary_row, start_column=1, end_row=summary_row, end_column=total_cols)
+    summary = ws.cell(
+        summary_row,
+        1,
+        (
+            f"Tong sinh vien: {sum(totals.values())} | "
+            f"Co mat: {totals['present']} | "
+            f"Di tre: {totals['late']} | "
+            f"Vang: {totals['absent']} | "
+            f"Cho diem danh: {totals['pending']}"
+        ),
+    )
+    summary.font = Font(bold=True)
+    summary.fill = header_fill
+    summary.alignment = center
+
+    widths = [6, 14, 28, 14, 16, 22, 12, 22, 30]
+    for col_idx, width in enumerate(widths, 1):
+        ws.column_dimensions[get_column_letter(col_idx)].width = width
+    ws.freeze_panes = "A5"
+
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    filename = f"diem_danh_buoi_{session.id}_{session.course_class.class_code}_{datetime.now().strftime('%Y%m%d%H%M')}.xlsx"
+    response = HttpResponse(
+        output.getvalue(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
