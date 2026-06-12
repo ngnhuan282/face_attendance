@@ -21,7 +21,6 @@
 
 {% block page_content %}
 
-<!-- Stats -->
 <div class="stats-grid">
     <div class="stat-card">
         <div class="stat-icon green">
@@ -52,13 +51,14 @@
     </div>
     <div class="stat-card">
         <div class="stat-icon orange">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
         </div>
         <div class="stat-info">
-            <div class="stat-value">{{ active_count }}</div>
-            <div class="stat-label">Đang Hoạt Động</div>
+            <div class="stat-value">{{ student_count }}</div>
+            <div class="stat-label">Sinh Viên</div>
         </div>
     </div>
+
 </div>
 
 <!-- Table -->
@@ -77,6 +77,7 @@
                     <option value="">Tất cả vai trò</option>
                     <option value="admin" {% if role == 'admin' %}selected{% endif %}>Quản Trị Viên</option>
                     <option value="teacher" {% if role == 'teacher' %}selected{% endif %}>Giảng Viên</option>
+                    <option value="student" {% if role == 'student' %}selected{% endif %}>Sinh Viên</option>
                 </select>
                 {% if q or role %}
                 <a href="{% url 'accounts:list' %}" style="font-size:13px;color:var(--text-muted);text-decoration:none;">Xóa lọc</a>
@@ -109,6 +110,8 @@
                         <div class="cell-user">
                             {% if u.teacher and u.teacher.avatar %}
                             <img src="{{ u.teacher.avatar.url }}" alt="{{ u.get_full_name }}" class="photo-thumb">
+                            {% elif u.student and u.student.photo %}
+                            <img src="{{ u.student.photo.url }}" alt="{{ u.get_full_name }}" class="photo-thumb">
                             {% else %}
                             <div class="cell-avatar">{{ u.first_name|slice:":1"|upper }}{{ u.last_name|slice:":1"|upper }}</div>
                             {% endif %}
@@ -116,7 +119,9 @@
                                 <div class="cell-name">{{ u.get_full_name|default:u.username }}</div>
                                 <div class="cell-sub">
                                     {% if u.teacher %}
-                                        {{ u.teacher.department.name }}
+                                        {{ u.teacher.department.name }} — {{ u.teacher.teacher_id }}
+                                    {% elif u.student %}
+                                        {{ u.student.student_id }} — {{ u.student.student_class.class_code|default:"Chưa có lớp" }}
                                     {% else %}
                                         Hệ thống
                                     {% endif %}
@@ -127,7 +132,9 @@
                     <td>{{ u.username }}</td>
                     <td>{{ u.email|default:"—" }}</td>
                     <td>
-                        {% if u.teacher %}
+                        {% if u.student %}
+                        <span class="badge badge-orange">Sinh Viên</span>
+                        {% elif u.teacher %}
                         <span class="badge badge-blue">Giảng Viên</span>
                         {% else %}
                         <span class="badge badge-purple">Quản Trị Viên</span>

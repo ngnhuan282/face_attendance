@@ -1,2 +1,3 @@
 ADMIN_GROUP_NAME = 'Admin'
 TEACHER_GROUP_NAME = 'GiangVien'
+STUDENT_GROUP_NAME = 'Student'

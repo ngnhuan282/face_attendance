@@ -24,10 +24,13 @@ def run():
     Enrollment.objects.all().delete()
     CourseClass.objects.all().delete()
     Course.objects.all().delete()
+    # Clear students and their User accounts
+    User.objects.filter(student__isnull=False).delete()
     Student.objects.all().delete()
     StudentClass.objects.all().delete()
 
     # Clear teachers and their User accounts (GV-prefixed usernames or linked to Teacher)
+    User.objects.filter(teacher__isnull=False).delete()
     User.objects.filter(username__startswith='gv_').delete()
     Teacher.objects.all().delete()
 
@@ -447,7 +450,22 @@ def run():
             email = f"{sv_id_str}@student.sgu.edu.vn"
 
             if not Student.objects.filter(student_id=sv_id_str).exists():
+                # Create User for student
+                from accounts.constants import STUDENT_GROUP_NAME
+                sv_group, _ = Group.objects.get_or_create(name=STUDENT_GROUP_NAME)
+                
+                # Use MSSV as username
+                student_user = User.objects.create(
+                    username=sv_id_str,
+                    email=email,
+                    first_name=first_name_val,
+                    last_name=last_name_val,
+                    password=make_password("123456")
+                )
+                student_user.groups.add(sv_group)
+
                 Student.objects.create(
+                    user=student_user,
                     student_class=sc_obj,
                     student_id=sv_id_str,
                     full_name=full_name,

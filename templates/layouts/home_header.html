@@ -1,0 +1,162 @@
+{% load static %}
+
+<header class="home-header" id="home-header">
+    <div class="home-header-container">
+
+        {# ── Brand Logo ── #}
+        <a href="{% url 'home' %}" class="header-brand">
+            <div class="header-logo-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="#1a6b3c" stroke-width="2"/>
+                    <path d="M8 14c1.5 1.5 6.5 1.5 8 0" stroke="#1a6b3c" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="9" cy="10" r="1" fill="#1a6b3c"/>
+                    <circle cx="15" cy="10" r="1" fill="#1a6b3c"/>
+                </svg>
+            </div>
+            <span>EduFace</span>
+        </a>
+
+        {# ── Nav links (chỉ hiện trên trang home) ── #}
+        {% if request.resolver_match.url_name == 'home' %}
+        <nav class="header-nav">
+            <a href="#features" class="header-nav-link">Tính Năng</a>
+            <a href="#how-it-works" class="header-nav-link">Cách Hoạt Động</a>
+        </nav>
+        {% endif %}
+
+        {# ── Phần bên phải: avatar dropdown (đã đăng nhập) hoặc nút Đăng Nhập ── #}
+        {% if request.user.is_authenticated %}
+            {% with user=request.user %}
+            <div class="topbar-avatar-wrap" id="avatarDropdownWrap">
+                <div class="topbar-avatar" id="avatarDropdownBtn"
+                     onclick="toggleAvatarDropdown(event)"
+                     title="{{ user.get_full_name|default:user.username }}"
+                     style="cursor:pointer;">
+                    {% if request.is_student_group %}
+                        {% with st=user.student %}
+                            {% if st.photo %}
+                                <img src="{{ st.photo.url }}" alt=""
+                                     style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                            {% else %}
+                                {{ user.username|first|upper }}
+                            {% endif %}
+                        {% endwith %}
+                    {% else %}
+                        {# Admin / Giảng viên #}
+                        {% if user.teacher.avatar %}
+                            <img src="{{ user.teacher.avatar.url }}" alt=""
+                                 style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                        {% else %}
+                            {{ user.username|first|upper }}
+                        {% endif %}
+                    {% endif %}
+                </div>
+
+                {# ── Dropdown Popover ── #}
+                <div class="avatar-dropdown" id="avatarDropdown">
+
+                    {# Header: avatar to + tên + role #}
+                    <div class="adrop-header">
+                        <div class="adrop-avatar">
+                            {% if request.is_student_group %}
+                                {% with st=user.student %}
+                                    {% if st.photo %}
+                                        <img src="{{ st.photo.url }}" alt=""
+                                             style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                                    {% else %}
+                                        {{ user.username|first|upper }}
+                                    {% endif %}
+                                {% endwith %}
+                            {% else %}
+                                {% if user.teacher.avatar %}
+                                    <img src="{{ user.teacher.avatar.url }}" alt=""
+                                         style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                                {% else %}
+                                    {{ user.username|first|upper }}
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                        <div class="adrop-info">
+                            <div class="adrop-name">
+                                {% if request.is_student_group %}
+                                    {{ user.student.full_name|default:user.get_full_name|default:user.username }}
+                                {% else %}
+                                    {{ user.get_full_name|default:user.username }}
+                                {% endif %}
+                            </div>
+                            <div class="adrop-username">@{{ user.username }}</div>
+                            <span class="adrop-role-badge
+                                {% if request.is_admin_group %}adrop-role-admin
+                                {% elif request.is_teacher_group %}adrop-role-teacher
+                                {% else %}adrop-role-other{% endif %}">
+                                {% if request.is_admin_group %}Quản Trị Viên
+                                {% elif request.is_teacher_group %}Giảng Viên
+                                {% else %}Sinh Viên{% endif %}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="adrop-divider"></div>
+
+                    {# Menu items #}
+                    <div class="adrop-menu">
+                        {% if request.is_student_group %}
+                            <a href="{% url 'students:student_profile' %}" class="adrop-item">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                                Thông Tin Cá Nhân
+                            </a>
+                        {% else %}
+                            <a href="{% url 'dashboard' %}" class="adrop-item">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                                    <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                                </svg>
+                                Trang Quản Trị
+                            </a>
+                            <a href="{% url 'accounts:profile' %}" class="adrop-item">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                                Thông Tin Cá Nhân
+                            </a>
+                        {% endif %}
+                    </div>
+
+                    <div class="adrop-divider"></div>
+
+                    {# Logout #}
+                    <div class="adrop-footer">
+                        <form action="{% url 'logout' %}" method="post" style="margin:0;">
+                            {% csrf_token %}
+                            <button type="submit" class="adrop-logout-btn">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                    <polyline points="16 17 21 12 16 7"/>
+                                    <line x1="21" y1="12" x2="9" y2="12"/>
+                                </svg>
+                                Đăng Xuất
+                            </button>
+                        </form>
+                    </div>
+
+                </div>{# /avatar-dropdown #}
+            </div>
+            {% endwith %}
+        {% else %}
+            {# ── Chưa đăng nhập: nút Đăng Nhập ── #}
+            <a href="{% url 'login' %}" class="btn-primary btn-header-login" id="header-login-btn">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                    <polyline points="10 17 15 12 10 7"/>
+                    <line x1="15" y1="12" x2="3" y2="12"/>
+                </svg>
+                Đăng Nhập
+            </a>
+        {% endif %}
+
+    </div>
+</header>

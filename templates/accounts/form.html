@@ -179,8 +179,16 @@
     <div class="current-photo-container">
         <img src="{{ user_instance.teacher.avatar.url }}" alt="{{ user_instance.get_full_name }}" class="current-photo-img">
         <div class="current-photo-info">
-            <span class="current-photo-label">Ảnh đại diện hiện tại</span>
+            <span class="current-photo-label">Ảnh đại diện hiện tại (Giảng viên)</span>
             <span class="current-photo-sub">Đang hiển thị trên hệ thống và các danh sách</span>
+        </div>
+    </div>
+    {% elif user_instance and user_instance.student and user_instance.student.photo %}
+    <div class="current-photo-container">
+        <img src="{{ user_instance.student.photo.url }}" alt="{{ user_instance.student.full_name }}" class="current-photo-img">
+        <div class="current-photo-info">
+            <span class="current-photo-label">Ảnh khuôn mặt hiện tại (Sinh viên)</span>
+            <span class="current-photo-sub">MSSV: {{ user_instance.student.student_id }} — {{ user_instance.student.full_name }}</span>
         </div>
     </div>
     {% endif %}
@@ -234,29 +242,37 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const roleSelect = document.getElementById('id_role');
-    const teacherFields = [
-        document.getElementById('id_department'),
-        document.getElementById('id_teacher_id'),
-        document.getElementById('id_phone'),
-        document.getElementById('id_avatar')
-    ];
-    
-    function toggleTeacherFields() {
+
+    // Teacher-only fields
+    const teacherFieldIds = ['id_department', 'id_teacher_id', 'id_phone', 'id_avatar'];
+    // Student-only fields
+    const studentFieldIds = ['id_student_id_link'];
+
+    function getGroup(fieldId) {
+        const el = document.getElementById(fieldId);
+        return el ? el.closest('.form-group') : null;
+    }
+
+    function toggleRoleFields() {
         if (!roleSelect) return;
-        const isTeacher = roleSelect.value === 'teacher';
-        teacherFields.forEach(field => {
-            if (!field) return;
-            const group = field.closest('.form-group');
-            if (group) {
-                group.style.display = isTeacher ? 'block' : 'none';
-            }
+        const role = roleSelect.value;
+
+        teacherFieldIds.forEach(id => {
+            const g = getGroup(id);
+            if (g) g.style.display = (role === 'teacher') ? 'block' : 'none';
+        });
+
+        studentFieldIds.forEach(id => {
+            const g = getGroup(id);
+            if (g) g.style.display = (role === 'student') ? 'block' : 'none';
         });
     }
-    
+
     if (roleSelect) {
-        roleSelect.addEventListener('change', toggleTeacherFields);
-        toggleTeacherFields(); // run initially
+        roleSelect.addEventListener('change', toggleRoleFields);
+        toggleRoleFields(); // run on page load
     }
 });
 </script>
 {% endblock %}
+

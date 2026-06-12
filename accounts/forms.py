@@ -3,32 +3,29 @@ from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError
 from academics.models import Department
 from .models import Teacher
-from .constants import ADMIN_GROUP_NAME, TEACHER_GROUP_NAME
+from .constants import ADMIN_GROUP_NAME, TEACHER_GROUP_NAME, STUDENT_GROUP_NAME
+
 
 class AccountForm(forms.Form):
+    """Form tạo tài khoản mới (Admin / Giảng viên / Sinh viên)."""
+
     username = forms.CharField(
         max_length=150,
         label='Tên đăng nhập',
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tên đăng nhập'}),
-        error_messages={
-            'required': 'Tên đăng nhập không được để trống.'
-        }
+        error_messages={'required': 'Tên đăng nhập không được để trống.'}
     )
     first_name = forms.CharField(
         max_length=150,
         label='Họ và tên đệm',
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Họ và tên đệm'}),
-        error_messages={
-            'required': 'Họ và tên đệm không được để trống.'
-        }
+        error_messages={'required': 'Họ và tên đệm không được để trống.'}
     )
     last_name = forms.CharField(
         max_length=150,
         label='Tên',
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tên'}),
-        error_messages={
-            'required': 'Tên không được để trống.'
-        }
+        error_messages={'required': 'Tên không được để trống.'}
     )
     email = forms.EmailField(
         label='Email',
@@ -42,12 +39,14 @@ class AccountForm(forms.Form):
         label='Mật khẩu',
         widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': '••••••••'}),
         required=True,
-        error_messages={
-            'required': 'Mật khẩu không được để trống.'
-        }
+        error_messages={'required': 'Mật khẩu không được để trống.'}
     )
     role = forms.ChoiceField(
-        choices=[('admin', 'Quản Trị Viên'), ('teacher', 'Giảng Viên')],
+        choices=[
+            ('admin', 'Quản Trị Viên'),
+            ('teacher', 'Giảng Viên'),
+            ('student', 'Sinh Viên'),
+        ],
         label='Vai trò',
         widget=forms.Select(attrs={'class': 'form-control', 'id': 'id_role'})
     )
@@ -57,36 +56,49 @@ class AccountForm(forms.Form):
         initial=True,
         widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
     )
-    
-    # Teacher fields
+
+    # ── Teacher fields ──
     department = forms.ModelChoiceField(
         queryset=Department.objects.all(),
         required=False,
         label='Ngành',
         widget=forms.Select(attrs={'class': 'form-control', 'id': 'id_department'}),
-        error_messages={
-            'required': 'Ngành không được để trống.'
-        }
+        error_messages={'required': 'Ngành không được để trống.'}
     )
     teacher_id = forms.CharField(
         max_length=20,
         required=False,
-        label='Mã giảng viên (MSSV/MSGV)',
-        widget=forms.TextInput(attrs={'class': 'form-control', 'id': 'id_teacher_id', 'placeholder': 'VD: GV001'}),
-        error_messages={
-            'required': 'Mã giảng viên không được để trống.'
-        }
+        label='Mã giảng viên',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 'id': 'id_teacher_id', 'placeholder': 'VD: GV001'
+        }),
+        error_messages={'required': 'Mã giảng viên không được để trống.'}
     )
     phone = forms.CharField(
         max_length=15,
         required=False,
         label='Số điện thoại',
-        widget=forms.TextInput(attrs={'class': 'form-control', 'id': 'id_phone', 'placeholder': '0912 345 678'})
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 'id': 'id_phone', 'placeholder': '0912 345 678'
+        })
     )
     avatar = forms.ImageField(
         required=False,
         label='Ảnh đại diện',
-        widget=forms.ClearableFileInput(attrs={'class': 'form-control', 'id': 'id_avatar', 'accept': 'image/*'})
+        widget=forms.ClearableFileInput(attrs={
+            'class': 'form-control', 'id': 'id_avatar', 'accept': 'image/*'
+        })
+    )
+
+    # ── Student field — link to existing Student record by MSSV ──
+    student_id_link = forms.CharField(
+        max_length=20,
+        required=False,
+        label='MSSV (liên kết Sinh Viên)',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 'id': 'id_student_id_link',
+            'placeholder': 'VD: 22110421 — phải tồn tại trong hệ thống'
+        }),
     )
 
     def clean_username(self):
@@ -98,6 +110,7 @@ class AccountForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         role = cleaned_data.get('role')
+
         if role == 'teacher':
             if not cleaned_data.get('department'):
                 self.add_error('department', 'Ngành không được để trống.')
@@ -107,25 +120,40 @@ class AccountForm(forms.Form):
                 tid = cleaned_data.get('teacher_id')
                 if Teacher.objects.filter(teacher_id=tid).exists():
                     self.add_error('teacher_id', 'Mã giảng viên này đã tồn tại.')
+
+        elif role == 'student':
+            sid = cleaned_data.get('student_id_link', '').strip()
+            if not sid:
+                self.add_error('student_id_link', 'Vui lòng nhập MSSV để liên kết sinh viên.')
+            else:
+                from students.models import Student
+                try:
+                    student = Student.objects.get(student_id=sid)
+                    if student.user is not None:
+                        self.add_error(
+                            'student_id_link',
+                            f'Sinh viên {sid} đã được liên kết với tài khoản khác.'
+                        )
+                except Student.DoesNotExist:
+                    self.add_error('student_id_link', f'Không tìm thấy sinh viên với MSSV: {sid}.')
+
         return cleaned_data
 
 
 class AccountEditForm(forms.Form):
+    """Form chỉnh sửa tài khoản (Admin / Giảng viên / Sinh viên)."""
+
     first_name = forms.CharField(
         max_length=150,
         label='Họ và tên đệm',
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Họ và tên đệm'}),
-        error_messages={
-            'required': 'Họ và tên đệm không được để trống.'
-        }
+        error_messages={'required': 'Họ và tên đệm không được để trống.'}
     )
     last_name = forms.CharField(
         max_length=150,
         label='Tên',
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tên'}),
-        error_messages={
-            'required': 'Tên không được để trống.'
-        }
+        error_messages={'required': 'Tên không được để trống.'}
     )
     email = forms.EmailField(
         label='Email',
@@ -141,7 +169,11 @@ class AccountEditForm(forms.Form):
         required=False
     )
     role = forms.ChoiceField(
-        choices=[('admin', 'Quản Trị Viên'), ('teacher', 'Giảng Viên')],
+        choices=[
+            ('admin', 'Quản Trị Viên'),
+            ('teacher', 'Giảng Viên'),
+            ('student', 'Sinh Viên'),
+        ],
         label='Vai trò',
         widget=forms.Select(attrs={'class': 'form-control', 'id': 'id_role'})
     )
@@ -150,36 +182,49 @@ class AccountEditForm(forms.Form):
         required=False,
         widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
     )
-    
-    # Teacher fields
+
+    # ── Teacher fields ──
     department = forms.ModelChoiceField(
         queryset=Department.objects.all(),
         required=False,
         label='Ngành',
         widget=forms.Select(attrs={'class': 'form-control', 'id': 'id_department'}),
-        error_messages={
-            'required': 'Ngành không được để trống.'
-        }
+        error_messages={'required': 'Ngành không được để trống.'}
     )
     teacher_id = forms.CharField(
         max_length=20,
         required=False,
-        label='Mã giảng viên (MSSV/MSGV)',
-        widget=forms.TextInput(attrs={'class': 'form-control', 'id': 'id_teacher_id', 'placeholder': 'VD: GV001'}),
-        error_messages={
-            'required': 'Mã giảng viên không được để trống.'
-        }
+        label='Mã giảng viên',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 'id': 'id_teacher_id', 'placeholder': 'VD: GV001'
+        }),
+        error_messages={'required': 'Mã giảng viên không được để trống.'}
     )
     phone = forms.CharField(
         max_length=15,
         required=False,
         label='Số điện thoại',
-        widget=forms.TextInput(attrs={'class': 'form-control', 'id': 'id_phone', 'placeholder': '0912 345 678'})
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 'id': 'id_phone', 'placeholder': '0912 345 678'
+        })
     )
     avatar = forms.ImageField(
         required=False,
         label='Ảnh đại diện',
-        widget=forms.ClearableFileInput(attrs={'class': 'form-control', 'id': 'id_avatar', 'accept': 'image/*'})
+        widget=forms.ClearableFileInput(attrs={
+            'class': 'form-control', 'id': 'id_avatar', 'accept': 'image/*'
+        })
+    )
+
+    # ── Student field — link to existing Student record by MSSV ──
+    student_id_link = forms.CharField(
+        max_length=20,
+        required=False,
+        label='MSSV (liên kết Sinh Viên)',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 'id': 'id_student_id_link',
+            'placeholder': 'VD: 22110421 — phải tồn tại trong hệ thống'
+        }),
     )
 
     def __init__(self, *args, **kwargs):
@@ -189,6 +234,7 @@ class AccountEditForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         role = cleaned_data.get('role')
+
         if role == 'teacher':
             if not cleaned_data.get('department'):
                 self.add_error('department', 'Ngành không được để trống.')
@@ -201,6 +247,26 @@ class AccountEditForm(forms.Form):
                     qs = qs.exclude(pk=self.user_instance.teacher.pk)
                 if qs.exists():
                     self.add_error('teacher_id', 'Mã giảng viên này đã tồn tại.')
+
+        elif role == 'student':
+            sid = cleaned_data.get('student_id_link', '').strip()
+            if not sid:
+                self.add_error('student_id_link', 'Vui lòng nhập MSSV để liên kết sinh viên.')
+            else:
+                from students.models import Student
+                try:
+                    student = Student.objects.get(student_id=sid)
+                    current_student = getattr(self.user_instance, 'student', None)
+                    if student.user is not None and (
+                        current_student is None or student.pk != current_student.pk
+                    ):
+                        self.add_error(
+                            'student_id_link',
+                            f'Sinh viên {sid} đã được liên kết với tài khoản khác.'
+                        )
+                except Student.DoesNotExist:
+                    self.add_error('student_id_link', f'Không tìm thấy sinh viên với MSSV: {sid}.')
+
         return cleaned_data
 
 

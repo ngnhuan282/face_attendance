@@ -91,6 +91,144 @@ body {
 }
 
 /* ==========================================
+   AVATAR DROPDOWN (dùng chung với student_profile.css)
+   ========================================== */
+/* Wrapper giữ vị trí tương đối */
+.topbar-avatar-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.topbar-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--primary-green-light);
+    border: 2px solid #c6e8d4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--primary-green);
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.topbar-avatar:hover,
+.topbar-avatar.active {
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 3px rgba(26,107,60,0.15);
+}
+
+/* Dropdown card */
+.avatar-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 260px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
+    z-index: 9999;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px) scale(0.97);
+    transform-origin: top right;
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+    pointer-events: none;
+}
+.avatar-dropdown.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+/* Header: avatar lớn + tên + role */
+.adrop-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 16px 14px;
+}
+.adrop-avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1a6b3c 0%, #2d9e5f 100%);
+    color: #fff;
+    font-size: 18px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; flex-shrink: 0;
+    border: 2px solid #dcfce7;
+}
+.adrop-info { flex: 1; min-width: 0; }
+.adrop-name {
+    font-size: 14px; font-weight: 700;
+    color: #1e293b;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin-bottom: 1px;
+}
+.adrop-username {
+    font-size: 12px; color: #94a3b8;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin-bottom: 5px;
+}
+.adrop-role-badge {
+    display: inline-flex; align-items: center;
+    padding: 2px 8px; border-radius: 999px;
+    font-size: 11px; font-weight: 600;
+}
+.adrop-role-admin   { background: #ede9fe; color: #5b21b6; }
+.adrop-role-teacher { background: #dcfce7; color: #166534; }
+.adrop-role-other   { background: #f1f5f9; color: #475569; }
+
+/* Divider */
+.adrop-divider {
+    height: 1px;
+    background: #f1f5f9;
+    margin: 0;
+}
+
+/* Menu items */
+.adrop-menu { padding: 6px 6px; }
+.adrop-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px;
+    border-radius: 9px;
+    font-size: 13.5px; font-weight: 500;
+    color: #374151;
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+}
+.adrop-item svg { color: #94a3b8; flex-shrink: 0; transition: color 0.15s; }
+.adrop-item:hover {
+    background: #f1f5f9;
+    color: #1a6b3c;
+}
+.adrop-item:hover svg { color: #1a6b3c; }
+
+/* Footer logout */
+.adrop-footer { padding: 6px 6px 8px; }
+.adrop-logout-btn {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 9px 10px;
+    border: none; border-radius: 9px;
+    background: transparent;
+    font-size: 13.5px; font-weight: 500;
+    color: #ef4444;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+    text-align: left;
+}
+.adrop-logout-btn svg { color: #ef4444; flex-shrink: 0; }
+.adrop-logout-btn:hover { background: #fef2f2; }
+
+
+
+/* ==========================================
    HERO SECTION
    ========================================== */
 .hero-section {

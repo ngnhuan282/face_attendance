@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from django.http import HttpRequest
 
-from .constants import ADMIN_GROUP_NAME, TEACHER_GROUP_NAME
+from .constants import ADMIN_GROUP_NAME, TEACHER_GROUP_NAME, STUDENT_GROUP_NAME
 
-STUDENT_GROUP_NAME = 'Student'
 
 
 class RoleFlagsMiddleware:
