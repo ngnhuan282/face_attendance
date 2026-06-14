@@ -5,8 +5,23 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/student_profile.css' %}?v=2">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
 <style>
 /* Additional styles for Timetable */
+.select2-container .select2-selection--single {
+    height: 38px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #374151;
+    font-size: 0.9rem;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 36px;
+}
 .sp-timetable-card {
     background: #fff;
     border-radius: 16px;
@@ -89,6 +104,7 @@
     border-left: 4px solid #3b82f6 !important;
     text-align: left !important;
     border-radius: 4px;
+    vertical-align: middle !important;
 }
 .sp-cell-course {
     font-weight: 600;
@@ -112,6 +128,25 @@
     height: 12px;
     opacity: 0.7;
 }
+.today-highlight {
+    background-color: #f0fdf4 !important; /* light green */
+    border-top: 3px solid var(--primary-green) !important;
+}
+.btn-outline-week {
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #374151;
+    background-color: #fff;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+.btn-outline-week:hover {
+    background-color: #f3f4f6;
+    border-color: #9ca3af;
+}
 </style>
 {% endblock %}
 
@@ -131,18 +166,26 @@
                     </div>
                     <div class="sp-timetable-controls">
                         <form method="get" id="timetable-form" style="display:flex; gap:12px; margin:0;">
-                            <select name="semester" class="sp-select" onchange="document.getElementById('timetable-form').submit()">
+                            <select name="semester" class="sp-select select2-filter" style="width: 250px;" onchange="document.getElementById('timetable-form').submit()">
                                 {% for sem in semesters %}
                                 <option value="{{ sem.id }}" {% if selected_semester and selected_semester.id == sem.id %}selected{% endif %}>{{ sem }}</option>
                                 {% endfor %}
                             </select>
                             
-                            <select name="week" class="sp-select" onchange="document.getElementById('timetable-form').submit()">
+                            <select name="week" id="week_select" class="sp-select select2-filter" style="width: 320px;" onchange="document.getElementById('timetable-form').submit()">
                                 {% for w in weeks %}
                                 <option value="{{ w.number }}" {% if selected_week and selected_week.number == w.number %}selected{% endif %}>{{ w.label }}</option>
                                 {% endfor %}
                             </select>
                         </form>
+                        {% if selected_week %}
+                            {% if selected_week.number > 1 %}
+                                <a href="?semester={{ selected_semester.id }}&week={{ selected_week.number|add:'-1' }}" class="btn-outline-week" title="Tuần trước">&lsaquo; Trước</a>
+                            {% endif %}
+                            {% if selected_week.number < weeks|length %}
+                                <a href="?semester={{ selected_semester.id }}&week={{ selected_week.number|add:'1' }}" class="btn-outline-week" title="Tuần sau">Sau &rsaquo;</a>
+                            {% endif %}
+                        {% endif %}
                     </div>
                 </div>
                 <div class="sp-timetable-body">
@@ -151,7 +194,7 @@
                             <tr>
                                 <th>Tiết</th>
                                 {% for day in week_days %}
-                                <th>
+                                <th {% if day.date == today %}class="today-highlight"{% endif %}>
                                     {{ day.day_name }}<br>
                                     <span style="font-weight:400; font-size:0.8rem; color:#6b7280;">{{ day.date|date:"d/m" }}</span>
                                 </th>
@@ -159,37 +202,35 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for period in periods %}
+                            {% for row in grid %}
                             <tr>
-                                <td>Tiết {{ period }}</td>
-                                {% for day_idx in "0123456"|make_list %}
-                                    {% with cell=grid|slice:period|last|slice:day_idx|first %}
-                                        {% if cell == 'spanned' %}
-                                            {# Do nothing, cell is spanned by previous schedule #}
-                                        {% elif cell %}
-                                            <td rowspan="{{ cell.end_period|add:'1'|add:'-'|add:cell.start_period }}" class="sp-cell-has-class">
-                                                <span class="sp-cell-course">{{ cell.course_class.course.course_name }}</span>
-                                                <div class="sp-cell-meta">
-                                                    <span>
-                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-                                                        {{ cell.course_class.class_code }}
-                                                    </span>
-                                                    <span>
-                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                                                        Phòng: {{ cell.room.room_code }}
-                                                    </span>
-                                                    {% if cell.course_class.teacher %}
-                                                    <span>
-                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                                                        GV: {{ cell.course_class.teacher.user.get_full_name }}
-                                                    </span>
-                                                    {% endif %}
-                                                </div>
-                                            </td>
-                                        {% else %}
-                                            <td></td>
-                                        {% endif %}
-                                    {% endwith %}
+                                <td>Tiết {{ forloop.counter }}</td>
+                                {% for cell in row %}
+                                    {% if cell == 'spanned' %}
+                                        {# Do nothing, cell is spanned by previous schedule #}
+                                    {% elif cell %}
+                                        <td rowspan="{{ cell.rowspan }}" class="sp-cell-has-class">
+                                            <span class="sp-cell-course">{{ cell.course_class.course.course_name }}</span>
+                                            <div class="sp-cell-meta">
+                                                <span>
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                                                    {{ cell.course_class.class_code }}
+                                                </span>
+                                                <span>
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                                                    Phòng: {{ cell.room.room_code }}
+                                                </span>
+                                                {% if cell.course_class.teacher %}
+                                                <span>
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                                    GV: {{ cell.course_class.teacher.user.get_full_name }}
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    {% else %}
+                                        <td></td>
+                                    {% endif %}
                                 {% endfor %}
                             </tr>
                             {% endfor %}
@@ -200,4 +241,21 @@
         </div>
     </main>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('.select2-filter').select2({
+        minimumResultsForSearch: 0 // luôn hiện ô search
+    });
+    
+    // Gắn sự kiện change cho select2 vì onchange inline có thể không hoạt động với select2
+    $('.select2-filter').on('change', function() {
+        document.getElementById('timetable-form').submit();
+    });
+});
+</script>
 {% endblock %}

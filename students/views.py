@@ -714,7 +714,8 @@ def student_timetable(request):
         selected_semester = Semester.objects.filter(is_active=True).first() or semesters.first()
 
     weeks = []
-    target_date = timezone.now().date()
+    today = timezone.now().date()
+    target_date = today
     
     if selected_semester:
         sem_start_monday = selected_semester.start_date - timedelta(days=selected_semester.start_date.weekday())
@@ -740,7 +741,6 @@ def student_timetable(request):
             except ValueError:
                 pass
         else:
-            today = timezone.now().date()
             current_week = next((w for w in weeks if w['monday'] <= today <= w['sunday']), None)
             if current_week:
                 target_date = current_week['monday']
@@ -757,7 +757,8 @@ def student_timetable(request):
         day = monday + timedelta(days=i)
         week_days.append({
             'date': day,
-            'day_name': f"Thứ {i+2}" if i < 6 else "Chủ Nhật"
+            'day_name': f"Thứ {i+2}" if i < 6 else "Chủ Nhật",
+            'is_today': day == today
         })
         
     schedules = Schedule.objects.select_related(
@@ -775,6 +776,7 @@ def student_timetable(request):
         end_p = schedule.end_period - 1
         
         if 0 <= day_idx < 7 and 0 <= start_p < 10:
+            schedule.rowspan = schedule.end_period - schedule.start_period + 1
             grid[start_p][day_idx] = schedule
             # Fill the spanned cells so the template can skip them
             for p in range(start_p + 1, min(end_p + 1, 10)):
@@ -792,6 +794,7 @@ def student_timetable(request):
         'week_days': week_days,
         'grid': grid,
         'periods': range(1, 11),
+        'today': timezone.now().date(),
     }
     return render(request, 'students/timetable.html', context)
 

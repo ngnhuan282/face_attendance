@@ -16,6 +16,7 @@ urlpatterns = [
     path('classes/<int:pk>/edit/', views.courseclass_edit, name='courseclass_edit'),
     path('classes/<int:pk>/delete/', views.courseclass_delete, name='courseclass_delete'),
     path('classes/<int:pk>/', views.courseclass_detail, name='courseclass_detail'),
+    path('classes/<int:pk>/export_excel/', views.courseclass_export_excel, name='courseclass_export_excel'),
     
     # Enrollments
     path('enrollments/', views.enrollment_all_list, name='enrollment_all_list'),

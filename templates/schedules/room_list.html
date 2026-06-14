@@ -32,6 +32,7 @@
                 <tr>
                     <th>Mã Phòng</th>
                     <th>Tòa Nhà</th>
+                    <th>Cơ Sở</th>
                     <th>Sức Chứa</th>
                     <th>Camera</th>
                     <th>Thao tác</th>
@@ -42,10 +43,12 @@
                 <tr data-room-id="{{ room.id }}" 
                     data-room-code="{{ room.room_code }}" 
                     data-building="{{ room.building }}" 
+                    data-campus="{{ room.campus }}" 
                     data-capacity="{{ room.capacity }}" 
                     data-has-camera="{{ room.has_camera|yesno:'true,false' }}">
                     <td style="font-weight: 600; color: var(--text-dark);">{{ room.room_code }}</td>
                     <td>{{ room.building|default:"--" }}</td>
+                    <td>{{ room.campus|default:"--" }}</td>
                     <td>{{ room.capacity }}</td>
                     <td>
                         {% if room.has_camera %}
@@ -127,6 +130,16 @@
             </div>
             
             <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Cơ sở</label>
+                <select name="campus" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; outline: none;">
+                    <option value="Cơ sở chính">Cơ sở chính</option>
+                    <option value="Cơ sở 1">Cơ sở 1</option>
+                    <option value="Cơ sở 2">Cơ sở 2</option>
+                    <option value="Cơ sở 3">Cơ sở 3</option>
+                </select>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 16px;">
                 <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Tòa nhà</label>
                 <select name="building" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; outline: none;">
                     <option value="Tòa A">Tòa A</option>
@@ -172,6 +185,16 @@
             <div class="form-group" style="margin-bottom: 16px;">
                 <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Mã phòng <span style="color: red;">*</span></label>
                 <input type="text" name="room_code" id="edit_room_code" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px;">Cơ sở</label>
+                <select name="campus" id="edit_campus" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; outline: none;">
+                    <option value="Cơ sở chính">Cơ sở chính</option>
+                    <option value="Cơ sở 1">Cơ sở 1</option>
+                    <option value="Cơ sở 2">Cơ sở 2</option>
+                    <option value="Cơ sở 3">Cơ sở 3</option>
+                </select>
             </div>
             
             <div class="form-group" style="margin-bottom: 16px;">
@@ -256,6 +279,7 @@ function openEditRoomModal(btn) {
     
     document.getElementById('edit_room_code').value = tr.dataset.roomCode;
     document.getElementById('edit_building').value = tr.dataset.building;
+    document.getElementById('edit_campus').value = tr.dataset.campus;
     document.getElementById('edit_capacity').value = tr.dataset.capacity;
     document.getElementById('edit_has_camera').checked = tr.dataset.hasCamera === 'true';
     

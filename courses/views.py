@@ -1,10 +1,12 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
 from django.db import transaction, models
 from django.contrib import messages
 from django.core.paginator import Paginator
 import csv
+import openpyxl
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from io import TextIOWrapper
 
 from accounts.constants import ADMIN_GROUP_NAME, TEACHER_GROUP_NAME
@@ -496,11 +498,16 @@ def enrollment_list(request, courseclass_id):
     """Danh sách đăng ký học phần của lớp"""
     courseclass = get_object_or_404(CourseClass, pk=courseclass_id)
     enrollments = courseclass.enrollments.select_related('student').all()
+    from django.core.paginator import Paginator
+    paginator = Paginator(enrollments, 10)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
     
     context = {
         'active_menu': 'courses',
         'courseclass': courseclass,
-        'enrollments': enrollments,
+        'enrollments': page_obj.object_list,
+        'page_obj': page_obj,
     }
     return render(request, 'courses/enrollment_list.html', context)
 
@@ -648,6 +655,99 @@ def enrollment_import(request, courseclass_id):
         'courseclass': courseclass,
     }
     return render(request, 'courses/enrollment_import.html', context)
+
+
+@group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
+def courseclass_export_excel(request, pk):
+    """Xuất danh sách sinh viên của lớp học phần ra file Excel"""
+    courseclass = get_object_or_404(CourseClass, pk=pk)
+    enrollments = courseclass.enrollments.select_related('student', 'student__student_class', 'student__student_class__department').all().order_by('student__student_id')
+    from attendance.models import AttendanceRecord
+    all_records = AttendanceRecord.objects.filter(session__course_class=courseclass)
+    
+    # GV chỉ được xuất danh sách lớp mình dạy
+    if request.is_teacher_group and not request.is_admin_group:
+        if courseclass.teacher.user != request.user:
+            messages.error(request, 'Bạn không có quyền truy cập lớp này')
+            from django.urls import reverse
+            return redirect(reverse('courses:courseclass_list'))
+            
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Danh sách sinh viên"
+    
+    # Styles
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="1A6B3C", end_color="1A6B3C", fill_type="solid")
+    align_center = Alignment(horizontal="center", vertical="center")
+    align_left = Alignment(horizontal="left", vertical="center")
+    border = Border(
+        left=Side(border_style="thin", color="000000"),
+        right=Side(border_style="thin", color="000000"),
+        top=Side(border_style="thin", color="000000"),
+        bottom=Side(border_style="thin", color="000000")
+    )
+    
+    # Title
+    ws.merge_cells('A1:H1')
+    title_cell = ws.cell(row=1, column=1, value=f"DANH SÁCH SINH VIÊN - LỚP {courseclass.class_code}")
+    title_cell.font = Font(bold=True, size=14)
+    title_cell.alignment = align_center
+    
+    ws.merge_cells('A2:H2')
+    teacher_name = courseclass.teacher.user.get_full_name() if courseclass.teacher and courseclass.teacher.user else ""
+    subtitle_cell = ws.cell(row=2, column=1, value=f"Môn học: {courseclass.course.course_name} | Giảng viên: {teacher_name}")
+    subtitle_cell.font = Font(italic=True)
+    subtitle_cell.alignment = align_center
+    
+    # Header Row
+    headers = ["STT", "MSSV", "Họ Tên", "Lớp Sinh Hoạt", "Ngành", "Trạng Thái", "Ngày Đăng Ký", "Tỉ lệ đi học"]
+    for col_num, header_title in enumerate(headers, 1):
+        cell = ws.cell(row=4, column=col_num, value=header_title)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = align_center
+        cell.border = border
+        
+    # Data Rows
+    for row_num, enrollment in enumerate(enrollments, 1):
+        
+        # Calculate attendance rate
+        student_records = all_records.filter(student=enrollment.student)
+        s_total = student_records.count()
+        if s_total > 0:
+            s_present = student_records.filter(status='present').count()
+            attendance_rate = f"{round((s_present / s_total) * 100, 1)}%"
+        else:
+            attendance_rate = "Chưa có DL"
+            
+        row = [
+            row_num,
+            enrollment.student.student_id,
+            enrollment.student.full_name,
+            enrollment.student.student_class.class_code if enrollment.student.student_class else "",
+            enrollment.student.student_class.department.name if enrollment.student.student_class and enrollment.student.student_class.department else "",
+            "Đang học" if enrollment.is_active else "Nghỉ học",
+            enrollment.enrolled_at.strftime("%d/%m/%Y"),
+            attendance_rate
+        ]
+        for col_num, cell_value in enumerate(row, 1):
+            cell = ws.cell(row=row_num+4, column=col_num, value=cell_value)
+            cell.border = border
+            if col_num in [1, 2, 6, 7, 8]:
+                cell.alignment = align_center
+            else:
+                cell.alignment = align_left
+                
+    # Auto-adjust column widths
+    column_widths = {'A': 6, 'B': 15, 'C': 30, 'D': 15, 'E': 25, 'F': 15, 'G': 15, 'H': 12}
+    for col, width in column_widths.items():
+        ws.column_dimensions[col].width = width
+        
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="DSSV_{courseclass.class_code}.xlsx"'
+    wb.save(response)
+    return response
 
 
 @group_required(ADMIN_GROUP_NAME)

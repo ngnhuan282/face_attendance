@@ -1,0 +1,140 @@
+HE THONG DIEM DANH SINH VIEN
+BANG NHAN DIEN KHUON MAT
+
+KE HOACH THUC HIEN 4 TUAN
+Mon hoc: Ngon ngu lap trinh Python  
+Nhom 4 thanh vien  |  Framework: Django  |  AI: face_recognition + OpenCV
+
+1. Tong quan du an
+
+He thong diem danh sinh vien bang nhan dien khuon mat la ung dung web xay dung tren Django, cho phep giang vien diem danh tu dong thong qua webcam. He thong nhan dien khuon mat sinh vien realtime, ghi nhan ket qua vao co so du lieu va tao bao cao chuyen can theo tung lop hoc phan.
+Tinh nang chinh:
+Nhan dien khuon mat realtime qua webcam (face_recognition + OpenCV)
+Quan ly sinh vien, hoc phan, lop hoc phan theo mo hinh truong dai hoc
+Giang vien chon lop va bat dau diem danh chi voi vai thao tac
+Canh bao tu dong khi sinh vien vang > 20% tong so buoi
+Xuat bao cao Excel mau sac truc quan
+
+2. Cac module he thong
+
+He thong gom 8 Django app va 1 module AI doc lap. Cac app duoc phan cong cho tung thanh vien de lam viec song song hieu qua.
+
+Can viet va migrate theo dung thu tu sau de tranh loi ForeignKey:
+Buoc 1: academics/models.py — Faculty, Department, AcademicYear, Semester
+Buoc 2: accounts/models.py — Teacher (lien ket voi Department)
+Buoc 3: students/models.py — Student (lien ket voi Department, Semester)
+Buoc 4: courses/models.py — Course, CourseClass (lien ket voi Semester, Teacher)
+Buoc 5: schedules/models.py — Schedule (lien ket voi CourseClass)
+Buoc 6: attendance/models.py — AttendanceSession, AttendanceRecord
+Buoc 7: notifications/models.py — Notification (lien ket voi Student, CourseClass)
+
+
+3. Ke hoach 4 tuan
+
+Uu tien tuyet doi: AI nhan dien khuon mat phai chay duoc truoc. Giao dien dep lam sau. Khong dao nguoc thu tu nay.
+
+
+TUẦN 01  —  Nen tang AI + Co so du lieu
+Trọng tâm: Chay duoc nhan dien khuon mat tren webcam — muc tieu duy nhat cua tuan 1
+
+Milestone cuoi tuan:
+Nguoi 1 - AI / Camera
+Nguoi 2 - Backend
+Nguoi 3 - Frontend
+Nguoi 4 - Data / Bao cao
+Luu y:
+
+TUẦN 02  —  Moi nguoi lam module cua minh (Models + Views + Templates)
+Trọng tâm: Tu tuan nay moi nguoi so huu hoan toan 1 module: viet views, forms, URLs va template cua module do
+
+Milestone cuoi tuan:
+Nguoi 1 - AI / Camera
+Nguoi 2 
+Nguoi 3 
+Nguoi 4 
+Luu y:
+
+TUẦN 03  —  Hoan thien tung module + Ghep toan he thong
+Trọng tâm: Moi module hoan thien day du chuc nang, cuoi tuan ghep lai va test toan bo luong
+
+Milestone cuoi tuan:
+Nguoi 1
+Nguoi 2
+Nguoi 3 
+Nguoi 4 
+Luu y:
+
+TUẦN 04  —  Test module + Sua loi + Demo
+Trọng tâm: Moi nguoi test module cua minh, sau do ca nhom test tich hop, chuan bi thuyet trinh
+
+Milestone cuoi tuan:
+Nguoi 1
+Nguoi 2 
+Nguoi 3 
+Nguoi 4 
+Luu y:
+
+
+Thay the SQLite bang MySQL yeu cau them cac buoc cai dat va cau hinh. Day la huong dan day du de ca nhom dong bo:
+Cai MySQL Server 8.0: https://dev.mysql.com/downloads/mysql/
+Cai MySQL Workbench de quan ly database truc quan
+Cai thu vien Python: pip install mysqlclient
+Neu mysqlclient loi tren Windows: pip install PyMySQL thay the
+Tai sao chon face_recognition thay vi cac thu vien khac?
+Do chinh xac nhan dien khuon mat dat bao nhieu phan tram?
+He thong xu ly the nao khi khuon mat khong nhan ra (Unknown)?
+Du lieu sinh vien duoc bao mat nhu the nao?
+Han che cua he thong hien tai la gi? Huong phat trien tiep theo?
+Lam the nao de he thong xu ly nhieu sinh vien truoc camera cung luc?
+
+
+Mon hoc: Ngon ngu lap trinh Python  |  Truong Dai hoc Sai Gon
+
+FEEDBACK lần 1 6/6/2026
+* Quản lý phòng học:
+ICON thao tác: cây bút (sửa) và thúng rác (xóa) không nhất quán với module QLHP và QL lớp HP
+-> Sử dụng icon giống với quản lý SV.
+* Quản lý ĐKHP:
+Table chỉ hiển thị 10 dòng, quá 10 dòng sẽ phân trang -> tránh vừa scroll vừa phân trang
+
+* Quản lý Học phần: 
+Form thêm: hiện tại thông báo lỗi đang sử dụng mặc định của HTML -> viết thông báo riêng
+Form sửa: khi cố tính để trống 1 field tín chỉ sẽ bị crash, form đang sử dụng thông báo lỗi mặc định của HTML -> viết thông báo riêng
+* Quản lý Lớp HP:
+Form thêm/sửa: Khi cố tình để trống các field là số -> crash; Form sử dụng thông báo lỗi mặc định của HTML -> viết thông báo riêng.
+* Lịch học và Phòng học:
+Form thêm/sửa:  Khi cố tình để trống các field là số -> crash; Form sử dụng thông báo lỗi mặc định của HTML -> viết thông báo riêng.
+* Quản lý báo cáo:
+Cột hành động: đang bị trống -> bổ sung đầy đủ chức năng
+** Về việc phân trang của tất cả các module: Sẽ sử dụng style UI giống với module Đăng ký học phần  “ << < Số trang > >> “ 
+** Về việc icon thao tác CRUD của tất cả các module: Sử dụng style UI giống với Quản lý sinh viên.
+
+FEEDBACK lần 2 12/6/2026
+* Chỉnh sửa/Bổ sung:
+Điểm danh:
+Giảng viên chỉ xem được buổi điểm danh của lớp mình.
+Cho phép xuất file excel kết quả điểm danh của từng buổi.
+Trước khi kết thúc buổi phải hỏi trước.
+Báo cáo/ Thông báo:
+Chỉ xem được báo cáo và thông báo của lớp mình dạy đối với GV
+Phòng học:
+Thêm 1 field là cơ sở. -> Chỉnh sửa lại xem/thêm/sửa/xóa liên quan.
+Lớp học phần:
+Bổ sung tính năng xuất excel danh sách sinh viên trong lớp.
+Data mẫu: Chỉnh sửa, bổ sung thêm cho hợp lý.
+* Các chức năng cho Sinh viên:
+Xem chuyên cần cá nhân  - vhoang
+SV xem tỉ lệ có mặt / vắng mặt từng môn học theo học kỳ
+Bảng điểm danh từng buổi: ngày, tiết, trạng thái (Có mặt / Vắng / Muộn)
+Thanh progress bar hiển thị % chuyên cần — đỏ khi dưới ngưỡng an toàn
+Cảnh báo nổi bật nếu vắng > 20%: "Bạn có nguy cơ không đủ điều kiện dự thi"
+Lọc theo học kỳ, môn học
+Xem thời khóa biểu cá nhân - mhoang
+Xem lịch học tuần này, tuần tới theo các lớp HP đã đăng ký
+
+Hiện rõ: môn học, phòng, tiết, tên giảng viên
+Highlight ngày hôm nay, buổi đang diễn ra
+Chuyển qua lại giữa các tuần
+Xem lịch sử điểm danh - vhoang
+Xem thống kê các buổi điểm danh. -vhoang
+Xem hồ sơ cá nhân. - Nhuận

@@ -4,13 +4,14 @@ class Room(models.Model):
     """Phòng học"""
     room_code = models.CharField(max_length=20, unique=True, verbose_name='Mã phòng')
     building = models.CharField(max_length=50, blank=True, verbose_name='Tòa nhà')
+    campus = models.CharField(max_length=50, blank=True, default='Cơ sở chính', verbose_name='Cơ sở')
     capacity = models.IntegerField(default=40, verbose_name='Sức chứa')
     has_camera = models.BooleanField(default=False, verbose_name='Có camera điểm danh')
 
     class Meta:
         verbose_name = 'Phòng học'
         verbose_name_plural = 'Phòng học'
-        ordering = ['building', 'room_code']
+        ordering = ['campus', 'building', 'room_code']
 
     def __str__(self):
         prefix = f"{self.building} — " if self.building else ""
