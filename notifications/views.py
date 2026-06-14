@@ -1,3 +1,4 @@
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 
 from accounts.constants import ADMIN_GROUP_NAME, TEACHER_GROUP_NAME
@@ -6,8 +7,16 @@ from accounts.permissions import group_required
 from .models import Notification
 
 
-@group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
-def notification_list(request):
+def _teacher_scope(request):
+    if request.is_teacher_group and not request.is_admin_group:
+        teacher = getattr(request.user, 'teacher', None)
+        if teacher is None:
+            raise PermissionDenied
+        return teacher
+    return None
+
+
+def _notification_queryset(request):
     notifications = (
         Notification.objects
         .select_related(
@@ -17,6 +26,17 @@ def notification_list(request):
         )
         .order_by('is_read', '-created_at')
     )
+
+    teacher = _teacher_scope(request)
+    if teacher:
+        notifications = notifications.filter(course_class__teacher=teacher)
+
+    return notifications, teacher
+
+
+@group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
+def notification_list(request):
+    notifications, teacher = _notification_queryset(request)
 
     total_count   = notifications.count()
     unread_count  = notifications.filter(is_read=False).count()
@@ -37,6 +57,8 @@ def notification_list(request):
 
     from academics.models import Semester
     semesters = Semester.objects.order_by('-start_date')
+    if teacher:
+        semesters = semesters.filter(course_classes__teacher=teacher).distinct()
 
     from django.core.paginator import Paginator
     paginator = Paginator(notifications, 10)
@@ -59,7 +81,8 @@ def notification_list(request):
 
 @group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
 def mark_read(request, noti_id):
-    noti = get_object_or_404(Notification, pk=noti_id)
+    notifications, _ = _notification_queryset(request)
+    noti = get_object_or_404(notifications, pk=noti_id)
     noti.is_read = True
     noti.save(update_fields=['is_read'])
     return redirect(request.META.get('HTTP_REFERER') or 'notifications:list')
@@ -67,5 +90,6 @@ def mark_read(request, noti_id):
 
 @group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
 def mark_all_read(request):
-    Notification.objects.filter(is_read=False).update(is_read=True)
+    notifications, _ = _notification_queryset(request)
+    notifications.filter(is_read=False).update(is_read=True)
     return redirect('notifications:list')
