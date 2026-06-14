@@ -3,7 +3,7 @@ from __future__ import annotations
 from courses.models import CourseClass
 from students.models import Student
 
-from .models import Notification
+from .models import Notification, NotificationRead
 
 ABSENT_WARNING_THRESHOLD = 20.0
 ABSENT_DANGER_THRESHOLD  = 40.0
@@ -64,6 +64,8 @@ def check_and_notify(
         update_fields.append('is_read')
 
     noti.save(update_fields=update_fields)
+    if should_mark_unread:
+        NotificationRead.objects.filter(notification=noti).delete()
     return noti
 
 

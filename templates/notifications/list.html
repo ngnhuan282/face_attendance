@@ -124,7 +124,7 @@
             </thead>
             <tbody>
                 {% for noti in page_obj %}
-                <tr {% if not noti.is_read %}style="background:rgba(251,191,36,0.06);"{% endif %}>
+                <tr {% if not noti.is_read_for_user %}style="background:rgba(251,191,36,0.06);"{% endif %}>
                     <td>
                         <div class="cell-user">
                             <div class="cell-avatar">{{ noti.student.full_name|first }}</div>
@@ -168,14 +168,14 @@
                         {{ noti.created_at|date:"d/m/Y H:i" }}
                     </td>
                     <td style="text-align:center;">
-                        {% if noti.is_read %}
+                        {% if noti.is_read_for_user %}
                         <span class="badge badge-green" style="font-size:11px;">Đã Đọc</span>
                         {% else %}
                         <span class="badge badge-orange" style="font-size:11px;">Chưa Đọc</span>
                         {% endif %}
                     </td>
                     <td>
-                        {% if not noti.is_read %}
+                        {% if not noti.is_read_for_user %}
                         <a href="{% url 'notifications:read' noti.pk %}" class="btn-action btn-action-view"
                             style="white-space:nowrap;font-size:12px;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12"

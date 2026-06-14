@@ -15,5 +15,5 @@ def unread_notifications_count(request):
             return {'unread_noti_count': 0}
         notifications = notifications.filter(course_class__teacher=teacher)
 
-    count = notifications.count()
+    count = notifications.exclude(read_receipts__user=request.user).count()
     return {'unread_noti_count': count}

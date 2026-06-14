@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from students.models import Student
 from courses.models import CourseClass
@@ -44,3 +45,28 @@ class Notification(models.Model):
             f"{self.course_class.class_code} — "
             f"{self.absent_percent:.1f}%"
         )
+
+
+class NotificationRead(models.Model):
+    notification = models.ForeignKey(
+        Notification,
+        on_delete=models.CASCADE,
+        related_name='read_receipts',
+        verbose_name='Cảnh báo'
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='read_notifications',
+        verbose_name='Người đọc'
+    )
+    read_at = models.DateTimeField(auto_now_add=True, verbose_name='Đọc lúc')
+
+    class Meta:
+        verbose_name = 'Trạng thái đọc cảnh báo'
+        verbose_name_plural = 'Trạng thái đọc cảnh báo'
+        unique_together = [('notification', 'user')]
+        ordering = ['-read_at']
+
+    def __str__(self):
+        return f"{self.user} đã đọc {self.notification_id}"
