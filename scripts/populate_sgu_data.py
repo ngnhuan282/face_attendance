@@ -254,7 +254,7 @@ def run():
     for campus in campuses:
         for building in buildings:
             for room_num in range(1, 7):   # 6 phòng mỗi khu → 3×5×6 = 90 phòng
-                code = f"{campus}.{building}{room_num:02d}"
+                code = f"{campus}.{building}{room_num:03d}"
                 r = Room.objects.create(
                     room_code=code,
                     building=f"Khu {building}",
@@ -512,11 +512,16 @@ def run():
     courses_list     = list(Course.objects.all())
 
     # Tạo 2–3 lớp học phần cho mỗi học phần
+    # Mã lớp HP giống lớp sinh hoạt: {dep_code}12{last_digit_year}{class_num}
+    # Ví dụ: DCT1231, DKP1232...
+    ay_year = active_semester.academic_year.name.split('-')[0].strip()   # "2025 - 2026" -> "2025"
+    year_digit = ay_year[-1]   # 2025 -> '5'
+
     for course_obj in courses_list:
         num_classes = random.randint(2, 3)
+        dep_code = course_obj.department.code
         for cls_idx in range(1, num_classes + 1):
-            # Mã lớp HP: mã ngành + mã HP rút gọn + số thứ tự
-            class_code = f"{course_obj.department.code}{course_obj.course_code[-3:]}{cls_idx}"
+            class_code = f"{dep_code}12{year_digit}{cls_idx}"
             if CourseClass.objects.filter(course=course_obj, semester=active_semester, class_code=class_code).exists():
                 continue
             t_obj = random.choice(teachers_list)
