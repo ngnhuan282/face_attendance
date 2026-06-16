@@ -25,7 +25,11 @@ def run():
     CourseClass.objects.all().delete()
     Course.objects.all().delete()
     # Clear students and their User accounts
-    User.objects.filter(student__isnull=False).delete()
+    User.objects.filter(student__isnull=False).delete()   # users linked to a Student
+    # Also delete orphaned student users (MSSV = all-digit username) left from a previous crashed run
+    User.objects.filter(
+        username__regex=r'^\d+$', is_superuser=False, is_staff=False
+    ).delete()
     Student.objects.all().delete()
     StudentClass.objects.all().delete()
 
@@ -132,24 +136,16 @@ def run():
 
     # -------------------------------------------------------------
     # 4. POPULATE FACULTIES & DEPARTMENTS
-    #    38 official SGU majors as provided
+    #    Chỉ 5 khoa được yêu cầu
     # -------------------------------------------------------------
     print("Generating Faculties and Departments...")
 
-    # Group the 38 majors into sensible faculties
     sgu_faculties = [
-        ("SPTN",  "Khoa Sư phạm Tự nhiên"),
-        ("SPXH",  "Khoa Sư phạm Xã hội"),
-        ("SPNT",  "Khoa Sư phạm Nghệ thuật"),
-        ("GDCB",  "Khoa Giáo dục Cơ bản"),
-        ("KTKT",  "Khoa Kinh tế - Kế toán"),
-        ("LUAT",  "Khoa Luật"),
-        ("MT",    "Khoa Môi trường"),
-        ("QLGD",  "Khoa Quản lý Giáo dục"),
-        ("XHNV",  "Khoa Xã hội & Nhân văn"),
-        ("TVTT",  "Khoa Thông tin - Thư viện"),
         ("CNTT",  "Khoa Công nghệ Thông tin"),
-        ("KTDDT", "Khoa Kỹ thuật Điện - Điện tử"),
+        ("DTVT",  "Khoa Điện tử Viễn thông"),
+        ("GDCT",  "Khoa Giáo dục Chính trị"),
+        ("GDMN",  "Khoa Giáo dục Mầm non"),
+        ("GDTH",  "Khoa Giáo dục Tiểu học"),
     ]
 
     faculty_map = {}
@@ -157,72 +153,26 @@ def run():
         fac = Faculty.objects.create(code=code, name=name)
         faculty_map[code] = fac
 
-    # 38 SGU departments (majors) as officially listed
-    # (faculty_code, major_code, major_name)
+    # Các ngành thuộc 5 khoa
     sgu_departments = [
-        # --- Sư phạm Tự nhiên ---
-        ("SPTN",  "DTO",  "SP Toán"),
-        ("SPTN",  "DLI",  "SP Vật lí"),
-        ("SPTN",  "DHO",  "SP Hóa"),
-        ("SPTN",  "DSI",  "SP Sinh học"),
-        ("SPTN",  "DKH",  "Sư phạm Khoa học tự nhiên"),
-        ("SPTN",  "DTU",  "Toán ứng dụng"),
-
-        # --- Sư phạm Xã hội ---
-        ("SPXH",  "DVA",  "SP Ngữ văn"),
-        ("SPXH",  "DSU",  "SP Lịch sử"),
-        ("SPXH",  "DDI",  "SP Địa lý"),
-        ("SPXH",  "DLD",  "Sư phạm Lịch sử – Địa lý"),
-        ("SPXH",  "DGD",  "Giáo dục Chính trị"),
-
-        # --- Sư phạm Ngoại ngữ ---
-        ("SPXH",  "DSA",  "SP Tiếng Anh"),
-        ("SPXH",  "DAN",  "Ngôn ngữ Anh"),
-
-        # --- Sư phạm Nghệ thuật ---
-        ("SPNT",  "DNH",  "SP Âm nhạc"),
-        ("SPNT",  "DMI",  "SP Mỹ thuật"),
-        ("SPNT",  "DNA",  "Thanh nhạc"),
-
-        # --- Giáo dục Cơ bản ---
-        ("GDCB",  "DGT",  "Giáo dục Tiểu học"),
-        ("GDCB",  "DGM",  "Giáo dục Mầm non"),
-
-        # --- Kinh tế - Kế toán ---
-        ("KTKT",  "DKE",  "Kế toán"),
-        ("KTKT",  "DQK",  "Quản trị kinh doanh"),
-        ("KTKT",  "DKQ",  "Kinh doanh quốc tế"),
-        ("KTKT",  "DTN",  "Tài chính – Ngân hàng"),
-
-        # --- Luật ---
-        ("LUAT",  "DLU",  "Luật"),
-
-        # --- Môi trường ---
-        ("MT",    "DKM",  "Khoa học môi trường"),
-        ("MT",    "DCM",  "Công nghệ Kĩ thuật Môi trường"),
-
-        # --- Quản lý Giáo dục ---
-        ("QLGD",  "DQG",  "Quản lý Giáo dục"),
-
-        # --- Xã hội & Nhân văn ---
-        ("XHNV",  "DTL",  "Tâm lí học"),
-        ("XHNV",  "DVI",  "Việt Nam học"),
-        ("XHNV",  "DQT",  "Quốc tế học"),
-
-        # --- Thông tin - Thư viện ---
-        ("TVTT",  "DQV",  "Quản trị văn phòng"),
-        ("TVTT",  "DTT",  "Thông tin – Thư viện"),
-        ("TVTT",  "DKV",  "Khoa học Thư viện"),
-
         # --- Công nghệ Thông tin ---
-        ("CNTT",  "DCT",  "Công nghệ thông tin"),
-        ("CNTT",  "DKP",  "Kỹ thuật phần mềm"),
+        ("CNTT", "DCT",  "Công nghệ thông tin"),
+        ("CNTT", "DKP",  "Kỹ thuật phần mềm"),
 
-        # --- Kỹ thuật Điện - Điện tử ---
-        ("KTDDT", "DDE",  "Kĩ thuật điện"),
-        ("KTDDT", "DDV",  "Kĩ thuật Điện tử – viễn thông"),
-        ("KTDDT", "DKD",  "Công nghệ Kĩ thuật điện, điện tử"),
-        ("KTDDT", "DCV",  "Công nghệ KT điện tử – viễn thông"),
+        # --- Điện tử Viễn thông ---
+        ("DTVT", "DDV",  "Kĩ thuật Điện tử – viễn thông"),
+        ("DTVT", "DCV",  "Công nghệ KT điện tử – viễn thông"),
+        ("DTVT", "DDE",  "Kĩ thuật điện"),
+        ("DTVT", "DKD",  "Công nghệ Kĩ thuật điện, điện tử"),
+
+        # --- Giáo dục Chính trị ---
+        ("GDCT", "DGD",  "Giáo dục Chính trị"),
+
+        # --- Giáo dục Mầm non ---
+        ("GDMN", "DGM",  "Giáo dục Mầm non"),
+
+        # --- Giáo dục Tiểu học ---
+        ("GDTH", "DGT",  "Giáo dục Tiểu học"),
     ]
 
     department_map = {}   # code -> Department object
@@ -239,6 +189,7 @@ def run():
 
     print(f"Created {Faculty.objects.count()} Faculties.")
     print(f"Created {Department.objects.count()} Departments.")
+
 
     # -------------------------------------------------------------
     # 5. POPULATE TEACHERS (35 fictional teachers)
@@ -290,48 +241,31 @@ def run():
     print(f"Created {Teacher.objects.count()} Teachers (Users).")
 
     # -------------------------------------------------------------
-    # 6. POPULATE ROOMS (from dkmh_all_lines.txt, min 30)
+    # 6. POPULATE ROOMS
+    #    Cơ sở: 1, 2, C  |  Khu (tòa nhà): A, B, C, D, E
+    #    Mã phòng: <campus>.<building><room_num>
     # -------------------------------------------------------------
-    print("Generating Rooms from DKMH data...")
+    print("Generating sample Rooms...")
 
-    dkmh_file = 'dkmh_all_lines.txt'
-    with open(dkmh_file, 'r', encoding='utf-8') as f:
-        dkmh_text = f.read()
-
-    room_pattern = re.compile(r'\b(C\.[A-Z0-9]+|1\.[A-Z0-9]+|TTSP\d+)\b')
-    parsed_room_codes = sorted(list(set(room_pattern.findall(dkmh_text))))
-
+    campuses  = ['1', '2', 'C']
+    buildings = ['A', 'B', 'C', 'D', 'E']
     room_objects = {}
-    for code in parsed_room_codes:
-        if code.startswith("C."):
-            building = "Khu C"
-        elif code.startswith("1."):
-            building = "Khu 1"
-        else:
-            building = "Thực tập"
 
-        r = Room.objects.create(
-            room_code=code,
-            building=building,
-            capacity=random.choice([40, 50, 80, 100, 120]),
-            has_camera=random.choice([True, False])
-        )
-        room_objects[code] = r
-
-    # Pad to at least 30 rooms
-    rooms_count = Room.objects.count()
-    if rooms_count < 30:
-        for idx in range(rooms_count + 1, 35):
-            code = f"C.E{idx:02d}"
-            r = Room.objects.create(
-                room_code=code,
-                building="Khu C",
-                capacity=50,
-                has_camera=False
-            )
-            room_objects[code] = r
+    for campus in campuses:
+        for building in buildings:
+            for room_num in range(1, 7):   # 6 phòng mỗi khu → 3×5×6 = 90 phòng
+                code = f"{campus}.{building}{room_num:02d}"
+                r = Room.objects.create(
+                    room_code=code,
+                    building=f"Khu {building}",
+                    campus=campus,
+                    capacity=random.choice([40, 50, 60, 80, 100]),
+                    has_camera=random.choice([True, True, False])  # 2/3 có camera
+                )
+                room_objects[code] = r
 
     print(f"Created {Room.objects.count()} Rooms.")
+
 
     # -------------------------------------------------------------
     # 7. POPULATE STUDENT CLASSES
@@ -366,15 +300,17 @@ def run():
     # -------------------------------------------------------------
     print("Reading and parsing dssv.xlsx...")
 
-    # Map major names from Excel sheets to department codes
+    # Map major names from Excel sheets to department codes (5 khoa)
     major_to_dep_code = {
-        "Kỹ thuật phần mềm":   "DKP",
-        "Công nghệ thông tin":  "DCT",
-        "Việt Nam học":         "DVI",
-        "Sư phạm Toán học":    "DTO",
-        "SP Toán":              "DTO",
-        "Quản trị văn phòng":   "DQV",
-        "Kế toán":              "DKE",
+        "Kỹ thuật phần mềm":                    "DKP",
+        "Công nghệ thông tin":                   "DCT",
+        "Kĩ thuật Điện tử – viễn thông":        "DDV",
+        "Công nghệ KT điện tử – viễn thông":    "DCV",
+        "Kĩ thuật điện":                         "DDE",
+        "Công nghệ Kĩ thuật điện, điện tử":     "DKD",
+        "Giáo dục Chính trị":                    "DGD",
+        "Giáo dục Mầm non":                      "DGM",
+        "Giáo dục Tiểu học":                     "DGT",
     }
 
     def parse_dob(val):
@@ -390,8 +326,30 @@ def run():
                 continue
         return datetime.date(2005, 1, 1)
 
+    from accounts.constants import STUDENT_GROUP_NAME
+    sv_group, _ = Group.objects.get_or_create(name=STUDENT_GROUP_NAME)
+
     excel_file = pd.ExcelFile('dssv.xlsx')
-    sheets_to_process = [s for s in excel_file.sheet_names if s not in ["TheDuc", "Sheet1"]]
+
+    # Chỉ xử lý sheet thuộc 5 khoa:
+    # CNTT, Điện tử Viễn thông, Giáo dục Chính trị, Mầm non, Tiểu học
+    ALLOWED_SHEET_KEYWORDS = [
+        'cntt', 'dtvt', 'dientuvienthong', 'dientu',
+        'gdct', 'chinhri', 'chinhtri',
+        'gdmn', 'mamnon', 'mammon',
+        'gdth', 'tieuhoc', 'tieu hoc',
+    ]
+
+    def sheet_is_allowed(sheet_name: str) -> bool:
+        name_lower = sheet_name.lower().replace(' ', '').replace(',', '')
+        return any(kw in name_lower for kw in ALLOWED_SHEET_KEYWORDS)
+
+    all_sheets = excel_file.sheet_names
+    sheets_to_process = [
+        s for s in all_sheets
+        if s not in ["TheDuc", "Sheet1"] and sheet_is_allowed(s)
+    ]
+    print(f"Sheets to process (5 faculties): {sheets_to_process}")
 
     for sheet in sheets_to_process:
         df = excel_file.parse(sheet)
@@ -421,8 +379,10 @@ def run():
             dob = parse_dob(row.get('Ngày sinh', None))
 
             raw_major = str(row.get('Tên ngành', '')).strip()
-            dep_code = major_to_dep_code.get(raw_major, "DCT")
-            dep_obj  = department_map.get(dep_code, department_map["DCT"])
+            dep_code = major_to_dep_code.get(raw_major)   # None nếu không thuộc 5 khoa
+            if dep_code is None:
+                continue   # bỏ qua sinh viên ngành khác
+            dep_obj = department_map.get(dep_code, department_map["DCT"])
 
             # Cohort year from MSSV digits 3-4 (e.g. 3123… → 2023)
             cohort_year = 2023
@@ -450,11 +410,11 @@ def run():
             email = f"{sv_id_str}@student.sgu.edu.vn"
 
             if not Student.objects.filter(student_id=sv_id_str).exists():
-                # Create User for student
-                from accounts.constants import STUDENT_GROUP_NAME
-                sv_group, _ = Group.objects.get_or_create(name=STUDENT_GROUP_NAME)
-                
-                # Use MSSV as username
+                # Skip nếu username đã tồn tại (tránh IntegrityError)
+                if User.objects.filter(username=sv_id_str).exists():
+                    continue
+
+                # Use MSSV as username, password = 123456
                 student_user = User.objects.create(
                     username=sv_id_str,
                     email=email,
@@ -478,183 +438,100 @@ def run():
     print(f"Created {Student.objects.count()} Students.")
 
     # -------------------------------------------------------------
-    # 9. POPULATE COURSES (from DKMH data)
+    # 9. POPULATE COURSES (hardcoded sample courses cho 5 khoa)
     # -------------------------------------------------------------
-    print("Generating Courses from DKMH data...")
+    print("Generating Courses...")
 
-    lines = dkmh_text.split('\n')
-    parsed_courses = {}
+    sample_courses = [
+        # CNTT
+        ("DCT", "810001", "Nhập môn lập trình",          3),
+        ("DCT", "810002", "Cấu trúc dữ liệu và giải thuật", 3),
+        ("DCT", "810003", "Cơ sở dữ liệu",               3),
+        ("DCT", "810004", "Lập trình hướng đối tượng",   3),
+        ("DCT", "810005", "Mạng máy tính",                3),
+        ("DKP", "810011", "Kỹ thuật phần mềm",           3),
+        ("DKP", "810012", "Kiểm thử phần mềm",           2),
+        ("DKP", "810013", "Lập trình Web",                3),
+        ("DKP", "810014", "Phát triển ứng dụng di động", 3),
+        # DTVT
+        ("DDV", "820001", "Điện tử cơ bản",              3),
+        ("DDV", "820002", "Kỹ thuật viễn thông",         3),
+        ("DDV", "820003", "Xử lý tín hiệu số",           3),
+        ("DCV", "820011", "Hệ thống nhúng",              3),
+        ("DCV", "820012", "Thiết kế mạch điện tử",      3),
+        ("DDE", "820021", "Máy điện",                    3),
+        ("DDE", "820022", "Điều khiển tự động",          3),
+        ("DKD", "820031", "Điện tử công suất",           3),
+        ("DKD", "820032", "An toàn điện",                2),
+        # GDCT
+        ("DGD", "830001", "Triết học Mác – Lênin",      3),
+        ("DGD", "830002", "Kinh tế chính trị Mác – Lênin", 3),
+        ("DGD", "830003", "Chủ nghĩa xã hội khoa học",  2),
+        ("DGD", "830004", "Lịch sử Đảng Cộng sản Việt Nam", 2),
+        # GDMN
+        ("DGM", "840001", "Giáo dục học mầm non",       3),
+        ("DGM", "840002", "Tâm lý trẻ em",               3),
+        ("DGM", "840003", "Phương pháp dạy học mầm non", 3),
+        # GDTH
+        ("DGT", "850001", "Giáo dục học tiểu học",      3),
+        ("DGT", "850002", "Tâm lý học tiểu học",         3),
+        ("DGT", "850003", "Tiếng Việt tiểu học",         3),
+        ("DGT", "850004", "Toán tiểu học",                3),
+        # Đại cương (dùng chung)
+        ("DCT", "800001", "Toán cao cấp",                3),
+        ("DCT", "800002", "Vật lý đại cương",            3),
+        ("DCT", "800003", "Tiếng Anh 1",                 3),
+        ("DCT", "800004", "Tiếng Anh 2",                 3),
+        ("DCT", "800005", "Giáo dục thể chất",           2),
+    ]
 
-    course_pattern  = re.compile(r'^(8\d{5})\s+(.+)$')
-    credits_pattern = re.compile(r'^(\d)\s+(\d{2,3})\s+(.+)\s+(\d+)$')
-
-    current_course_code = None
-    for line in lines:
-        line = line.strip()
-        if not line:
-            continue
-
-        m_course = course_pattern.match(line)
-        if m_course:
-            code = m_course.group(1)
-            name = m_course.group(2)
-            parsed_courses[code] = {"course_code": code, "course_name": name, "credits": 3}
-            current_course_code = code
-            continue
-
-        m_cred = credits_pattern.match(line)
-        if m_cred and current_course_code:
-            parsed_courses[current_course_code]["credits"] = int(m_cred.group(1))
-            current_course_code = None
-
-    # Also handle STT-prefixed lines
-    for line in lines:
-        line = line.strip()
-        m_stt = re.search(
-            r'^\d+\s+(8\d{5})\s+([A-Za-đĐâÂêÊôÔưƯơƠíÍúÚýÝáÁàÀảẢãÃạẠéÉèÈẻẺẽẼẹẸíÍìÌỉỈĩĨịỊóÓòÒỏỎõÕọỌúÚùÙủỦũŨụỤýÝỳỲỷỶỹỸỵYăĂắẮằẰẳẲẵẴặẶâÂấẤầẦẩẨẫẪậẬêÊếẾềỀểỂễỄệỆôÔốỐồỒổỔỗỖộỘơƠớỚờỜởỞỡỠợỢưƯứỨừỪửỬữỮựỰa-zA-Z\s\(\),/\-]+)\s+(\d)\s+(\d{2,3})\b',
-            line
-        )
-        if m_stt:
-            code = m_stt.group(1)
-            name = m_stt.group(2).strip()
-            cred = int(m_stt.group(3))
-            if code not in parsed_courses:
-                parsed_courses[code] = {"course_code": code, "course_name": name, "credits": cred}
-
-    # Create Course records, mapping to appropriate department
     course_instances = {}
-    default_dep = department_map["DCT"]
-
-    for code, info in parsed_courses.items():
-        dep = default_dep
-        name_lower = info["course_name"].lower()
-        if "toán" in name_lower:
-            dep = department_map.get("DTO", default_dep)
-        elif "kế toán" in name_lower or "tài chính" in name_lower:
-            dep = department_map.get("DKE", default_dep)
-        elif "văn phòng" in name_lower or "thư viện" in name_lower:
-            dep = department_map.get("DQV", default_dep)
-        elif "du lịch" in name_lower or "việt nam học" in name_lower:
-            dep = department_map.get("DVI", default_dep)
-        elif "kỹ thuật phần mềm" in name_lower:
-            dep = department_map.get("DKP", default_dep)
-
-        c = Course.objects.create(
-            department=dep,
-            course_code=code,
-            course_name=info["course_name"],
-            credits=info["credits"],
-            description=f"Học phần {info['course_name']} trường Đại học Sài Gòn."
-        )
-        course_instances[code] = c
+    for dep_code, course_code, course_name, credits in sample_courses:
+        dep = department_map.get(dep_code, department_map["DCT"])
+        if not Course.objects.filter(course_code=course_code).exists():
+            c = Course.objects.create(
+                department=dep,
+                course_code=course_code,
+                course_name=course_name,
+                credits=credits,
+                description=f"Học phần {course_name} – Trường Đại học Sài Gòn."
+            )
+            course_instances[course_code] = c
 
     print(f"Created {Course.objects.count()} Courses.")
 
+
     # -------------------------------------------------------------
-    # 10. POPULATE COURSE CLASSES (from DKMH data, min 30)
+    # 10. POPULATE COURSE CLASSES (tạo mẫu từ danh sách courses)
     # -------------------------------------------------------------
     print("Generating Course Classes...")
 
-    class_pattern = re.compile(r'\b([A-Z]{3}\d{4})\b')
-
-    parsed_classes = []
-    current_code  = None
-    current_siso  = 40
-
-    for line in lines:
-        line = line.strip()
-        if not line:
-            continue
-
-        m_course = course_pattern.match(line)
-        if m_course:
-            current_code = m_course.group(1)
-            continue
-
-        m_cred = credits_pattern.match(line)
-        if m_cred:
-            current_siso = int(m_cred.group(2))
-            continue
-
-        m_class = class_pattern.search(line)
-        m_room  = room_pattern.search(line)
-        if m_class and m_room and current_code:
-            c_code = m_class.group(1)
-            r_code = m_room.group(1)
-            class_key = (current_code, c_code)
-            if class_key not in [(pc["course_code"], pc["class_code"]) for pc in parsed_classes]:
-                parsed_classes.append({
-                    "course_code":  current_code,
-                    "class_code":   c_code,
-                    "max_students": current_siso,
-                    "room_code":    r_code
-                })
-
-    # STT-prefixed class lines
-    for line in lines:
-        line = line.strip()
-        m_stt = re.search(
-            r'^\d+\s+(8\d{5})\s+([A-Za-đ\s]+[0-9]*)\s+\d\s+(\d{2,3})\s+.+?\s+(\d+)\s+(\d+)\s+([A-Z0-9.]+)\s+([A-Z]{3}\d{4})',
-            line
-        )
-        if m_stt:
-            course_code = m_stt.group(1)
-            siso        = int(m_stt.group(3))
-            room_code   = m_stt.group(6)
-            class_code  = m_stt.group(7)
-            class_key   = (course_code, class_code)
-            if class_key not in [(pc["course_code"], pc["class_code"]) for pc in parsed_classes]:
-                parsed_classes.append({
-                    "course_code":  course_code,
-                    "class_code":   class_code,
-                    "max_students": siso,
-                    "room_code":    room_code
-                })
-
-    # Create CourseClass records
-    class_instances  = []
     teachers_list    = list(Teacher.objects.all())
+    rooms_list       = list(Room.objects.all())
+    class_instances  = []
+    courses_list     = list(Course.objects.all())
 
-    for pc in parsed_classes:
-        course_obj = course_instances.get(pc["course_code"])
-        if not course_obj:
-            continue
-        if CourseClass.objects.filter(course=course_obj, semester=active_semester, class_code=pc["class_code"]).exists():
-            continue
-
-        t_obj = random.choice(teachers_list)
-        r_obj = room_objects.get(pc["room_code"])
-
-        cc = CourseClass.objects.create(
-            course=course_obj,
-            semester=active_semester,
-            teacher=t_obj,
-            class_code=pc["class_code"],
-            max_students=pc["max_students"],
-            total_sessions=15
-        )
-        class_instances.append(cc)
-
-    # Pad to at least 30 course classes
-    if CourseClass.objects.count() < 30:
-        print("Fewer than 30 classes parsed, generating mock classes...")
-        courses_list = list(Course.objects.all())
-        existing_count = CourseClass.objects.count()
-        for idx in range(existing_count + 1, 35):
-            c_obj      = random.choice(courses_list)
-            t_obj      = random.choice(teachers_list)
-            class_code = f"DKP{idx:02d}M"
+    # Tạo 2–3 lớp học phần cho mỗi học phần
+    for course_obj in courses_list:
+        num_classes = random.randint(2, 3)
+        for cls_idx in range(1, num_classes + 1):
+            # Mã lớp HP: mã ngành + mã HP rút gọn + số thứ tự
+            class_code = f"{course_obj.department.code}{course_obj.course_code[-3:]}{cls_idx}"
+            if CourseClass.objects.filter(course=course_obj, semester=active_semester, class_code=class_code).exists():
+                continue
+            t_obj = random.choice(teachers_list)
             cc = CourseClass.objects.create(
-                course=c_obj,
+                course=course_obj,
                 semester=active_semester,
                 teacher=t_obj,
                 class_code=class_code,
-                max_students=50,
+                max_students=random.choice([40, 50, 60]),
                 total_sessions=15
             )
             class_instances.append(cc)
 
     print(f"Created {CourseClass.objects.count()} Course Classes.")
+
 
     # -------------------------------------------------------------
     # 11. POPULATE ENROLLMENTS (3-5 course classes per student)
