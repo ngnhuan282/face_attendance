@@ -5,12 +5,62 @@ from django.http import HttpRequest
 from .constants import ADMIN_GROUP_NAME, TEACHER_GROUP_NAME, STUDENT_GROUP_NAME
 
 
+# Default permissions (fallback nếu DB chưa có record)
+_DEFAULT_PERMS = {
+    'admin': {
+        'accounts':      {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'students':      {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'attendance':    {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'courses':       {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'schedules':     {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'academics':     {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'reports':       {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'recognition':   {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'permissions':   {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'notifications': {'view': True,  'add': True,  'edit': True,  'delete': True},
+    },
+    'teacher': {
+        'accounts':      {'view': False, 'add': False, 'edit': False, 'delete': False},
+        'students':      {'view': True,  'add': False, 'edit': True,  'delete': False},
+        'attendance':    {'view': True,  'add': True,  'edit': True,  'delete': False},
+        'courses':       {'view': True,  'add': False, 'edit': False, 'delete': False},
+        'schedules':     {'view': True,  'add': False, 'edit': False, 'delete': False},
+        'academics':     {'view': True,  'add': False, 'edit': False, 'delete': False},
+        'reports':       {'view': True,  'add': False, 'edit': False, 'delete': False},
+        'recognition':   {'view': True,  'add': False, 'edit': False, 'delete': False},
+        'permissions':   {'view': False, 'add': False, 'edit': False, 'delete': False},
+        'notifications': {'view': True,  'add': True,  'edit': False, 'delete': False},
+    },
+}
+
+
+def _get_role_perms(role: str) -> dict:
+    """Lấy permissions từ DB, fallback về default nếu chưa có."""
+    try:
+        from .models import RolePermission
+        rp = RolePermission.objects.filter(role=role).first()
+        if rp and rp.permissions:
+            # Merge với default để đảm bảo không thiếu module nào
+            import copy
+            merged = copy.deepcopy(_DEFAULT_PERMS.get(role, {}))
+            for module, perms in rp.permissions.items():
+                if module in merged:
+                    merged[module].update(perms)
+                else:
+                    merged[module] = perms
+            return merged
+    except Exception:
+        pass
+    return _DEFAULT_PERMS.get(role, {})
+
 
 class RoleFlagsMiddleware:
-    """Attach role flags for templates/views.
+    """Attach role flags và permission flags cho templates/views.
 
-    We keep this middleware non-blocking (safe), and enforce access
-    in views using `accounts.permissions.group_required`.
+    Đọc ma trận quyền từ DB (RolePermission) và gắn vào request:
+    - request.is_admin_group / is_teacher_group / is_student_group
+    - request.user_permissions  (dict toàn bộ quyền)
+    - request.can_view_accounts, request.can_view_students, ... (shorthand flags)
     """
 
     def __init__(self, get_response):
@@ -23,6 +73,7 @@ class RoleFlagsMiddleware:
         request.is_teacher_group = False
         request.is_student_group = False
         request.student_profile = None
+        request.user_permissions = {}
 
         if user is not None and getattr(user, 'is_authenticated', False):
             if user.is_superuser:
@@ -37,4 +88,31 @@ class RoleFlagsMiddleware:
             # Gắn student profile nếu có
             request.student_profile = getattr(user, 'student', None)
 
+            # Xác định role và load permissions từ DB
+            if user.is_superuser or request.is_admin_group:
+                # Admin luôn có full quyền, không cần đọc DB
+                perms = _DEFAULT_PERMS['admin']
+            elif request.is_teacher_group:
+                perms = _get_role_perms('teacher')
+            else:
+                perms = {}
+
+            request.user_permissions = perms
+
+            # Gắn shorthand flags tiện lợi cho templates
+            def _can(module, action='view'):
+                return perms.get(module, {}).get(action, False)
+
+            request.can_view_accounts      = _can('accounts')
+            request.can_view_students      = _can('students')
+            request.can_view_attendance    = _can('attendance')
+            request.can_view_courses       = _can('courses')
+            request.can_view_schedules     = _can('schedules')
+            request.can_view_academics     = _can('academics')
+            request.can_view_reports       = _can('reports')
+            request.can_view_recognition   = _can('recognition')
+            request.can_view_permissions   = _can('permissions')
+            request.can_view_notifications = _can('notifications')
+
         return self.get_response(request)
+

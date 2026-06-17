@@ -82,6 +82,12 @@
     color: #15803d;
 }
 
+.perm-alert-error {
+    background: #fef2f2;
+    border: 1px solid #fca5a5;
+    color: #dc2626;
+}
+
 @keyframes slideDown {
     from { opacity: 0; transform: translateY(-8px); }
     to   { opacity: 1; transform: translateY(0); }

@@ -203,6 +203,15 @@
 
 {% block extra_js %}
 <script>
+/* Django API URLs */
+const API_GET_PERMS  = "{% url 'accounts:api_get_permissions' %}";
+const API_SAVE_PERMS = "{% url 'accounts:api_save_permissions' %}";
+
+function getCsrfToken() {
+    return document.cookie.split(';').map(c => c.trim())
+        .find(c => c.startsWith('csrftoken='))?.split('=')[1] || '';
+}
+
 /* ============================================================
    DATA: Module definitions
    ============================================================ */
@@ -518,10 +527,39 @@ function updateSummary() {
 }
 
 /* ============================================================
-   SAVE (UI demo)
+   LOAD permissions from server
+   ============================================================ */
+function loadPermissions() {
+    fetch(API_GET_PERMS, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(res => {
+        if (!res.ok) throw new Error('Lỗi kết nối máy chủ.');
+        return res.json();
+    })
+    .then(data => {
+        if (data.permissions) {
+            // Merge fetched data into permState (keep defaults for missing modules)
+            ['admin', 'teacher'].forEach(role => {
+                if (data.permissions[role]) {
+                    Object.assign(permState[role], data.permissions[role]);
+                }
+            });
+        }
+        renderTable();
+    })
+    .catch(err => {
+        console.warn('Không thể tải quyền từ server, dùng mặc định.', err);
+        renderTable();
+    });
+}
+
+/* ============================================================
+   SAVE permissions to server
    ============================================================ */
 function savePermissions() {
     const btn = document.getElementById('btnSave');
+    const alertEl = document.getElementById('alertSuccess');
     btn.disabled = true;
     btn.innerHTML = `
         <svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -530,17 +568,56 @@ function savePermissions() {
         Đang lưu...
     `;
 
-    setTimeout(() => {
+    // Save current role's permissions
+    fetch(API_SAVE_PERMS, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken(),
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: JSON.stringify({
+            role: currentRole,
+            permissions: permState[currentRole],
+        }),
+    })
+    .then(res => {
+        if (!res.ok) return res.json().then(d => { throw new Error(d.error || 'Lỗi không xác định.'); });
+        return res.json();
+    })
+    .then(data => {
         btn.disabled = false;
         btn.innerHTML = `
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
             Lưu Phân Quyền
         `;
-        const alert = document.getElementById('alertSuccess');
-        alert.style.display = 'flex';
-        alert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        setTimeout(() => { alert.style.display = 'none'; }, 3500);
-    }, 900);
+        if (data.success) {
+            alertEl.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
+                Đã lưu phân quyền <strong>${ROLE_LABELS[currentRole]}</strong> thành công!
+            `;
+            alertEl.className = 'perm-alert perm-alert-success';
+            alertEl.style.display = 'flex';
+            alertEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            setTimeout(() => { alertEl.style.display = 'none'; }, 3500);
+        } else {
+            throw new Error(data.error || 'Lỗi không xác định.');
+        }
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            Lưu Phân Quyền
+        `;
+        alertEl.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Lỗi: ${err.message}
+        `;
+        alertEl.className = 'perm-alert perm-alert-error';
+        alertEl.style.display = 'flex';
+        setTimeout(() => { alertEl.style.display = 'none'; }, 4000);
+    });
 }
 
 function showToast(msg) {
@@ -560,7 +637,8 @@ function showToast(msg) {
    INIT
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
-    renderTable();
+    // Load permissions from server first, then render
+    loadPermissions();
 });
 </script>
 {% endblock %}

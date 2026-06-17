@@ -41,7 +41,7 @@
 
             <div class="sidebar-nav-label">Quản Lý</div>
 
-            {% if request.is_admin_group %}
+            {% if request.can_view_accounts %}
             <a href="{% url 'accounts:list' %}" class="sidebar-link {% if active_menu == 'accounts' %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -51,7 +51,7 @@
             </a>
             {% endif %}
 
-            {% if request.is_admin_group %}
+            {% if request.can_view_students %}
             <a href="{% url 'students:list' %}" class="sidebar-link {% if active_menu == 'students' %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -69,7 +69,7 @@
                 </svg>
                 Điểm Danh
             </a>
-            {% if request.is_admin_group %}
+            {% if request.can_view_courses %}
             <a href="{% url 'courses:course_list' %}" class="sidebar-link {% if active_menu == 'courses' %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 7l9-4 9 4"/><line x1="12" y1="7" x2="12" y2="20"/>
@@ -96,7 +96,7 @@
             </a>
             {% endif %}
 
-            {% if request.is_admin_group %}
+            {% if request.can_view_schedules %}
             <div class="sidebar-nav-label">Quản Lý Lịch Học</div>
             <a href="{% url 'schedules:room_list' %}" class="sidebar-link {% if active_menu == 'rooms' %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -153,7 +153,7 @@
                 {% endif %}
             </a>
 
-            {% if request.is_admin_group %}
+            {% if request.can_view_permissions %}
             <div class="sidebar-nav-label">Hệ Thống</div>
             <a href="{% url 'accounts:permissions' %}" class="sidebar-link {% if active_menu == 'permissions' %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

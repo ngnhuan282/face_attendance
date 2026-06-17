@@ -50,10 +50,12 @@
             <div class="table-card-title">Danh Sách Đăng Ký - {{ courseclass.course.course_name }}</div>
         </div>
         <div class="table-toolbar">
+            {% if request.user_permissions.courses.add %}
             <a href="{% url 'courses:enrollment_import' courseclass.pk %}" class="btn-primary" style="padding: 8px 16px; font-size: 13px; gap: 6px; text-decoration: none;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 Import CSV
             </a>
+            {% endif %}
         </div>
     </div>
 
@@ -95,15 +97,22 @@
                     </td>
                     <td>
                         <div class="action-btns">
+                            {% if request.user_permissions.courses.edit %}
                             <button type="button" class="btn-action btn-action-edit" title="Chỉnh sửa trạng thái" onclick="openEditEnrollmentModal(this)" style="border: none; background: none; cursor: pointer; padding: 6px; color: #3b82f6;">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                             </button>
+                            {% endif %}
+                            {% if request.user_permissions.courses.delete %}
                             <form method="post" action="{% url 'courses:enrollment_remove' enrollment.pk %}" style="display: inline;" onsubmit="return confirm('Xóa sinh viên này khỏi lớp?');" novalidate>
                                 {% csrf_token %}
                                 <button type="submit" class="btn-action btn-action-delete" title="Xóa" style="border: none; background: none; cursor: pointer; padding: 6px; color: #dc2626;">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                 </button>
                             </form>
+                            {% endif %}
+                            {% if not request.user_permissions.courses.edit and not request.user_permissions.courses.delete %}
+                            <span style="font-size:12px;color:var(--text-muted);font-style:italic;">Chỉ xem</span>
+                            {% endif %}
                         </div>
                     </td>
                 </tr>

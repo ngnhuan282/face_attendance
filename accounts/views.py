@@ -8,12 +8,12 @@ from django.views.decorators.http import require_POST
 from django.db import transaction
 
 from .constants import ADMIN_GROUP_NAME, TEACHER_GROUP_NAME, STUDENT_GROUP_NAME
-from .permissions import group_required
+from .permissions import group_required, module_permission_required
 from .models import Teacher
 from .forms import AccountForm, AccountEditForm, TeacherProfileForm
 
 
-@group_required(ADMIN_GROUP_NAME)
+@module_permission_required('accounts', 'view')
 def account_list(request):
     """Trang quản lý tài khoản – chỉ Admin."""
     from django.db.models import Q
@@ -257,6 +257,7 @@ def _unlink_student(user):
 @require_POST
 def account_delete(request, pk):
     """Xóa tài khoản – chỉ Admin (AJAX)."""
+    from django.db.models import ProtectedError
     user = get_object_or_404(User, pk=pk)
 
     if user == request.user:
@@ -267,15 +268,114 @@ def account_delete(request, pk):
     Student.objects.filter(user=user).update(user=None)
 
     username = user.username
-    user.delete()
-    messages.success(request, f'Xóa tài khoản {username} thành công.')
-    return JsonResponse({'success': True})
+    try:
+        user.delete()
+        messages.success(request, f'Xóa tài khoản {username} thành công.')
+        return JsonResponse({'success': True})
+    except ProtectedError as e:
+        # Gather related objects that are blocking deletion
+        blocked_by = []
+        for obj in e.protected_objects:
+            blocked_by.append(str(obj))
+
+        if blocked_by:
+            detail = '; '.join(blocked_by[:5])
+            if len(blocked_by) > 5:
+                detail += f' … và {len(blocked_by) - 5} mục khác'
+            msg = (
+                f'Không thể xóa tài khoản <strong>{username}</strong> vì giảng viên này '
+                f'đang phụ trách {len(blocked_by)} lớp học phần. '
+                f'Vui lòng gán giảng viên khác cho các lớp trước khi xóa.<br>'
+                f'<small style="opacity:.75">Lớp liên quan: {detail}</small>'
+            )
+        else:
+            msg = f'Không thể xóa tài khoản {username} vì dữ liệu đang được tham chiếu ở nơi khác.'
+
+        return JsonResponse({'error': msg, 'html': True}, status=409)
 
 
 @group_required(ADMIN_GROUP_NAME)
 def permission_matrix(request):
     """Trang phân quyền hệ thống – chỉ Admin."""
     return render(request, 'accounts/permissions.html', {'active_menu': 'permissions'})
+
+
+# Default permissions used as fallback when DB has no record yet
+_DEFAULT_PERMS = {
+    'admin': {
+        'accounts':      {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'students':      {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'attendance':    {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'courses':       {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'schedules':     {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'academics':     {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'reports':       {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'recognition':   {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'permissions':   {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'notifications': {'view': True,  'add': True,  'edit': True,  'delete': True},
+    },
+    'teacher': {
+        'accounts':      {'view': False, 'add': False, 'edit': False, 'delete': False},
+        'students':      {'view': True,  'add': False, 'edit': True,  'delete': False},
+        'attendance':    {'view': True,  'add': True,  'edit': True,  'delete': False},
+        'courses':       {'view': True,  'add': False, 'edit': False, 'delete': False},
+        'schedules':     {'view': True,  'add': False, 'edit': False, 'delete': False},
+        'academics':     {'view': True,  'add': False, 'edit': False, 'delete': False},
+        'reports':       {'view': True,  'add': False, 'edit': False, 'delete': False},
+        'recognition':   {'view': True,  'add': False, 'edit': False, 'delete': False},
+        'permissions':   {'view': False, 'add': False, 'edit': False, 'delete': False},
+        'notifications': {'view': True,  'add': True,  'edit': False, 'delete': False},
+    },
+}
+
+
+@group_required(ADMIN_GROUP_NAME)
+def api_get_permissions(request):
+    """API GET – Trả về ma trận quyền hiện tại cho tất cả role."""
+    from .models import RolePermission
+    import copy
+    result = copy.deepcopy(_DEFAULT_PERMS)
+    for rp in RolePermission.objects.all():
+        if rp.role in result:
+            result[rp.role] = rp.permissions
+    return JsonResponse({'permissions': result}, json_dumps_params={'ensure_ascii': False})
+
+
+@group_required(ADMIN_GROUP_NAME)
+@require_POST
+def api_save_permissions(request):
+    """API POST – Lưu ma trận quyền cho một role vào DB."""
+    import json
+    from .models import RolePermission
+    try:
+        data = json.loads(request.body)
+        role = data.get('role')
+        permissions = data.get('permissions')
+
+        if role not in ('admin', 'teacher'):
+            return JsonResponse({'error': 'Role không hợp lệ.'}, status=400)
+
+        if not isinstance(permissions, dict):
+            return JsonResponse({'error': 'Dữ liệu quyền không hợp lệ.'}, status=400)
+
+        # Validate structure: each module must have view/add/edit/delete booleans
+        for module_id, perms in permissions.items():
+            if not isinstance(perms, dict):
+                return JsonResponse({'error': f'Module {module_id} có dữ liệu không hợp lệ.'}, status=400)
+            for action in ('view', 'add', 'edit', 'delete'):
+                if action not in perms or not isinstance(perms[action], bool):
+                    return JsonResponse({'error': f'Module {module_id} thiếu hoặc sai kiểu action {action}.'}, status=400)
+
+        RolePermission.objects.update_or_create(
+            role=role,
+            defaults={'permissions': permissions},
+        )
+        return JsonResponse({'success': True, 'role': role})
+
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Dữ liệu JSON không hợp lệ.'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 
 @login_required
