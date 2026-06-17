@@ -694,8 +694,7 @@ def student_profile(request):
       - update_photo: đổi ảnh khuôn mật → re-encode
       - change_password: đổi mật khẩu
     """
-    from .forms import StudentInfoForm, StudentPhotoForm, StudentPasswordForm
-    from recognition.encoding_tasks import enqueue_student_encoding_update
+    from .forms import StudentInfoForm, StudentPasswordForm
     from courses.models import Enrollment
     from academics.models import Semester
 
@@ -720,7 +719,6 @@ def student_profile(request):
 
     # Khởi tạo các form
     info_form = StudentInfoForm(initial={'email': student.email, 'phone': student.phone})
-    photo_form = StudentPhotoForm()
     password_form = StudentPasswordForm(user_instance=user)
 
     if request.method == 'POST':
@@ -736,16 +734,6 @@ def student_profile(request):
                 messages.success(request, 'Cập nhật thông tin thành công!')
                 return redirect('students:student_profile')
 
-        # ---- Cập nhật ảnh khuôn mật ----
-        elif action == 'update_photo':
-            photo_form = StudentPhotoForm(request.POST, request.FILES)
-            if photo_form.is_valid():
-                student.photo = photo_form.cleaned_data['photo']
-                student.save(update_fields=['photo'])
-                # Re-encode async
-                enqueue_student_encoding_update(student.pk)
-                messages.success(request, 'Đã cập nhật ảnh khuôn mật! Hệ thống đang xử lý nhận diện...')
-                return redirect('students:student_profile')
 
         # ---- Đổi mật khẩu ----
         elif action == 'change_password':
@@ -761,7 +749,6 @@ def student_profile(request):
         'student': student,
         'user': user,
         'info_form': info_form,
-        'photo_form': photo_form,
         'password_form': password_form,
         'enrollments': enrollments,
         'current_semester': current_semester,

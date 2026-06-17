@@ -237,27 +237,9 @@
                             {% endif %}
                         </div>
 
-                        <form method="post" enctype="multipart/form-data" class="sp-form" id="form-photo">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="update_photo">
-                            <div class="sp-field">
-                                <label class="sp-label">Chọn Ảnh Mới</label>
-                                <div class="sp-file-drop" id="file-drop-zone">
-                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                                    <p class="sp-file-text">Kéo thả ảnh vào đây hoặc</p>
-                                    <label for="{{ photo_form.photo.id_for_label }}" class="sp-file-btn">Chọn từ máy tính</label>
-                                    {{ photo_form.photo }}
-                                </div>
-                                {% if photo_form.photo.errors %}<div class="sp-error">{{ photo_form.photo.errors.0 }}</div>{% endif %}
-                                <p class="sp-field-hint">Ảnh rõ mặt, nền sáng · JPG/PNG · Tối đa 5MB</p>
-                            </div>
-                            <div class="sp-form-actions">
-                                <button type="submit" class="sp-btn-purple" id="btn-upload-photo">
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                                    Cập Nhật Ảnh & Mã Hóa
-                                </button>
-                            </div>
-                        </form>
+                        <div style="padding: 16px; background: #f8fafc; border-radius: 8px; text-align: center; color: var(--text-light); margin-top: 16px;">
+                            <p style="margin: 0; font-size: 14px;">Liên hệ Quản trị viên để được cập nhật ảnh</p>
+                        </div>
                     </div>
 
                     <!-- Các lớp HP đang học -->
