@@ -30,6 +30,7 @@
 
         <!-- Navigation -->
         <nav class="sidebar-nav">
+            {% if request.is_admin_group %}
             <div class="sidebar-nav-label">Tổng Quan</div>
             <a href="{% url 'dashboard' %}" class="sidebar-link {% if active_menu == 'dashboard' %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -38,6 +39,7 @@
                 </svg>
                 Dashboard
             </a>
+            {% endif %}
 
             <div class="sidebar-nav-label">Quản Lý</div>
 
@@ -114,6 +116,9 @@
                 </svg>
                 Lịch Học
             </a>
+            {% endif %}
+
+            <div class="sidebar-nav-label">Cá Nhân</div>
             <a href="{% url 'schedules:timetable_view' %}" class="sidebar-link {% if active_menu == 'timetable' %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
@@ -124,7 +129,6 @@
                 </svg>
                 Thời Khóa Biểu
             </a>
-            {% endif %}
 
             <div class="sidebar-nav-label">Phân Tích</div>
             <a href="{% url 'reports:index' %}" class="sidebar-link {% if active_menu == 'reports' %}active{% endif %}">

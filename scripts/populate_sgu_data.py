@@ -21,6 +21,8 @@ def run():
     # 1. CLEAN EXISTING DATA
     # -------------------------------------------------------------
     print("Clearing existing database records in correct order...")
+    from accounts.models import RolePermission
+    RolePermission.objects.all().delete()
     Enrollment.objects.all().delete()
     CourseClass.objects.all().delete()
     Course.objects.all().delete()
@@ -46,7 +48,18 @@ def run():
     print("Existing data cleared.")
 
     # -------------------------------------------------------------
-    # 2. CREATE / ENSURE ADMIN ACCOUNT
+    # 2. INIT ROLE PERMISSIONS
+    # -------------------------------------------------------------
+    print("Initializing Role Permissions...")
+    from accounts.models import RolePermission
+    from accounts.middleware import _DEFAULT_PERMS
+
+    for role_name, perms in _DEFAULT_PERMS.items():
+        RolePermission.objects.create(role=role_name, permissions=perms)
+    print("Role permissions initialized.")
+
+    # -------------------------------------------------------------
+    # 3. CREATE / ENSURE ADMIN ACCOUNT
     # -------------------------------------------------------------
     print("Creating admin account...")
     if not User.objects.filter(username='admin').exists():

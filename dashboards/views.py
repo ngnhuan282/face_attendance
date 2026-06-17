@@ -34,6 +34,10 @@ def dashboard(request):
     if not (request.is_admin_group or request.is_teacher_group):
         return redirect('login')
 
+    if request.is_teacher_group and not request.is_admin_group:
+        # Giảng viên không có quyền xem dashboard thống kê chung
+        return redirect('students:list')
+
     # Nếu là Giảng viên, có thể lọc bớt dữ liệu (ví dụ chỉ lấy các lớp của GV đó)
     # Tuy nhiên, đối với "Tổng Quan" cấp trường, thường Admin thấy tất cả, GV cũng có thể thấy tổng quan
     # hoặc chỉ thấy của mình. Ở đây ta ưu tiên tính trên toàn trường (Admin view).
