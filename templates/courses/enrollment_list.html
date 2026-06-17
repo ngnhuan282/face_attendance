@@ -51,10 +51,10 @@
         </div>
         <div class="table-toolbar">
             {% if request.user_permissions.courses.add %}
-            <a href="{% url 'courses:enrollment_import' courseclass.pk %}" class="btn-primary" style="padding: 8px 16px; font-size: 13px; gap: 6px; text-decoration: none;">
+            <button type="button" onclick="openImportModal()" class="btn-primary" style="padding: 8px 16px; font-size: 13px; gap: 6px; border: none; cursor: pointer;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 Import CSV
-            </a>
+            </button>
             {% endif %}
         </div>
     </div>
@@ -241,6 +241,256 @@ function submitEditEnrollmentForm(e) {
         errorDiv.textContent = err.message || 'Lỗi hệ thống';
         errorDiv.style.display = 'block';
         btn.disabled = false;
+    });
+}
+</script>
+
+<!-- Modal Import Excel -->
+<div id="importModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center;">
+    <div class="card" style="width: 700px; max-height: 90vh; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div class="card-title" style="margin: 0;">Nhập Danh Sách (Excel/CSV)</div>
+            <button type="button" onclick="closeImportModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light);">×</button>
+        </div>
+        
+        <div id="import_step_1">
+            <div style="margin-bottom: 20px; font-size: 13px; color: var(--text-medium); line-height: 1.5;">
+                Vui lòng chuẩn bị file Excel/CSV chứa 1 cột bắt buộc:<br>
+                <strong>MSSV</strong> (Mã sinh viên). (Hệ thống sẽ tự hiểu là lớp này).
+            </div>
+            <div id="import_error_message" style="display: none; padding: 12px; background: #fee2e2; border: 1.5px solid #fca5a5; border-radius: 6px; margin-bottom: 16px; color: #dc2626; font-size: 13px;"></div>
+            
+            <form method="post" action="{% url 'courses:enrollment_import_preview' %}" enctype="multipart/form-data" id="importForm" onsubmit="submitImportForm(event)" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="courseclass_id" value="{{ courseclass.pk }}">
+                <div style="margin-bottom: 20px;">
+                    <input type="file" name="csv_file" accept=".csv" required style="width: 100%; padding: 10px; border: 1.5px dashed var(--border-color); border-radius: 6px; cursor: pointer; font-family: var(--font-base); font-size: 13px;">
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <button type="submit" class="btn-primary" id="btn_submit_import" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; flex: 1;">
+                        Xem Trước Dữ Liệu
+                    </button>
+                    <button type="button" class="btn-secondary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; flex: 1;" onclick="closeImportModal()">
+                        Đóng
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div id="import_step_2" style="display: none; flex-direction: column; flex: 1; min-height: 0;">
+            <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
+                    Kết Quả Xem Trước (<span id="preview_valid_count" style="color: #16a34a;">0</span> hợp lệ, <span id="preview_invalid_count" style="color: #dc2626;">0</span> lỗi)
+                </div>
+                <button type="button" onclick="backToImportStep1()" class="btn-secondary" style="padding: 4px 12px; font-size: 12px;">← Chọn lại file</button>
+            </div>
+            <div style="flex: 1; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 16px; min-height: 200px;">
+                <table class="data-table" style="margin: 0; min-width: 100%;">
+                    <thead style="position: sticky; top: 0; z-index: 10; background: var(--bg-card);">
+                        <tr>
+                            <th style="font-size: 12px; padding: 8px;">Dòng</th>
+                            <th style="font-size: 12px; padding: 8px;">MSSV</th>
+                            <th style="font-size: 12px; padding: 8px;">Sinh Viên</th>
+                            <th style="font-size: 12px; padding: 8px;">Mã Lớp</th>
+                            <th style="font-size: 12px; padding: 8px;">Trạng Thái</th>
+                        </tr>
+                    </thead>
+                    <tbody id="preview_tbody">
+                    </tbody>
+                </table>
+            </div>
+            <div id="confirm_error_message" style="display: none; padding: 12px; background: #fee2e2; border: 1.5px solid #fca5a5; border-radius: 6px; margin-bottom: 16px; color: #dc2626; font-size: 13px;"></div>
+            <div style="display: flex; gap: 12px;">
+                <button type="button" class="btn-primary" id="btn_confirm_import" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; flex: 1;" onclick="submitConfirmImport()">
+                    Xác Nhận Lưu (<span id="btn_confirm_count">0</span>)
+                </button>
+                <button type="button" class="btn-secondary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; flex: 1;" onclick="closeImportModal()">
+                    Hủy Bỏ
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openImportModal() {
+    const modal = document.getElementById('importModal');
+    modal.style.display = 'flex';
+    document.getElementById('import_step_1').style.display = 'block';
+    document.getElementById('import_step_2').style.display = 'none';
+    document.getElementById('import_error_message').style.display = 'none';
+    document.getElementById('importForm').reset();
+    previewDataRows = [];
+}
+
+function closeImportModal() {
+    const modal = document.getElementById('importModal');
+    modal.style.display = 'none';
+}
+
+let previewDataRows = [];
+
+function submitImportForm(event) {
+    event.preventDefault();
+    const form = event.target;
+    const errorDiv = document.getElementById('import_error_message');
+    const submitBtn = document.getElementById('btn_submit_import');
+    
+    errorDiv.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = 'Đang đọc file...';
+    
+    Swal.fire({
+        title: 'Đang đọc file...',
+        text: 'Vui lòng chờ trong giây lát',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading()
+        }
+    });
+    
+    fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => { throw new Error(data.error || 'Lỗi khi đọc file'); });
+        }
+        return response.json();
+    })
+    .then(data => {
+        Swal.close();
+        if (data.success && data.data) {
+            previewDataRows = data.data;
+            renderPreviewTable();
+            document.getElementById('import_step_1').style.display = 'none';
+            document.getElementById('import_step_2').style.display = 'flex';
+        }
+    })
+    .catch(error => {
+        Swal.close();
+        errorDiv.textContent = error.message || 'Lỗi khi import file';
+        errorDiv.style.display = 'block';
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Xem Trước Dữ Liệu';
+    });
+}
+
+function renderPreviewTable() {
+    const tbody = document.getElementById('preview_tbody');
+    tbody.innerHTML = '';
+    
+    let validCount = 0;
+    let invalidCount = 0;
+    
+    previewDataRows.forEach(row => {
+        const tr = document.createElement('tr');
+        if (row.status === 'valid') {
+            validCount++;
+            tr.innerHTML = `
+                <td style="font-size: 12px; padding: 6px 8px;">${row.row_num}</td>
+                <td style="font-size: 12px; padding: 6px 8px; font-weight: 600;">${row.student_code}</td>
+                <td style="font-size: 12px; padding: 6px 8px;">${row.student_name || '-'}</td>
+                <td style="font-size: 12px; padding: 6px 8px; font-weight: 600;">${row.class_code}</td>
+                <td style="font-size: 12px; padding: 6px 8px; color: #16a34a; font-weight: 600;">Hợp lệ</td>
+            `;
+        } else {
+            invalidCount++;
+            tr.style.background = '#fef2f2';
+            tr.innerHTML = `
+                <td style="font-size: 12px; padding: 6px 8px; color: #dc2626;">${row.row_num}</td>
+                <td style="font-size: 12px; padding: 6px 8px; font-weight: 600; color: #dc2626;">${row.student_code}</td>
+                <td style="font-size: 12px; padding: 6px 8px; color: #dc2626;">${row.student_name || '-'}</td>
+                <td style="font-size: 12px; padding: 6px 8px; font-weight: 600; color: #dc2626;">${row.class_code}</td>
+                <td style="font-size: 12px; padding: 6px 8px; color: #dc2626; font-weight: 600;">Lỗi: ${row.error}</td>
+            `;
+        }
+        tbody.appendChild(tr);
+    });
+    
+    document.getElementById('preview_valid_count').textContent = validCount;
+    document.getElementById('preview_invalid_count').textContent = invalidCount;
+    
+    const confirmBtn = document.getElementById('btn_confirm_import');
+    document.getElementById('btn_confirm_count').textContent = validCount;
+    
+    if (validCount === 0) {
+        confirmBtn.disabled = true;
+        confirmBtn.style.opacity = '0.5';
+        confirmBtn.style.cursor = 'not-allowed';
+    } else {
+        confirmBtn.disabled = false;
+        confirmBtn.style.opacity = '1';
+        confirmBtn.style.cursor = 'pointer';
+    }
+}
+
+function backToImportStep1() {
+    document.getElementById('import_step_2').style.display = 'none';
+    document.getElementById('import_step_1').style.display = 'block';
+    document.getElementById('importForm').reset();
+    document.getElementById('import_error_message').style.display = 'none';
+}
+
+function submitConfirmImport() {
+    const validRows = previewDataRows.filter(r => r.status === 'valid');
+    if (validRows.length === 0) return;
+    
+    const errorDiv = document.getElementById('confirm_error_message');
+    const submitBtn = document.getElementById('btn_confirm_import');
+    
+    errorDiv.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = 'Đang lưu...';
+    
+    Swal.fire({
+        title: 'Đang lưu dữ liệu...',
+        text: 'Hệ thống đang xử lý, vui lòng chờ',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading()
+        }
+    });
+    
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch('{% url "courses:enrollment_import_confirm" %}', {
+        method: 'POST',
+        body: JSON.stringify({ rows: validRows }),
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(res => res.json().then(data => { if (!res.ok) throw new Error(data.error); return data; }))
+    .then(data => {
+        if (data.success) {
+            let htmlContent = data.message;
+            if (data.errors && data.errors.length > 0) {
+                htmlContent += '<br><br><strong>Các lỗi:</strong><br><div style="max-height: 200px; overflow-y: auto; text-align: left; padding: 10px; background: #f8f9fa; border-radius: 4px; font-size: 13px;">' + data.errors.join('<br>') + '</div>';
+            }
+            
+            Swal.fire({
+                icon: data.errors && data.errors.length > 0 ? 'warning' : 'success',
+                title: 'Hoàn tất!',
+                html: htmlContent,
+                confirmButtonText: 'Đóng'
+            }).then(() => {
+                window.location.reload();
+            });
+        }
+    })
+    .catch(error => {
+        Swal.close();
+        errorDiv.textContent = error.message || 'Lỗi hệ thống';
+        errorDiv.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Xác Nhận Lưu (<span id="btn_confirm_count">' + validRows.length + '</span>)';
     });
 }
 </script>

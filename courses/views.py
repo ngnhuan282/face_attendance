@@ -404,8 +404,8 @@ def courseclass_detail(request, pk):
             from django.core.exceptions import PermissionDenied
             raise PermissionDenied
     
-    # Get enrolled students
-    enrollments = courseclass.enrollments.select_related('student').filter(is_active=True)
+    # Get enrolled students, ordered by newest first so recently added students appear at the top
+    enrollments = courseclass.enrollments.select_related('student').filter(is_active=True).order_by('-enrolled_at')
     
     # Search student
     search_query = request.GET.get('search', '')
@@ -459,7 +459,7 @@ def courseclass_detail(request, pk):
 @group_required(ADMIN_GROUP_NAME)
 def enrollment_all_list(request):
     """Danh sách tất cả đăng ký học phần (tổng hợp)"""
-    enrollments = Enrollment.objects.select_related('course_class__course', 'course_class__semester', 'student').all().order_by('id')
+    enrollments = Enrollment.objects.select_related('course_class__course', 'course_class__semester', 'student').all().order_by('-id')
     
     # Search
     search_query = request.GET.get('search', '')
@@ -497,7 +497,7 @@ def enrollment_all_list(request):
 def enrollment_list(request, courseclass_id):
     """Danh sách đăng ký học phần của lớp"""
     courseclass = get_object_or_404(CourseClass, pk=courseclass_id)
-    enrollments = courseclass.enrollments.select_related('student').all()
+    enrollments = courseclass.enrollments.select_related('student').all().order_by('-id')
     from django.core.paginator import Paginator
     paginator = Paginator(enrollments, 10)
     page_number = request.GET.get('page', 1)
@@ -662,8 +662,9 @@ def courseclass_export_excel(request, pk):
     """Xuất danh sách sinh viên của lớp học phần ra file Excel"""
     courseclass = get_object_or_404(CourseClass, pk=pk)
     enrollments = courseclass.enrollments.select_related('student', 'student__student_class', 'student__student_class__department').all().order_by('student__student_id')
-    from attendance.models import AttendanceRecord
+    from attendance.models import AttendanceRecord, AttendanceSession
     all_records = AttendanceRecord.objects.filter(session__course_class=courseclass)
+    sessions = AttendanceSession.objects.filter(course_class=courseclass).order_by('started_at')
     
     # GV chỉ được xuất danh sách lớp mình dạy
     if request.is_teacher_group and not request.is_admin_group:
@@ -702,6 +703,9 @@ def courseclass_export_excel(request, pk):
     
     # Header Row
     headers = ["STT", "MSSV", "Họ Tên", "Lớp Sinh Hoạt", "Ngành", "Trạng Thái", "Ngày Đăng Ký", "Tỉ lệ đi học"]
+    for s in sessions:
+        headers.append(s.started_at.strftime("%d/%m/%Y"))
+        
     for col_num, header_title in enumerate(headers, 1):
         cell = ws.cell(row=4, column=col_num, value=header_title)
         cell.font = header_font
@@ -731,16 +735,51 @@ def courseclass_export_excel(request, pk):
             enrollment.enrolled_at.strftime("%d/%m/%Y"),
             attendance_rate
         ]
+        
+        # Thêm các cột điểm danh
+        student_records_dict = {rec.session_id: rec.status for rec in student_records}
+        for s in sessions:
+            status = student_records_dict.get(s.id, None)
+            if status == 'present':
+                row.append("Có mặt")
+            elif status == 'absent':
+                row.append("Vắng")
+            elif status == 'late':
+                row.append("Đi trễ")
+            elif status == 'excused':
+                row.append("Có phép")
+            else:
+                row.append("-")
+                
         for col_num, cell_value in enumerate(row, 1):
             cell = ws.cell(row=row_num+4, column=col_num, value=cell_value)
             cell.border = border
-            if col_num in [1, 2, 6, 7, 8]:
+            if col_num in [1, 2, 6, 7, 8] or col_num > 8:
                 cell.alignment = align_center
             else:
                 cell.alignment = align_left
                 
+            # Đổi màu cho trạng thái điểm danh
+            if cell_value == "Có mặt":
+                cell.fill = PatternFill(start_color="dcfce7", end_color="dcfce7", fill_type="solid")
+                cell.font = Font(color="166534")
+            elif cell_value == "Vắng":
+                cell.fill = PatternFill(start_color="fee2e2", end_color="fee2e2", fill_type="solid")
+                cell.font = Font(color="991b1b")
+            elif cell_value == "Đi trễ":
+                cell.fill = PatternFill(start_color="fef9c3", end_color="fef9c3", fill_type="solid")
+                cell.font = Font(color="854d0e")
+            elif cell_value == "Có phép":
+                cell.fill = PatternFill(start_color="e0e7ff", end_color="e0e7ff", fill_type="solid")
+                cell.font = Font(color="3730a3")
+                
     # Auto-adjust column widths
     column_widths = {'A': 6, 'B': 15, 'C': 30, 'D': 15, 'E': 25, 'F': 15, 'G': 15, 'H': 12}
+    # Adjust widths for dynamic session columns (I, J, K...)
+    for idx in range(len(sessions)):
+        col_letter = openpyxl.utils.get_column_letter(idx + 9)
+        column_widths[col_letter] = 15
+        
     for col, width in column_widths.items():
         ws.column_dimensions[col].width = width
         
@@ -790,77 +829,151 @@ def enrollment_export_all(request):
 
 @group_required(ADMIN_GROUP_NAME)
 @require_http_methods(["POST"])
-def enrollment_import_all(request):
-    """Import danh sách sinh viên vào các lớp học phần từ file CSV"""
-    if request.method == 'POST':
-        try:
-            csv_file = request.FILES.get('csv_file')
-            if not csv_file:
-                return JsonResponse({'error': 'Chưa chọn file'}, status=400)
+def enrollment_import_preview(request):
+    """Đọc file CSV và trả về dữ liệu xem trước"""
+    try:
+        csv_file = request.FILES.get('csv_file')
+        courseclass_id = request.POST.get('courseclass_id')
+        
+        if not csv_file:
+            return JsonResponse({'error': 'Chưa chọn file'}, status=400)
+        
+        if not csv_file.name.endswith('.csv'):
+            return JsonResponse({'error': 'Vui lòng chọn file CSV'}, status=400)
+        
+        from io import TextIOWrapper
+        import csv
+        stream = TextIOWrapper(csv_file.file, encoding='utf-8-sig')
+        csv_reader = csv.DictReader(stream)
+        
+        target_course_class = None
+        if courseclass_id:
+            try:
+                target_course_class = CourseClass.objects.get(pk=courseclass_id)
+            except CourseClass.DoesNotExist:
+                pass
+
+        preview_data = []
+        for row_num, row in enumerate(csv_reader, start=2):
+            student_code = row.get('student_code', '').strip() or row.get('student_id', '').strip() or row.get('MSSV', '').strip()
             
-            if not csv_file.name.endswith('.csv'):
-                return JsonResponse({'error': 'Vui lòng chọn file CSV'}, status=400)
+            # If target_course_class is provided, use its class_code. Otherwise, read from CSV.
+            if target_course_class:
+                class_code = target_course_class.class_code
+            else:
+                class_code = row.get('class_code', '').strip() or row.get('Ma Lop HP', '').strip()
             
-            from io import TextIOWrapper
-            import csv
-            stream = TextIOWrapper(csv_file.file, encoding='utf-8-sig')
-            csv_reader = csv.DictReader(stream)
+            row_data = {
+                'row_num': row_num,
+                'student_code': student_code,
+                'class_code': class_code,
+                'status': 'valid',
+                'error': ''
+            }
             
-            imported_count = 0
-            errors = []
+            if not student_code or not class_code:
+                row_data['status'] = 'invalid'
+                row_data['error'] = 'Mã sinh viên hoặc Mã lớp trống'
+                preview_data.append(row_data)
+                continue
             
-            from django.db import transaction
-            
-            with transaction.atomic():
-                for row_num, row in enumerate(csv_reader, start=2):
-                    try:
-                        with transaction.atomic():
-                            student_code = row.get('student_code', '').strip() or row.get('student_id', '').strip() or row.get('MSSV', '').strip()
-                            class_code = row.get('class_code', '').strip() or row.get('Ma Lop HP', '').strip()
-                            
-                            if not student_code or not class_code:
-                                errors.append(f'Dòng {row_num}: Mã sinh viên hoặc Mã lớp trống')
-                                continue
-                            
-                            try:
-                                student = Student.objects.get(student_id=student_code)
-                            except Student.DoesNotExist:
-                                errors.append(f'Dòng {row_num}: Không tìm thấy SV {student_code}')
-                                continue
-                                
-                            try:
-                                course_class = CourseClass.objects.select_for_update().get(class_code=class_code)
-                            except CourseClass.DoesNotExist:
-                                errors.append(f'Dòng {row_num}: Không tìm thấy Lớp HP {class_code}')
-                                continue
-                            except CourseClass.MultipleObjectsReturned:
-                                course_class = CourseClass.objects.select_for_update().filter(class_code=class_code).order_by('-id').first()
-                            
-                            if Enrollment.objects.filter(course_class=course_class, student=student).exists():
-                                errors.append(f'Dòng {row_num}: {student_code} đã đ.ký {class_code}')
-                                continue
-                            
-                            current_count = course_class.enrollments.filter(is_active=True).count()
-                            if current_count >= course_class.max_students:
-                                errors.append(f'Dòng {row_num}: Lớp {class_code} đã đầy')
-                                continue
-                            
-                            Enrollment.objects.create(
-                                course_class=course_class,
-                                student=student,
-                                is_active=True
-                            )
-                            imported_count += 1
-                    except Exception as e:
-                        errors.append(f'Dòng {row_num}: {str(e)}')
-            
-            message = f'Import thành công {imported_count} đăng ký.'
-            if errors:
-                message += f' Có {len(errors)} lỗi.'
-                # Trả về JSON để JS xử lý và show cả lỗi
-                return JsonResponse({'success': True, 'message': message, 'errors': errors})
+            try:
+                student = Student.objects.get(student_id=student_code)
+                row_data['student_name'] = student.full_name
+            except Student.DoesNotExist:
+                row_data['status'] = 'invalid'
+                row_data['error'] = f'Không tìm thấy SV {student_code}'
+                preview_data.append(row_data)
+                continue
                 
-            messages.success(request, message)
-            return JsonResponse({'success': True, 'message': message})
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=400)
+            try:
+                if target_course_class:
+                    course_class = target_course_class
+                else:
+                    course_class = CourseClass.objects.filter(class_code=class_code).order_by('-id').first()
+                    if not course_class:
+                        row_data['status'] = 'invalid'
+                        row_data['error'] = f'Không tìm thấy Lớp HP {class_code}'
+                        preview_data.append(row_data)
+                        continue
+                row_data['course_name'] = course_class.course.course_name
+                row_data['courseclass_id'] = course_class.id  # Save this to confirm step
+            except Exception as e:
+                row_data['status'] = 'invalid'
+                row_data['error'] = str(e)
+                preview_data.append(row_data)
+                continue
+            
+            if Enrollment.objects.filter(course_class=course_class, student=student).exists():
+                row_data['status'] = 'invalid'
+                row_data['error'] = f'{student_code} đã đăng ký {class_code}'
+                preview_data.append(row_data)
+                continue
+            
+            current_count = course_class.enrollments.filter(is_active=True).count()
+            if current_count >= course_class.max_students:
+                row_data['status'] = 'invalid'
+                row_data['error'] = f'Lớp {class_code} đã đầy'
+                preview_data.append(row_data)
+                continue
+            
+            preview_data.append(row_data)
+            
+        return JsonResponse({'success': True, 'data': preview_data})
+    except Exception as e:
+        return JsonResponse({'error': f'Lỗi xử lý file: {str(e)}'}, status=400)
+
+
+@group_required(ADMIN_GROUP_NAME)
+@require_http_methods(["POST"])
+def enrollment_import_confirm(request):
+    """Lưu dữ liệu import sau khi đã xác nhận"""
+    import json
+    try:
+        data = json.loads(request.body)
+        valid_rows = data.get('rows', [])
+        
+        imported_count = 0
+        errors = []
+        from django.db import transaction
+        
+        with transaction.atomic():
+            for row in valid_rows:
+                student_code = row.get('student_code')
+                class_code = row.get('class_code')
+                
+                try:
+                    with transaction.atomic():
+                        student = Student.objects.get(student_id=student_code)
+                        courseclass_id = row.get('courseclass_id')
+                        
+                        if courseclass_id:
+                            course_class = CourseClass.objects.select_for_update().get(pk=courseclass_id)
+                        else:
+                            course_class = CourseClass.objects.select_for_update().filter(class_code=class_code).order_by('-id').first()
+                        
+                        if Enrollment.objects.filter(course_class=course_class, student=student).exists():
+                            errors.append(f'{student_code} đã đ.ký {class_code}')
+                            continue
+                        
+                        current_count = course_class.enrollments.filter(is_active=True).count()
+                        if current_count >= course_class.max_students:
+                            errors.append(f'Lớp {class_code} đã đầy')
+                            continue
+                        
+                        Enrollment.objects.create(
+                            course_class=course_class,
+                            student=student,
+                            is_active=True
+                        )
+                        imported_count += 1
+                except Exception as e:
+                    errors.append(f'Lỗi dòng {row.get("row_num")}: {str(e)}')
+        
+        message = f'Import thành công {imported_count} sinh viên'
+        if errors:
+            message += f'. Có {len(errors)} lỗi.'
+            
+        return JsonResponse({'success': True, 'message': message, 'errors': errors})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)

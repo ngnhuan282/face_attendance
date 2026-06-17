@@ -373,9 +373,8 @@ def run():
             continue
 
         print(f"Processing sheet {sheet} ({len(df)} rows)...")
-        df_subset = df.head(40)
 
-        for _, row in df_subset.iterrows():
+        for _, row in df.iterrows():
             if pd.isnull(row['Mã SV']):
                 continue
 
@@ -525,16 +524,24 @@ def run():
     courses_list     = list(Course.objects.all())
 
     # Tạo 2–3 lớp học phần cho mỗi học phần
-    # Mã lớp HP giống lớp sinh hoạt: {dep_code}12{last_digit_year}{class_num}
-    # Ví dụ: DCT1231, DKP1232...
+    # Mã lớp HP giống lớp sinh hoạt: {dep_code}12{last_digit_year}{class_num:02d}
+    # Ví dụ: DCT12501, DCT12502...
     ay_year = active_semester.academic_year.name.split('-')[0].strip()   # "2025 - 2026" -> "2025"
     year_digit = ay_year[-1]   # 2025 -> '5'
-
+    
+    dep_class_counter = {}
+    
     for course_obj in courses_list:
         num_classes = random.randint(2, 3)
         dep_code = course_obj.department.code
-        for cls_idx in range(1, num_classes + 1):
-            class_code = f"{dep_code}12{year_digit}{cls_idx}"
+        if dep_code not in dep_class_counter:
+            dep_class_counter[dep_code] = 1
+            
+        for _ in range(num_classes):
+            cls_idx = dep_class_counter[dep_code]
+            class_code = f"{dep_code}12{year_digit}{cls_idx:02d}"
+            dep_class_counter[dep_code] += 1
+            
             if CourseClass.objects.filter(course=course_obj, semester=active_semester, class_code=class_code).exists():
                 continue
             t_obj = random.choice(teachers_list)
@@ -543,7 +550,7 @@ def run():
                 semester=active_semester,
                 teacher=t_obj,
                 class_code=class_code,
-                max_students=random.choice([40, 50, 60]),
+                max_students=1000,
                 total_sessions=15
             )
             class_instances.append(cc)

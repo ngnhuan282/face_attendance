@@ -195,6 +195,12 @@ def schedule_create_bulk(request):
         if start_date > end_date:
             return JsonResponse({'error': 'Ngày bắt đầu không được lớn hơn ngày kết thúc'}, status=400)
             
+        days_diff = (end_date - start_date).days
+        if days_diff < 42:
+            return JsonResponse({'error': 'Khoảng thời gian tạo lịch học phải tối thiểu 7 tuần.'}, status=400)
+        if days_diff > 105:
+            return JsonResponse({'error': 'Khoảng thời gian tạo lịch học không được vượt quá 15 tuần.'}, status=400)
+            
         dates_to_create = []
         current_date = start_date
         
@@ -256,7 +262,7 @@ def schedule_create_bulk(request):
             return JsonResponse({'error': 'Không có buổi học nào được tạo. Có thể do chọn trùng lịch hoặc khoảng thời gian không khớp.'}, status=400)
             
         messages.success(request, f'Tạo thành công {created_count} buổi học!')
-        return JsonResponse({'success': True, 'redirect_url': f'?courseclass_id={courseclass_id}&page=999999'})
+        return JsonResponse({'success': True})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
@@ -422,9 +428,15 @@ def timetable_view(request):
     grid = [[None for _ in range(7)] for _ in range(10)]
     for schedule in schedules:
         day_idx = (schedule.date - monday).days
-        period_idx = schedule.start_period - 1
-        if 0 <= day_idx < 7 and 0 <= period_idx < 10:
-            grid[period_idx][day_idx] = schedule
+        start_p = schedule.start_period - 1
+        end_p = schedule.end_period - 1
+        
+        if 0 <= day_idx < 7 and 0 <= start_p < 10:
+            schedule.rowspan = schedule.end_period - schedule.start_period + 1
+            grid[start_p][day_idx] = schedule
+            # Fill the spanned cells so the template can skip them
+            for p in range(start_p + 1, min(end_p + 1, 10)):
+                grid[p][day_idx] = 'spanned'
 
     context = {
         'active_menu': 'timetable',

@@ -82,8 +82,10 @@
                         Tiết {{ forloop.counter }}
                     </td>
                     {% for schedule in row %}
-                        <td style="padding: 4px; border-right: 1px solid var(--border-color); vertical-align: top; height: 60px;">
-                            {% if schedule %}
+                        {% if schedule == 'spanned' %}
+                            <!-- skip spanned cell -->
+                        {% elif schedule %}
+                        <td rowspan="{{ schedule.rowspan }}" style="padding: 4px; border-right: 1px solid var(--border-color); vertical-align: middle; height: 60px;">
                             <div class="schedule-block" 
                                  style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 8px; text-align: left; cursor: pointer; height: 100%; transition: all 0.2s;"
                                  onclick="openScheduleModal('{{ schedule.course_class.class_code|escapejs }}', '{{ schedule.course_class.course.course_name|escapejs }}', '{{ schedule.room.room_code|escapejs }}', '{{ schedule.start_period }}', '{{ schedule.end_period }}', '{{ schedule.pk }}', '{{ schedule.course_class.teacher.user.last_name|escapejs }} {{ schedule.course_class.teacher.user.first_name|escapejs }}')">
@@ -107,8 +109,10 @@
                                     GV: {{ schedule.course_class.teacher.user.last_name }} {{ schedule.course_class.teacher.user.first_name }}
                                 </div>
                             </div>
-                            {% endif %}
                         </td>
+                        {% else %}
+                        <td style="padding: 4px; border-right: 1px solid var(--border-color); vertical-align: top; height: 60px;"></td>
+                        {% endif %}
                     {% endfor %}
                 </tr>
                 {% endfor %}

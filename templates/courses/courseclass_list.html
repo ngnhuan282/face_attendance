@@ -81,7 +81,7 @@
                 {% for courseclass in page_obj %}
                 <tr data-courseclass-id="{{ courseclass.pk }}" data-class-code="{{ courseclass.class_code }}" data-course-id="{{ courseclass.course.pk }}" data-course-code="{{ courseclass.course.course_code }}" data-course-name="{{ courseclass.course.course_name }}" data-semester-id="{{ courseclass.semester.pk }}" data-semester-name="{{ courseclass.semester }}" data-teacher-id="{{ courseclass.teacher.pk }}" data-max-students="{{ courseclass.max_students }}" data-total-sessions="{{ courseclass.total_sessions }}">
                     <td style="font-weight: 600; color: var(--text-dark); font-family: monospace;">{{ courseclass.class_code }}</td>
-                    <td>{{ courseclass.course.course_code }}</td>
+                    <td><span style="font-weight: 500;">{{ courseclass.course.course_code }}</span> - {{ courseclass.course.course_name }}</td>
                     <td>{{ courseclass.semester }}</td>
                     <td>{{ courseclass.teacher }}</td>
                     <td style="text-align: center;">{{ courseclass.enrollments.count }} / {{ courseclass.max_students }}</td>
