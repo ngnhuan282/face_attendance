@@ -247,6 +247,16 @@ def studentclass_detail(request, pk):
         pk=pk
     )
     students_qs = sc.students.order_by('full_name')
+
+    # Thêm chức năng tìm kiếm
+    q = request.GET.get('q', '').strip()
+    if q:
+        students_qs = students_qs.filter(
+            Q(student_id__icontains=q) |
+            Q(full_name__icontains=q) |
+            Q(email__icontains=q)
+        )
+
     # Lấy tất cả sinh viên không thuộc lớp này để hiển thị trong phần thêm sinh viên
     available_students = Student.objects.exclude(student_class=sc).select_related('student_class').order_by('student_id')
 
@@ -262,6 +272,7 @@ def studentclass_detail(request, pk):
         'page_obj': page_obj,
         'paginator': paginator,
         'available_students': available_students,
+        'q': q,
     })
 
 
@@ -581,6 +592,73 @@ def student_import_csv_template(request):
     writer.writerow(['SV220001', 'Nguyễn Văn A', '01/01/2004', 'sva@email.com', '0901234567', 'DHKTPM17A'])
     writer.writerow(['SV220002', 'Trần Thị B', '15/03/2004', 'svb@email.com', '0902345678', 'DHKTPM17A'])
     writer.writerow(['SV220003', 'Lê Văn C', '', '', '', ''])
+    return response
+
+
+@group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
+def student_export_excel(request):
+    """Xuất danh sách sinh viên ra file Excel."""
+    import openpyxl
+    from openpyxl.styles import Font, Alignment
+    from django.http import HttpResponse
+
+    # Khởi tạo workbook
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "DanhSachSinhVien"
+
+    # Header
+    headers = ['STT', 'MSSV', 'Họ Tên', 'Ngày Sinh', 'Email', 'Điện Thoại', 'Lớp Sinh Hoạt', 'Ngành']
+    for col_num, header_title in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num, value=header_title)
+        cell.font = Font(bold=True)
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+
+    # Lấy dữ liệu giống như bộ lọc ở student_list
+    qs = Student.objects.select_related('student_class', 'student_class__department')
+
+    q = request.GET.get('q', '').strip()
+    if q:
+        qs = qs.filter(
+            Q(student_id__icontains=q) |
+            Q(full_name__icontains=q) |
+            Q(email__icontains=q)
+        )
+
+    class_id = request.GET.get('class_id', '').strip()
+    if class_id:
+        qs = qs.filter(student_class_id=class_id)
+
+    dept_id = request.GET.get('dept_id', '').strip()
+    if dept_id:
+        qs = qs.filter(student_class__department_id=dept_id)
+
+    qs = qs.order_by('student_class__class_code', 'student_id')
+
+    # Ghi dữ liệu
+    for row_num, student in enumerate(qs, 2):
+        ws.cell(row=row_num, column=1, value=row_num - 1)
+        ws.cell(row=row_num, column=2, value=student.student_id)
+        ws.cell(row=row_num, column=3, value=student.full_name)
+        ws.cell(row=row_num, column=4, value=student.date_of_birth.strftime('%d/%m/%Y') if student.date_of_birth else '')
+        ws.cell(row=row_num, column=5, value=student.email)
+        ws.cell(row=row_num, column=6, value=student.phone)
+        ws.cell(row=row_num, column=7, value=student.student_class.class_code if student.student_class else '')
+        ws.cell(row=row_num, column=8, value=student.student_class.department.name if student.student_class and student.student_class.department else '')
+
+    # Điều chỉnh độ rộng cột
+    ws.column_dimensions['B'].width = 15
+    ws.column_dimensions['C'].width = 30
+    ws.column_dimensions['D'].width = 15
+    ws.column_dimensions['E'].width = 30
+    ws.column_dimensions['F'].width = 15
+    ws.column_dimensions['G'].width = 20
+    ws.column_dimensions['H'].width = 30
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=danh_sach_sinh_vien.xlsx'
+    wb.save(response)
+
     return response
 
 

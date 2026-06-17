@@ -18,6 +18,7 @@ urlpatterns = [
     # Import CSV hàng loạt (Admin)
     path('import-csv/', views.student_import_csv, name='import_csv'),
     path('import-csv/template/', views.student_import_csv_template, name='import_csv_template'),
+    path('export-excel/', views.student_export_excel, name='export_excel'),
 
     # ── Student Classes ───────────────────────────
     path('classes/', views.studentclass_list, name='class_list'),

@@ -143,11 +143,19 @@
             </form>
 
             <div style="display:flex;gap:8px;">
+                <div style="position: relative; display: inline-block;" id="excelDropdownContainer">
+                    <button type="button" class="btn-secondary" style="padding: 8px 16px; font-size: 13px; gap: 6px; cursor: pointer; border: 1.5px solid var(--border-color); background: white; text-decoration: none; display: flex; align-items: center;" onclick="toggleExcelDropdown()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        Excel
+                    </button>
+                    <div id="excelDropdown" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: white; border: 1.5px solid var(--border-color); border-radius: 6px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); z-index: 50; min-width: 150px; overflow: hidden;">
+                        {% if request.user_permissions.students.add %}
+                        <a href="{% url 'students:import_csv' %}" style="display: block; padding: 10px 16px; color: var(--text-dark); text-decoration: none; font-size: 13px; border-bottom: 1px solid var(--border-color);">Nhập Excel</a>
+                        {% endif %}
+                        <a href="{% url 'students:export_excel' %}?q={{ q|urlencode }}&dept_id={{ dept_id|urlencode }}&class_id={{ class_id|urlencode }}" style="display: block; padding: 10px 16px; color: var(--text-dark); text-decoration: none; font-size: 13px;">Xuất Excel</a>
+                    </div>
+                </div>
                 {% if request.user_permissions.students.add %}
-                <a href="{% url 'students:import_csv' %}" class="btn-primary" style="padding:8px 16px;font-size:13px;gap:6px;text-decoration:none;display:flex;align-items:center;background:#0f766e;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
-                    Import CSV
-                </a>
                 <a href="{% url 'students:create' %}" class="btn-primary" style="padding:8px 16px;font-size:13px;gap:6px;text-decoration:none;display:flex;align-items:center;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     Thêm Sinh Viên
@@ -381,6 +389,19 @@ document.getElementById('deleteStudentModal').addEventListener('click', function
 });
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeDeleteModal();
+});
+
+// Excel Dropdown Logic
+function toggleExcelDropdown() {
+    var dropdown = document.getElementById('excelDropdown');
+    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+}
+
+document.addEventListener('click', function(event) {
+    var container = document.getElementById('excelDropdownContainer');
+    if (container && !container.contains(event.target)) {
+        document.getElementById('excelDropdown').style.display = 'none';
+    }
 });
 </script>
 
