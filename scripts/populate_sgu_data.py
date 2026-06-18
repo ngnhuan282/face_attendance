@@ -11,7 +11,7 @@ from django.contrib.auth.hashers import make_password
 from academics.models import Faculty, Department, AcademicYear, Semester
 from accounts.models import Teacher
 from students.models import StudentClass, Student
-from schedules.models import Room
+from schedules.models import Room, Schedule
 from courses.models import Course, CourseClass, Enrollment
 
 def run():
@@ -43,6 +43,7 @@ def run():
     Department.objects.all().delete()
     Faculty.objects.all().delete()
     Room.objects.all().delete()
+    Schedule.objects.all().delete()
     Semester.objects.all().delete()
     AcademicYear.objects.all().delete()
     print("Existing data cleared.")
@@ -155,10 +156,9 @@ def run():
 
     sgu_faculties = [
         ("CNTT",  "Khoa Công nghệ Thông tin"),
-        ("DTVT",  "Khoa Điện tử Viễn thông"),
-        ("GDCT",  "Khoa Giáo dục Chính trị"),
-        ("GDMN",  "Khoa Giáo dục Mầm non"),
-        ("GDTH",  "Khoa Giáo dục Tiểu học"),
+        ("KTTC",  "Khoa Kế toán - Tài chính"),
+        ("TUD",   "Khoa Toán - Ứng dụng"),
+        ("VNH",   "Khoa Việt Nam học"),
     ]
 
     faculty_map = {}
@@ -166,26 +166,21 @@ def run():
         fac = Faculty.objects.create(code=code, name=name)
         faculty_map[code] = fac
 
-    # Các ngành thuộc 5 khoa
+    # Các ngành thuộc 4 khoa
     sgu_departments = [
         # --- Công nghệ Thông tin ---
         ("CNTT", "DCT",  "Công nghệ thông tin"),
         ("CNTT", "DKP",  "Kỹ thuật phần mềm"),
 
-        # --- Điện tử Viễn thông ---
-        ("DTVT", "DDV",  "Kĩ thuật Điện tử – viễn thông"),
-        ("DTVT", "DCV",  "Công nghệ KT điện tử – viễn thông"),
-        ("DTVT", "DDE",  "Kĩ thuật điện"),
-        ("DTVT", "DKD",  "Công nghệ Kĩ thuật điện, điện tử"),
+        # --- Kế toán - Tài chính ---
+        ("KTTC", "DKT",  "Kế toán"),
+        ("KTTC", "DTC",  "Tài chính ngân hàng"),
 
-        # --- Giáo dục Chính trị ---
-        ("GDCT", "DGD",  "Giáo dục Chính trị"),
+        # --- Toán - Ứng dụng ---
+        ("TUD", "DTU",   "Toán ứng dụng"),
 
-        # --- Giáo dục Mầm non ---
-        ("GDMN", "DGM",  "Giáo dục Mầm non"),
-
-        # --- Giáo dục Tiểu học ---
-        ("GDTH", "DGT",  "Giáo dục Tiểu học"),
+        # --- Việt Nam học ---
+        ("VNH", "DVN",   "Việt Nam học"),
     ]
 
     department_map = {}   # code -> Department object
@@ -234,8 +229,8 @@ def run():
         user = User.objects.create(
             username=username,
             email=email,
-            first_name=first_name,
-            last_name=last_name,
+            first_name=last_name,
+            last_name=first_name,
             password=make_password("123456")
         )
         user.groups.add(gv_group)
@@ -315,15 +310,13 @@ def run():
 
     # Map major names from Excel sheets to department codes (5 khoa)
     major_to_dep_code = {
-        "Kỹ thuật phần mềm":                    "DKP",
         "Công nghệ thông tin":                   "DCT",
-        "Kĩ thuật Điện tử – viễn thông":        "DDV",
-        "Công nghệ KT điện tử – viễn thông":    "DCV",
-        "Kĩ thuật điện":                         "DDE",
-        "Công nghệ Kĩ thuật điện, điện tử":     "DKD",
-        "Giáo dục Chính trị":                    "DGD",
-        "Giáo dục Mầm non":                      "DGM",
-        "Giáo dục Tiểu học":                     "DGT",
+        "Kỹ thuật phần mềm":                     "DKP",
+        "Kế toán":                               "DKT",
+        "Tài chính ngân hàng":                   "DTC",
+        "Tài chính - Ngân hàng":                 "DTC",
+        "Toán ứng dụng":                         "DTU",
+        "Việt Nam học":                          "DVN",
     }
 
     def parse_dob(val):
@@ -344,13 +337,10 @@ def run():
 
     excel_file = pd.ExcelFile('dssv.xlsx')
 
-    # Chỉ xử lý sheet thuộc 5 khoa:
-    # CNTT, Điện tử Viễn thông, Giáo dục Chính trị, Mầm non, Tiểu học
+    # Chỉ xử lý sheet thuộc các khoa:
+    # CNTT, Kế toán, Tài chính, Toán, Việt Nam học
     ALLOWED_SHEET_KEYWORDS = [
-        'cntt', 'dtvt', 'dientuvienthong', 'dientu',
-        'gdct', 'chinhri', 'chinhtri',
-        'gdmn', 'mamnon', 'mammon',
-        'gdth', 'tieuhoc', 'tieu hoc',
+        'cntt', 'ketoan', 'taichinh', 'toan', 'vietnam'
     ]
 
     def sheet_is_allowed(sheet_name: str) -> bool:
@@ -362,7 +352,9 @@ def run():
         s for s in all_sheets
         if s not in ["TheDuc", "Sheet1"] and sheet_is_allowed(s)
     ]
-    print(f"Sheets to process (5 faculties): {sheets_to_process}")
+    print(f"Sheets to process: {sheets_to_process}")
+
+    dep_student_count = {}
 
     for sheet in sheets_to_process:
         df = excel_file.parse(sheet)
@@ -391,9 +383,22 @@ def run():
             dob = parse_dob(row.get('Ngày sinh', None))
 
             raw_major = str(row.get('Tên ngành', '')).strip()
-            dep_code = major_to_dep_code.get(raw_major)   # None nếu không thuộc 5 khoa
+            dep_code = major_to_dep_code.get(raw_major)   # None nếu không thuộc các khoa quy định
             if dep_code is None:
                 continue   # bỏ qua sinh viên ngành khác
+                
+            # Kiểm tra giới hạn số lượng sinh viên
+            limit = 0
+            if dep_code in ["DCT", "DKP"]:
+                limit = 100
+            elif dep_code in ["DKT", "DTC", "DTU", "DVN"]:
+                limit = 50
+                
+            if dep_student_count.get(dep_code, 0) >= limit:
+                continue
+                
+            dep_student_count[dep_code] = dep_student_count.get(dep_code, 0) + 1
+            
             dep_obj = department_map.get(dep_code, department_map["DCT"])
 
             # Cohort year from MSSV digits 3-4 (e.g. 3123… → 2023)
@@ -430,8 +435,8 @@ def run():
                 student_user = User.objects.create(
                     username=sv_id_str,
                     email=email,
-                    first_name=first_name_val,
-                    last_name=last_name_val,
+                    first_name=last_name_val,
+                    last_name=first_name_val,
                     password=make_password("123456")
                 )
                 student_user.groups.add(sv_group)
@@ -465,30 +470,22 @@ def run():
         ("DKP", "810012", "Kiểm thử phần mềm",           2),
         ("DKP", "810013", "Lập trình Web",                3),
         ("DKP", "810014", "Phát triển ứng dụng di động", 3),
-        # DTVT
-        ("DDV", "820001", "Điện tử cơ bản",              3),
-        ("DDV", "820002", "Kỹ thuật viễn thông",         3),
-        ("DDV", "820003", "Xử lý tín hiệu số",           3),
-        ("DCV", "820011", "Hệ thống nhúng",              3),
-        ("DCV", "820012", "Thiết kế mạch điện tử",      3),
-        ("DDE", "820021", "Máy điện",                    3),
-        ("DDE", "820022", "Điều khiển tự động",          3),
-        ("DKD", "820031", "Điện tử công suất",           3),
-        ("DKD", "820032", "An toàn điện",                2),
-        # GDCT
-        ("DGD", "830001", "Triết học Mác – Lênin",      3),
-        ("DGD", "830002", "Kinh tế chính trị Mác – Lênin", 3),
-        ("DGD", "830003", "Chủ nghĩa xã hội khoa học",  2),
-        ("DGD", "830004", "Lịch sử Đảng Cộng sản Việt Nam", 2),
-        # GDMN
-        ("DGM", "840001", "Giáo dục học mầm non",       3),
-        ("DGM", "840002", "Tâm lý trẻ em",               3),
-        ("DGM", "840003", "Phương pháp dạy học mầm non", 3),
-        # GDTH
-        ("DGT", "850001", "Giáo dục học tiểu học",      3),
-        ("DGT", "850002", "Tâm lý học tiểu học",         3),
-        ("DGT", "850003", "Tiếng Việt tiểu học",         3),
-        ("DGT", "850004", "Toán tiểu học",                3),
+        # Kế toán (DKT)
+        ("DKT", "820001", "Nguyên lý kế toán", 3),
+        ("DKT", "820002", "Kế toán tài chính", 3),
+        ("DKT", "820003", "Kế toán quản trị", 3),
+        # Tài chính ngân hàng (DTC)
+        ("DTC", "830001", "Tài chính doanh nghiệp", 3),
+        ("DTC", "830002", "Tiền tệ ngân hàng", 3),
+        ("DTC", "830003", "Thị trường chứng khoán", 3),
+        # Toán ứng dụng (DTU)
+        ("DTU", "840001", "Đại số tuyến tính", 3),
+        ("DTU", "840002", "Giải tích 1", 3),
+        ("DTU", "840003", "Xác suất thống kê", 3),
+        # Việt Nam học (DVN)
+        ("DVN", "850001", "Cơ sở văn hóa Việt Nam", 3),
+        ("DVN", "850002", "Lịch sử văn minh Việt Nam", 3),
+        ("DVN", "850003", "Địa lý du lịch Việt Nam", 3),
         # Đại cương (dùng chung)
         ("DCT", "800001", "Toán cao cấp",                3),
         ("DCT", "800002", "Vật lý đại cương",            3),
@@ -539,7 +536,7 @@ def run():
             
         for _ in range(num_classes):
             cls_idx = dep_class_counter[dep_code]
-            class_code = f"{dep_code}12{year_digit}{cls_idx:02d}"
+            class_code = f"{dep_code}12{year_digit}{cls_idx}"
             dep_class_counter[dep_code] += 1
             
             if CourseClass.objects.filter(course=course_obj, semester=active_semester, class_code=class_code).exists():
@@ -555,7 +552,38 @@ def run():
             )
             class_instances.append(cc)
 
+            # --- Sinh thời khóa biểu (15 buổi) ---
+            # Để thuận tiện test, ngày bắt đầu sẽ là ngày 1 của tháng hiện tại
+            today = datetime.date.today()
+            test_start_date = datetime.date(today.year, today.month, 1)
+            
+            c_room = random.choice(rooms_list)
+            dow = random.randint(2, 7)
+            start_p = random.choice([1, 4, 7, 10]) # Các ca học thường thấy
+            end_p = start_p + 2
+            
+            # Tính ngày của buổi học đầu tiên
+            delta_days = (dow - 1) - test_start_date.weekday()
+            if delta_days < 0:
+                delta_days += 7
+            first_date = test_start_date + datetime.timedelta(days=delta_days)
+            
+            for s_idx in range(1, 16):
+                s_date = first_date + datetime.timedelta(weeks=(s_idx - 1))
+                
+                # Bỏ qua điều kiện s_date > sem_end để test đủ 15 tuần kể từ tháng hiện tại
+                Schedule.objects.create(
+                    course_class=cc,
+                    room=c_room,
+                    day_of_week=dow,
+                    start_period=start_p,
+                    end_period=end_p,
+                    date=s_date,
+                    session_number=s_idx
+                )
+
     print(f"Created {CourseClass.objects.count()} Course Classes.")
+    print(f"Created {Schedule.objects.count()} Schedules.")
 
 
     # -------------------------------------------------------------

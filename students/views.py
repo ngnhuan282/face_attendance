@@ -23,7 +23,7 @@ from .forms import StudentForm, StudentClassForm
 @group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
 def student_list(request):
     """Danh sách sinh viên – có tìm kiếm và lọc theo lớp / ngành."""
-    qs = Student.objects.select_related('student_class', 'student_class__department')
+    qs = Student.objects.select_related('student_class', 'student_class__department').order_by('student_id')
 
     # Tìm kiếm
     q = request.GET.get('q', '').strip()
@@ -478,7 +478,7 @@ def student_import_csv(request):
     if not reader.fieldnames:
         return JsonResponse({'error': 'File CSV trống hoặc không có header.'}, status=400)
 
-    headers = {f.strip().lower() for f in reader.fieldnames}
+    headers = {str(f).replace('\ufeff', '').strip().lower() for f in reader.fieldnames if f}
     missing = required_fields - headers
     if missing:
         return JsonResponse({
@@ -493,8 +493,8 @@ def student_import_csv(request):
     try:
         with transaction.atomic():
             for row_num, row in enumerate(reader, start=2):
-                # Chuẩn hóa key (bỏ khoảng trắng)
-                row = {k.strip().lower(): (v.strip() if v else '') for k, v in row.items()}
+                # Chuẩn hóa key (bỏ khoảng trắng và ký tự BOM)
+                row = {str(k).replace('\ufeff', '').strip().lower(): (str(v).strip() if v else '') for k, v in row.items() if k}
 
                 student_id = row.get('student_id', '').strip()
                 full_name  = row.get('full_name', '').strip()
