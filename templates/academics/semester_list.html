@@ -23,9 +23,14 @@
 }
 .semester-year-link {
     width: fit-content;
+    border: none;
+    background: transparent;
+    padding: 0;
     color: var(--text-muted);
     font-size: 12px;
+    font-family: inherit;
     text-decoration: none;
+    cursor: pointer;
 }
 .semester-year-link:hover {
     color: var(--primary-green, #1a6b3c);
@@ -67,6 +72,102 @@
 .btn-action-disabled {
     opacity: 0.45;
     cursor: not-allowed !important;
+}
+.academic-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+}
+.academic-modal.show {
+    display: flex;
+}
+.academic-modal-card {
+    width: 560px;
+    max-width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.18);
+}
+.academic-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+.academic-modal-title {
+    margin: 0;
+    color: var(--text-dark);
+    font-size: 18px;
+    font-weight: 700;
+}
+.academic-modal-close {
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 24px;
+    line-height: 1;
+}
+.academic-modal-grid {
+    display: grid;
+    gap: 14px;
+}
+.academic-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.academic-field label,
+.academic-check label {
+    color: var(--text-dark);
+    font-size: 13px;
+    font-weight: 600;
+}
+.academic-field input,
+.academic-field select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 1.5px solid var(--border-color, #e5e7eb);
+    border-radius: 6px;
+    color: var(--text-dark);
+    font: inherit;
+    outline: none;
+    background: #fff;
+}
+.academic-field input:focus,
+.academic-field select:focus {
+    border-color: var(--primary-green, #1a6b3c);
+    box-shadow: 0 0 0 3px rgba(26, 107, 60, 0.1);
+}
+.academic-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.academic-check input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary-green, #1a6b3c);
+}
+.academic-modal-error {
+    display: none;
+    padding: 12px;
+    background: #fee2e2;
+    border: 1px solid #fca5a5;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    color: #dc2626;
+    font-size: 13px;
+    white-space: pre-line;
 }
 @media (max-width: 900px) {
     .table-toolbar form {
@@ -138,10 +239,10 @@
                 {% endif %}
             </form>
             {% if request.user_permissions.academics.add %}
-            <a href="{% url 'academics:semester_create' %}" class="btn-primary" style="padding: 8px 16px; font-size: 13px; gap: 6px; text-decoration: none; display: inline-flex; align-items: center;">
+            <button type="button" class="btn-primary" style="padding: 8px 16px; font-size: 13px; gap: 6px; border: none; cursor: pointer;" onclick="openSemesterModal()">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Thêm Học Kỳ
-            </a>
+            </button>
             {% endif %}
         </div>
     </div>
@@ -166,7 +267,14 @@
                         <div class="semester-period">
                             <span class="semester-period-main">{{ semester.academic_year.name }}</span>
                             {% if request.user_permissions.academics.edit %}
-                            <a href="{% url 'academics:academic_year_edit' semester.academic_year.pk %}" class="semester-year-link" title="Sửa ngày bắt đầu và ngày kết thúc năm học">{{ semester.academic_year.start_date|date:"d/m/Y" }} - {{ semester.academic_year.end_date|date:"d/m/Y" }}</a>
+                            <button type="button"
+                                    class="semester-year-link"
+                                    title="Sửa ngày bắt đầu và ngày kết thúc năm học"
+                                    data-action="{% url 'academics:academic_year_edit' semester.academic_year.pk %}"
+                                    data-name="{{ semester.academic_year.name }}"
+                                    data-start-date="{{ semester.academic_year.start_date|date:'Y-m-d' }}"
+                                    data-end-date="{{ semester.academic_year.end_date|date:'Y-m-d' }}"
+                                    onclick="openSemesterYearModal(this)">{{ semester.academic_year.start_date|date:"d/m/Y" }} - {{ semester.academic_year.end_date|date:"d/m/Y" }}</button>
                             {% else %}
                             <span class="semester-period-sub">{{ semester.academic_year.start_date|date:"d/m/Y" }} - {{ semester.academic_year.end_date|date:"d/m/Y" }}</span>
                             {% endif %}
@@ -186,10 +294,18 @@
                     <td>
                         <div class="action-btns">
                             {% if request.user_permissions.academics.edit %}
-                            <a href="{% url 'academics:semester_edit' semester.pk %}" class="btn-action btn-action-edit">
+                            <button type="button"
+                                    class="btn-action btn-action-edit"
+                                    data-action="{% url 'academics:semester_edit' semester.pk %}"
+                                    data-academic-year-id="{{ semester.academic_year_id }}"
+                                    data-semester-num="{{ semester.semester_num }}"
+                                    data-start-date="{{ semester.start_date|date:'Y-m-d' }}"
+                                    data-end-date="{{ semester.end_date|date:'Y-m-d' }}"
+                                    data-is-active="{{ semester.is_active|yesno:'true,false' }}"
+                                    onclick="openSemesterModal(this)">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                 Sửa
-                            </a>
+                            </button>
                             {% endif %}
                             {% if request.user_permissions.academics.delete %}
                                 {% if semester.course_class_count %}
@@ -252,4 +368,254 @@
         <div class="footer-spacer"></div>
     </div>
 </div>
+
+<div id="semesterYearModal" class="academic-modal">
+    <div class="academic-modal-card">
+        <div class="academic-modal-header">
+            <h3 class="academic-modal-title">Sửa Năm Học</h3>
+            <button type="button" class="academic-modal-close" onclick="closeSemesterYearModal()">×</button>
+        </div>
+
+        <div id="semesterYearModalError" class="academic-modal-error"></div>
+
+        <form id="semesterYearForm" method="post" action="" onsubmit="submitSemesterYearForm(event)" novalidate>
+            {% csrf_token %}
+            <div class="academic-modal-grid">
+                <div class="academic-field">
+                    <label for="semester_year_name">Năm học</label>
+                    <input type="text" id="semester_year_name" name="name" placeholder="VD: 2025 - 2026" required>
+                </div>
+                <div class="academic-field">
+                    <label for="semester_year_start_date">Ngày bắt đầu</label>
+                    <input type="date" id="semester_year_start_date" name="start_date" required>
+                </div>
+                <div class="academic-field">
+                    <label for="semester_year_end_date">Ngày kết thúc</label>
+                    <input type="date" id="semester_year_end_date" name="end_date" required>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px;">
+                    <button type="button" class="btn-secondary" style="padding: 10px 22px; font-size: 13px; border: none; cursor: pointer;" onclick="closeSemesterYearModal()">Hủy</button>
+                    <button type="submit" id="semesterYearSubmitBtn" class="btn-primary" style="padding: 10px 22px; font-size: 13px; border: none; cursor: pointer;">Lưu</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="semesterModal" class="academic-modal">
+    <div class="academic-modal-card">
+        <div class="academic-modal-header">
+            <h3 id="semesterModalTitle" class="academic-modal-title">Thêm Học Kỳ</h3>
+            <button type="button" class="academic-modal-close" onclick="closeSemesterModal()">×</button>
+        </div>
+
+        <div id="semesterModalError" class="academic-modal-error"></div>
+
+        <form id="semesterForm" method="post" action="{% url 'academics:semester_create' %}" onsubmit="submitSemesterForm(event)" novalidate>
+            {% csrf_token %}
+            <div class="academic-modal-grid">
+                <div class="academic-field">
+                    <label for="semester_academic_year">Năm học</label>
+                    <select id="semester_academic_year" name="academic_year" required>
+                        <option value="">-- Chọn năm học --</option>
+                        {% for year in academic_years %}
+                        <option value="{{ year.id }}">{{ year.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="academic-field">
+                    <label for="semester_num">Học kỳ</label>
+                    <select id="semester_num" name="semester_num" required>
+                        <option value="1">Học kỳ 1</option>
+                        <option value="2">Học kỳ 2</option>
+                        <option value="3">Học kỳ 3</option>
+                    </select>
+                </div>
+                <div class="academic-field">
+                    <label for="semester_start_date">Ngày bắt đầu</label>
+                    <input type="date" id="semester_start_date" name="start_date" required>
+                </div>
+                <div class="academic-field">
+                    <label for="semester_end_date">Ngày kết thúc</label>
+                    <input type="date" id="semester_end_date" name="end_date" required>
+                </div>
+                <div class="academic-check">
+                    <input type="checkbox" id="semester_is_active" name="is_active">
+                    <label for="semester_is_active">Đang áp dụng</label>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px;">
+                    <button type="button" class="btn-secondary" style="padding: 10px 22px; font-size: 13px; border: none; cursor: pointer;" onclick="closeSemesterModal()">Hủy</button>
+                    <button type="submit" id="semesterSubmitBtn" class="btn-primary" style="padding: 10px 22px; font-size: 13px; border: none; cursor: pointer;">Lưu</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+const selectedAcademicYearId = "{{ selected_year|default:'' }}";
+
+function openSemesterYearModal(button) {
+    const modal = document.getElementById('semesterYearModal');
+    const form = document.getElementById('semesterYearForm');
+    const errorDiv = document.getElementById('semesterYearModalError');
+    const submitBtn = document.getElementById('semesterYearSubmitBtn');
+
+    errorDiv.style.display = 'none';
+    errorDiv.textContent = '';
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Lưu';
+    form.reset();
+
+    form.action = button.dataset.action;
+    document.getElementById('semester_year_name').value = button.dataset.name || '';
+    document.getElementById('semester_year_start_date').value = button.dataset.startDate || '';
+    document.getElementById('semester_year_end_date').value = button.dataset.endDate || '';
+
+    modal.classList.add('show');
+}
+
+function closeSemesterYearModal() {
+    const modal = document.getElementById('semesterYearModal');
+    modal.classList.remove('show');
+}
+
+function submitSemesterYearForm(event) {
+    event.preventDefault();
+    const form = event.target;
+    const errorDiv = document.getElementById('semesterYearModalError');
+    const submitBtn = document.getElementById('semesterYearSubmitBtn');
+
+    errorDiv.style.display = 'none';
+    errorDiv.textContent = '';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Đang lưu...';
+
+    fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || 'Vui lòng kiểm tra lại thông tin năm học.');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        }
+    })
+    .catch(error => {
+        errorDiv.textContent = error.message || 'Vui lòng kiểm tra lại thông tin năm học.';
+        errorDiv.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Lưu';
+    });
+}
+
+function openSemesterModal(button) {
+    const modal = document.getElementById('semesterModal');
+    const form = document.getElementById('semesterForm');
+    const title = document.getElementById('semesterModalTitle');
+    const errorDiv = document.getElementById('semesterModalError');
+    const submitBtn = document.getElementById('semesterSubmitBtn');
+
+    errorDiv.style.display = 'none';
+    errorDiv.textContent = '';
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Lưu';
+    form.reset();
+
+    if (button) {
+        title.textContent = 'Sửa Học Kỳ';
+        form.action = button.dataset.action;
+        document.getElementById('semester_academic_year').value = button.dataset.academicYearId || '';
+        document.getElementById('semester_num').value = button.dataset.semesterNum || '1';
+        document.getElementById('semester_start_date').value = button.dataset.startDate || '';
+        document.getElementById('semester_end_date').value = button.dataset.endDate || '';
+        document.getElementById('semester_is_active').checked = button.dataset.isActive === 'true';
+    } else {
+        title.textContent = 'Thêm Học Kỳ';
+        form.action = "{% url 'academics:semester_create' %}";
+        if (selectedAcademicYearId) {
+            document.getElementById('semester_academic_year').value = selectedAcademicYearId;
+        }
+    }
+
+    modal.classList.add('show');
+}
+
+function closeSemesterModal() {
+    const modal = document.getElementById('semesterModal');
+    modal.classList.remove('show');
+}
+
+function submitSemesterForm(event) {
+    event.preventDefault();
+    const form = event.target;
+    const errorDiv = document.getElementById('semesterModalError');
+    const submitBtn = document.getElementById('semesterSubmitBtn');
+
+    errorDiv.style.display = 'none';
+    errorDiv.textContent = '';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Đang lưu...';
+
+    fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || 'Vui lòng kiểm tra lại thông tin học kỳ.');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        }
+    })
+    .catch(error => {
+        errorDiv.textContent = error.message || 'Vui lòng kiểm tra lại thông tin học kỳ.';
+        errorDiv.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Lưu';
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('semesterModal');
+    modal.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            closeSemesterModal();
+        }
+    });
+
+    const yearModal = document.getElementById('semesterYearModal');
+    yearModal.addEventListener('click', function(event) {
+        if (event.target === yearModal) {
+            closeSemesterYearModal();
+        }
+    });
+
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeSemesterModal();
+            closeSemesterYearModal();
+        }
+    });
+});
+</script>
 {% endblock %}

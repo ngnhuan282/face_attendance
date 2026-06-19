@@ -76,7 +76,7 @@ def _get_active_reports(course_class: CourseClass):
             student__enrollments__course_class=course_class,
             student__enrollments__is_active=True,
         )
-        .select_related('student__student_class')
+        .select_related('student__student_class__department')
         .order_by('student__full_name')
         .distinct()
     )
@@ -211,16 +211,9 @@ def report_class(request, class_id):
 # Xuất Excel
 @group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
 def export_excel(request, class_id):
-    """
-    Xuất file Excel báo cáo chuyên cần:
-    - Hàng đầu: thông tin lớp HP
-    - Hàng header: MSSV | Họ Tên | Lớp | Buổi 1 | Buổi 2 | … | Có mặt | Vắng | Trễ | Tỉ lệ %
-    - Mỗi hàng SV: status mỗi buổi, tô XANH=có mặt, ĐỎ=vắng, CAM=trễ
-    - Hàng cuối: tổng kết toàn lớp
-    """
+    """Xuất báo cáo chuyên cần theo template danh sách sinh viên của nhóm."""
     import openpyxl
-    from openpyxl.styles import (Alignment, Border, Font, PatternFill, Side,
-                                  numbers)
+    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
     from openpyxl.utils import get_column_letter
 
     course_class = get_object_or_404(
@@ -233,214 +226,180 @@ def export_excel(request, class_id):
     if teacher and course_class.teacher_id != teacher.pk:
         raise PermissionDenied
 
-    reports = _get_active_reports(course_class)
+    reports = _get_active_reports(course_class).order_by('student__student_id')
     sessions = _build_session_columns(course_class)
     matrix   = _build_matrix(reports, sessions)
 
-    # ---- Màu sắc ----
-    GREEN_FILL  = PatternFill('solid', fgColor='C6EFCE')   # có mặt
-    RED_FILL    = PatternFill('solid', fgColor='FFC7CE')   # vắng
-    ORANGE_FILL = PatternFill('solid', fgColor='FFEB9C')   # trễ
-    HEADER_FILL = PatternFill('solid', fgColor='1F4E79')   # header tối
-    TITLE_FILL  = PatternFill('solid', fgColor='2E75B6')   # tiêu đề
-    TOTAL_FILL  = PatternFill('solid', fgColor='D9E1F2')   # tổng kết
-    GOOD_FILL   = PatternFill('solid', fgColor='E2EFDA')   # tỉ lệ tốt
-    BAD_FILL    = PatternFill('solid', fgColor='FCE4D6')   # tỉ lệ kém
-
-    WHITE_FONT  = Font(name='Calibri', bold=True, color='FFFFFF', size=11)
-    BOLD_FONT   = Font(name='Calibri', bold=True, size=10)
-    NORMAL_FONT = Font(name='Calibri', size=10)
-    MONO_FONT   = Font(name='Courier New', size=10)
-
-    thin = Side(style='thin', color='BFBFBF')
-    BORDER = Border(left=thin, right=thin, top=thin, bottom=thin)
-
-    CENTER = Alignment(horizontal='center', vertical='center', wrap_text=True)
-    LEFT   = Alignment(horizontal='left',   vertical='center')
-
-    # ---- Workbook ----
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = 'Báo Cáo Chuyên Cần'
-
-    # Cột cố định: STT | MSSV | Họ Tên | Lớp SH
-    FIXED_COLS = 4
-    total_cols = FIXED_COLS + len(sessions) + 4
-
-    # ---- Hàng 1: Tiêu đề lớn ----
-    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=total_cols)
-    c = ws.cell(1, 1, f'BÁO CÁO CHUYÊN CẦN — {course_class.class_code}')
-    c.font      = Font(name='Calibri', bold=True, color='FFFFFF', size=14)
-    c.fill      = TITLE_FILL
-    c.alignment = CENTER
-    ws.row_dimensions[1].height = 28
-
-    # ---- Hàng 2: Thông tin lớp ----
-    ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=total_cols)
-    teacher_name = course_class.teacher.user.get_full_name() or course_class.teacher.user.username
-    info = (
-        f"Học phần: {course_class.course.course_name}   |   "
-        f"Học kỳ: {course_class.semester}   |   "
-        f"Giảng viên: {teacher_name}   |   "
-        f"Xuất lúc: {datetime.now().strftime('%d/%m/%Y %H:%M')}"
-    )
-    c = ws.cell(2, 1, info)
-    c.font      = Font(name='Calibri', size=10, italic=True)
-    c.alignment = CENTER
-    ws.row_dimensions[2].height = 18
-
-    # ---- Hàng 3: ngăn cách ----
-    ws.row_dimensions[3].height = 6
-
-    # ---- Hàng 4: Header ----
-    HEADER_ROW = 4
-    headers = ['STT', 'MSSV', 'Họ và Tên', 'Lớp SH']
-    for i, s in enumerate(sessions, 1):
-        date_str = s.started_at.strftime('%d/%m') if s.started_at else f'B{i}'
-        headers.append(f'Buổi {i}\n{date_str}')
-    headers += ['Có Mặt', 'Vắng', 'Đi Trễ', 'Tỉ Lệ (%)']
-
-    for col_idx, header in enumerate(headers, 1):
-        c = ws.cell(HEADER_ROW, col_idx, header)
-        c.font      = WHITE_FONT
-        c.fill      = HEADER_FILL
-        c.alignment = CENTER
-        c.border    = BORDER
-    ws.row_dimensions[HEADER_ROW].height = 36
-
-    # ---- Hàng dữ liệu ----
-    STATUS_MAP = {
-        'present': ('P', GREEN_FILL),
-        'late'   : ('T', ORANGE_FILL),
-        'absent' : ('V', RED_FILL),
-        None     : ('—', None),
+    student_ids = [row['report'].student_id for row in matrix]
+    enrollment_map = {
+        enrollment.student_id: enrollment
+        for enrollment in Enrollment.objects.filter(
+            course_class=course_class,
+            student_id__in=student_ids,
+        ).select_related('student')
     }
 
-    total_present_sum = 0
-    total_absent_sum  = 0
-    total_late_sum    = 0
+    header_fill = PatternFill('solid', fgColor='1A6B3C')
+    present_fill = PatternFill('solid', fgColor='DCFCE7')
+    absent_fill = PatternFill('solid', fgColor='FEE2E2')
+    late_fill = PatternFill('solid', fgColor='FEF9C3')
+    excused_fill = PatternFill('solid', fgColor='E0E7FF')
+
+    header_font = Font(bold=True, color='FFFFFF')
+    title_font = Font(bold=True, size=14)
+    subtitle_font = Font(italic=True)
+    present_font = Font(color='166534')
+    absent_font = Font(color='991B1B')
+    late_font = Font(color='854D0E')
+    excused_font = Font(color='3730A3')
+
+    thin = Side(style='thin', color='000000')
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+    align_center = Alignment(horizontal='center', vertical='center')
+    align_left = Alignment(horizontal='left', vertical='center')
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Danh sách sinh viên'
+
+    ws.merge_cells('A1:H1')
+    title_cell = ws.cell(1, 1, f'DANH SÁCH SINH VIÊN - LỚP {course_class.class_code}')
+    title_cell.font = title_font
+    title_cell.alignment = align_center
+
+    ws.merge_cells('A2:H2')
+    teacher_name = course_class.teacher.user.get_full_name() or course_class.teacher.user.username
+    subtitle_cell = ws.cell(
+        2,
+        1,
+        f'Môn học: {course_class.course.course_name} | Giảng viên: {teacher_name}',
+    )
+    subtitle_cell.font = subtitle_font
+    subtitle_cell.alignment = align_center
+
+    HEADER_ROW = 4
+    headers = [
+        'STT',
+        'MSSV',
+        'Họ Tên',
+        'Lớp Sinh Hoạt',
+        'Ngành',
+        'Trạng Thái',
+        'Ngày Đăng Ký',
+        'Tỉ lệ đi học',
+    ]
+    headers.extend(
+        session.started_at.strftime('%d/%m/%Y') if session.started_at else ''
+        for session in sessions
+    )
+
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(HEADER_ROW, col_num, header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = align_center
+        cell.border = border
+
+    status_styles = {
+        'present': ('Có mặt', present_fill, present_font),
+        'absent': ('Vắng', absent_fill, absent_font),
+        'late': ('Đi trễ', late_fill, late_font),
+        'excused': ('Có phép', excused_fill, excused_font),
+        'not_enrolled': ('-', None, None),
+    }
+
+    session_totals = [
+        {'present': 0, 'absent': 0, 'late': 0}
+        for _ in sessions
+    ]
 
     for row_num, row_data in enumerate(matrix, 1):
-        rpt    = row_data['report']
-        cells  = row_data['cells']
-        sv     = rpt.student
+        rpt = row_data['report']
+        sv = rpt.student
+        student_class = sv.student_class
+        enrollment = enrollment_map.get(sv.pk)
         excel_row = HEADER_ROW + row_num
 
-        # STT
-        c = ws.cell(excel_row, 1, row_num)
-        c.font = NORMAL_FONT; c.alignment = CENTER; c.border = BORDER
+        row = [
+            row_num,
+            sv.student_id,
+            sv.full_name,
+            student_class.class_code if student_class else '',
+            student_class.department.name if student_class and student_class.department else '',
+            'Đang học' if enrollment and enrollment.is_active else 'Nghỉ học',
+            enrollment.enrolled_at.strftime('%d/%m/%Y') if enrollment else '',
+            f'{rpt.attendance_rate:.1f}%',
+        ]
 
-        # MSSV
-        c = ws.cell(excel_row, 2, sv.student_id)
-        c.font = MONO_FONT; c.alignment = CENTER; c.border = BORDER
+        for col_num, value in enumerate(row, 1):
+            cell = ws.cell(excel_row, col_num, value)
+            cell.border = border
+            cell.alignment = align_left if col_num in (3, 5) else align_center
 
-        # Họ Tên
-        c = ws.cell(excel_row, 3, sv.full_name)
-        c.font = NORMAL_FONT; c.alignment = LEFT; c.border = BORDER
-
-        # Lớp SH
-        c = ws.cell(excel_row, 4, sv.student_class.class_code)
-        c.font = NORMAL_FONT; c.alignment = CENTER; c.border = BORDER
-
-        # Từng buổi
-        for i, status in enumerate(cells):
-            label, fill = STATUS_MAP.get(status, ('—', None))
-            c = ws.cell(excel_row, FIXED_COLS + 1 + i, label)
-            c.font      = BOLD_FONT
-            c.alignment = CENTER
-            c.border    = BORDER
+        for index, status in enumerate(row_data['cells'], start=9):
+            label, fill, font = status_styles.get(status, ('-', None, None))
+            cell = ws.cell(excel_row, index, label)
+            cell.border = border
+            cell.alignment = align_center
             if fill:
-                c.fill = fill
+                cell.fill = fill
+            if font:
+                cell.font = font
 
-        # Tổng kết SV
-        c = ws.cell(excel_row, total_cols - 3, rpt.present_count)
-        c.font = BOLD_FONT; c.fill = GREEN_FILL; c.alignment = CENTER; c.border = BORDER
+            if index >= 9:
+                session_index = index - 9
+                if session_index < len(session_totals) and status in session_totals[session_index]:
+                    session_totals[session_index][status] += 1
 
-        c = ws.cell(excel_row, total_cols - 2, rpt.absent_count)
-        c.font = BOLD_FONT; c.fill = RED_FILL; c.alignment = CENTER; c.border = BORDER
-
-        c = ws.cell(excel_row, total_cols - 1, rpt.late_count)
-        c.font = BOLD_FONT; c.fill = ORANGE_FILL; c.alignment = CENTER; c.border = BORDER
-
-        rate = rpt.attendance_rate
-        c = ws.cell(excel_row, total_cols, f'{rate:.1f}%')
-        c.font      = BOLD_FONT
-        c.fill      = GOOD_FILL if rate >= 80 else BAD_FILL
-        c.alignment = CENTER
-        c.border    = BORDER
-
-        total_present_sum += rpt.present_count
-        total_absent_sum  += rpt.absent_count
-        total_late_sum    += rpt.late_count
-
-        # Xen kẽ màu
-        if row_num % 2 == 0:
-            for col in range(1, total_cols + 1):
-                cell = ws.cell(excel_row, col)
-                if not cell.fill or cell.fill.fgColor.rgb in ('00000000', 'FFFFFFFF'):
-                    cell.fill = PatternFill('solid', fgColor='F8FAFF')
-
-    # ---- Hàng tổng kết ----
     total_row = HEADER_ROW + len(matrix) + 1
-    ws.merge_cells(start_row=total_row, start_column=1, end_row=total_row, end_column=FIXED_COLS)
-    c = ws.cell(total_row, 1, f'TỔNG KẾT  ({len(matrix)} sinh viên)')
-    c.font = Font(name='Calibri', bold=True, size=11, color='1F4E79')
-    c.fill = TOTAL_FILL; c.alignment = CENTER; c.border = BORDER
-
-    # Ô trống ở các cột buổi
-    for i in range(len(sessions)):
-        c = ws.cell(total_row, FIXED_COLS + 1 + i)
-        c.fill = TOTAL_FILL; c.border = BORDER
-
-    # Tổng
-    for val, col_offset in [(total_present_sum, -3), (total_absent_sum, -2), (total_late_sum, -1)]:
-        c = ws.cell(total_row, total_cols + col_offset, val)
-        c.font = Font(name='Calibri', bold=True, size=11)
-        c.fill = TOTAL_FILL; c.alignment = CENTER; c.border = BORDER
-
-    # Tỉ lệ TB
-    avg = 0.0
-    if len(matrix):
-        avg = sum(r['report'].attendance_rate for r in matrix) / len(matrix)
-    c = ws.cell(total_row, total_cols, f'{avg:.1f}%')
-    c.font      = Font(name='Calibri', bold=True, size=11,
-                       color='375623' if avg >= 80 else '9C0006')
-    c.fill      = TOTAL_FILL
-    c.alignment = CENTER
-    c.border    = BORDER
-    ws.row_dimensions[total_row].height = 24
-
-    # Chú thích
-    note_row = total_row + 2
-    ws.cell(note_row, 1, 'Chú thích:').font = BOLD_FONT
-    legends = [
-        (note_row, 2, 'P = Có mặt', GREEN_FILL),
-        (note_row, 3, 'V = Vắng',   RED_FILL),
-        (note_row, 4, 'T = Đi trễ', ORANGE_FILL),
-        (note_row, 5, '— = Chưa có dữ liệu', None),
+    summary_fill = PatternFill('solid', fgColor='E2EFDA')
+    summary_font = Font(bold=True, color='166534')
+    avg_rate = sum(row['report'].attendance_rate for row in matrix) / len(matrix) if matrix else 0.0
+    summary_values = [
+        'Tổng kết',
+        '',
+        f'{len(matrix)} sinh viên',
+        '',
+        '',
+        '',
+        '',
+        f'{avg_rate:.1f}%',
     ]
-    for r, col, text, fill in legends:
-        c = ws.cell(r, col, text)
-        c.font = NORMAL_FONT
-        if fill:
-            c.fill = fill
+    for col_num, value in enumerate(summary_values, 1):
+        cell = ws.cell(total_row, col_num, value)
+        cell.font = summary_font
+        cell.fill = summary_fill
+        cell.border = border
+        cell.alignment = align_left if col_num == 3 else align_center
 
-    # Độ rộng cột
-    ws.column_dimensions['A'].width = 5
-    ws.column_dimensions['B'].width = 13
-    ws.column_dimensions['C'].width = 24
-    ws.column_dimensions['D'].width = 12
-    for i in range(len(sessions)):
-        ws.column_dimensions[get_column_letter(FIXED_COLS + 1 + i)].width = 8
-    ws.column_dimensions[get_column_letter(total_cols - 3)].width = 10
-    ws.column_dimensions[get_column_letter(total_cols - 2)].width = 8
-    ws.column_dimensions[get_column_letter(total_cols - 1)].width = 8
-    ws.column_dimensions[get_column_letter(total_cols)].width     = 11
+    for index, totals in enumerate(session_totals, start=9):
+        cell = ws.cell(
+            total_row,
+            index,
+            f"Có mặt: {totals['present']}\nVắng: {totals['absent']}\nTrễ: {totals['late']}",
+        )
+        cell.font = summary_font
+        cell.fill = summary_fill
+        cell.border = border
+        cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    ws.row_dimensions[total_row].height = 48
 
-    # Đóng băng hàng header
-    ws.freeze_panes = ws.cell(HEADER_ROW + 1, FIXED_COLS + 1)
+    column_widths = {
+        'A': 6,
+        'B': 15,
+        'C': 30,
+        'D': 15,
+        'E': 25,
+        'F': 15,
+        'G': 15,
+        'H': 12,
+    }
+    for idx in range(len(sessions)):
+        column_widths[get_column_letter(idx + 9)] = 15
+    for column, width in column_widths.items():
+        ws.column_dimensions[column].width = width
 
-    filename = f"chuyen_can_{course_class.class_code}_{datetime.now().strftime('%Y%m%d')}.xlsx"
+    filename = f"bao_cao_chuyen_can_{course_class.class_code}_{datetime.now().strftime('%Y%m%d')}.xlsx"
     output = io.BytesIO()
     wb.save(output)
     output.seek(0)
