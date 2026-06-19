@@ -116,7 +116,7 @@
         </div>
         <div>
             <h2 class="form-card-title">{{ form_title }}</h2>
-            <p class="form-card-desc">Thiết lập thời gian học kỳ và học kỳ đang áp dụng cho hệ thống.</p>
+            <p class="form-card-desc">{{ form_desc|default:"Thiết lập thời gian học kỳ và học kỳ đang áp dụng cho hệ thống." }}</p>
         </div>
     </div>
 
@@ -153,7 +153,7 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                 {{ submit_label }}
             </button>
-            <a href="{% url 'academics:semester_list' %}" class="btn-secondary" style="padding: 10px 22px; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+            <a href="{% if cancel_url %}{{ cancel_url }}{% else %}{% url 'academics:semester_list' %}{% endif %}" class="btn-secondary" style="padding: 10px 22px; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
                 Hủy
             </a>
         </div>

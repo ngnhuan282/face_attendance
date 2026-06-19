@@ -102,8 +102,6 @@
             </a>
             {% endif %}
 
-            {% if request.can_view_schedules or request.can_view_academics %}
-            <div class="sidebar-nav-label">Quản Lý Lịch Học</div>
             {% if request.can_view_academics %}
             <a href="{% url 'academics:semester_list' %}" class="sidebar-link {% if active_menu == 'academics' %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -114,7 +112,9 @@
                 Học Kỳ
             </a>
             {% endif %}
+
             {% if request.can_view_schedules %}
+            <div class="sidebar-nav-label">Quản Lý Lịch Học</div>
             <a href="{% url 'schedules:room_list' %}" class="sidebar-link {% if active_menu == 'rooms' %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
@@ -131,7 +131,6 @@
                 </svg>
                 Lịch Học
             </a>
-            {% endif %}
             {% endif %}
 
             <div class="sidebar-nav-label">Cá Nhân</div>

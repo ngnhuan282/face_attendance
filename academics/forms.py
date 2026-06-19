@@ -5,6 +5,73 @@ from django import forms
 from .models import AcademicYear, Semester
 
 
+class AcademicYearDateForm(forms.ModelForm):
+    class Meta:
+        model = AcademicYear
+        fields = ['start_date', 'end_date']
+        labels = {
+            'start_date': 'Ngày bắt đầu năm học',
+            'end_date': 'Ngày kết thúc năm học',
+        }
+        widgets = {
+            'start_date': forms.DateInput(
+                format='%Y-%m-%d',
+                attrs={'class': 'form-control', 'type': 'date'},
+            ),
+            'end_date': forms.DateInput(
+                format='%Y-%m-%d',
+                attrs={'class': 'form-control', 'type': 'date'},
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['start_date'].input_formats = ['%Y-%m-%d']
+        self.fields['end_date'].input_formats = ['%Y-%m-%d']
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+
+        if start_date and end_date and start_date > end_date:
+            self.add_error('end_date', 'Ngày kết thúc năm học phải lớn hơn hoặc bằng ngày bắt đầu.')
+            return cleaned_data
+
+        if start_date and end_date and self.instance.pk:
+            outside_semester = (
+                self.instance.semesters
+                .filter(start_date__lt=start_date)
+                .order_by('start_date')
+                .first()
+            ) or (
+                self.instance.semesters
+                .filter(end_date__gt=end_date)
+                .order_by('-end_date')
+                .first()
+            )
+            if outside_semester:
+                self.add_error(
+                    'start_date',
+                    f'Khoảng năm học phải bao phủ tất cả học kỳ hiện có. {outside_semester} đang nằm ngoài khoảng mới.',
+                )
+
+            overlapping_year = (
+                AcademicYear.objects
+                .filter(start_date__lte=end_date, end_date__gte=start_date)
+                .exclude(pk=self.instance.pk)
+                .order_by('-start_date')
+                .first()
+            )
+            if overlapping_year:
+                self.add_error(
+                    'start_date',
+                    f'Thời gian năm học bị trùng với {overlapping_year}.',
+                )
+
+        return cleaned_data
+
+
 class SemesterForm(forms.ModelForm):
     SEMESTER_CHOICES = (
         (1, 'Học kỳ 1'),

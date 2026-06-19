@@ -4,11 +4,12 @@ from django.db import transaction
 from django.db.models import Count, Q
 from django.db.models.deletion import ProtectedError
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
 from accounts.permissions import module_permission_required
 
-from .forms import SemesterForm
+from .forms import AcademicYearDateForm, SemesterForm
 from .models import AcademicYear, Semester
 
 
@@ -33,6 +34,7 @@ def semester_list(request):
     params = _semester_query_params(request)
     search_query = params['search_query']
     selected_year = params['selected_year']
+    selected_academic_year = None
 
     semesters = (
         Semester.objects.select_related('academic_year')
@@ -41,7 +43,11 @@ def semester_list(request):
     )
 
     if selected_year and selected_year.isdigit():
-        semesters = semesters.filter(academic_year_id=selected_year)
+        selected_academic_year = AcademicYear.objects.filter(pk=selected_year).first()
+        if selected_academic_year:
+            semesters = semesters.filter(academic_year=selected_academic_year)
+        else:
+            selected_year = ''
     elif selected_year:
         selected_year = ''
 
@@ -63,6 +69,7 @@ def semester_list(request):
         'page_obj': page_obj,
         'search_query': search_query,
         'selected_year': selected_year,
+        'selected_academic_year': selected_academic_year,
         'academic_years': AcademicYear.objects.order_by('-start_date'),
         'total_semesters': Semester.objects.count(),
         'academic_year_count': AcademicYear.objects.count(),
@@ -74,6 +81,34 @@ def semester_list(request):
         ),
     }
     return render(request, 'academics/semester_list.html', context)
+
+
+@module_permission_required('academics', 'edit')
+@require_http_methods(['GET', 'POST'])
+def academic_year_edit(request, pk):
+    academic_year = get_object_or_404(AcademicYear, pk=pk)
+
+    if request.method == 'POST':
+        form = AcademicYearDateForm(request.POST, instance=academic_year)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Cập nhật thời gian năm học {academic_year.name} thành công.')
+            return redirect(f'{reverse("academics:semester_list")}?year={academic_year.pk}')
+        messages.error(request, 'Vui lòng kiểm tra lại thời gian năm học.')
+    else:
+        form = AcademicYearDateForm(instance=academic_year)
+
+    context = {
+        'active_menu': 'academics',
+        'form': form,
+        'academic_year': academic_year,
+        'form_title': f'Sửa Năm Học {academic_year.name}',
+        'form_desc': 'Điều chỉnh ngày bắt đầu và ngày kết thúc của năm học. Khoảng này phải bao phủ các học kỳ hiện có.',
+        'submit_label': 'Lưu Năm Học',
+        'is_edit': True,
+        'cancel_url': f'{reverse("academics:semester_list")}?year={academic_year.pk}',
+    }
+    return render(request, 'academics/semester_form.html', context)
 
 
 @module_permission_required('academics', 'add')

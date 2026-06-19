@@ -9,7 +9,9 @@
 .semester-period {
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 4px;
+    text-align: center;
 }
 .semester-period-main {
     color: var(--text-dark);
@@ -18,6 +20,16 @@
 .semester-period-sub {
     color: var(--text-muted);
     font-size: 12px;
+}
+.semester-year-link {
+    width: fit-content;
+    color: var(--text-muted);
+    font-size: 12px;
+    text-decoration: none;
+}
+.semester-year-link:hover {
+    color: var(--primary-green, #1a6b3c);
+    text-decoration: underline;
 }
 .semester-badge {
     display: inline-flex;
@@ -153,7 +165,11 @@
                     <td>
                         <div class="semester-period">
                             <span class="semester-period-main">{{ semester.academic_year.name }}</span>
+                            {% if request.user_permissions.academics.edit %}
+                            <a href="{% url 'academics:academic_year_edit' semester.academic_year.pk %}" class="semester-year-link" title="Sửa ngày bắt đầu và ngày kết thúc năm học">{{ semester.academic_year.start_date|date:"d/m/Y" }} - {{ semester.academic_year.end_date|date:"d/m/Y" }}</a>
+                            {% else %}
                             <span class="semester-period-sub">{{ semester.academic_year.start_date|date:"d/m/Y" }} - {{ semester.academic_year.end_date|date:"d/m/Y" }}</span>
+                            {% endif %}
                         </div>
                     </td>
                     <td><span class="semester-badge">HK{{ semester.semester_num }}</span></td>
