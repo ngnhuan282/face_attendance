@@ -18,4 +18,5 @@ urlpatterns = [
     
     # Timetable URLs
     path('timetable/', views.timetable_view, name='timetable_view'),
+    path('timetable/export/', views.timetable_export_excel, name='timetable_export_excel'),
 ]

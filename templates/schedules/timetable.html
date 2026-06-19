@@ -33,6 +33,15 @@
     box-shadow: 0 0 0 3px rgba(26, 107, 60, 0.1) !important;
     background: #fff !important;
 }
+.btn-pdf {
+    background-color: #ef4444;
+    color: white;
+    transition: background-color 0.2s;
+    border-radius: 6px;
+}
+.btn-pdf:hover {
+    background-color: #dc2626;
+}
 </style>
 {% endblock %}
 
@@ -41,14 +50,14 @@
 <div class="card" style="margin-bottom: 24px; padding: 20px;">
     <form method="get" style="display: flex; gap: 16px; align-items: center; justify-content: space-between;">
         <div style="display: flex; gap: 16px; align-items: center;">
-            <div style="font-weight: 600; color: var(--text-dark);">Học kỳ:</div>
-            <select name="semester" class="form-control select2-filter" style="width: 250px;">
+            <div style="font-weight: 600; color: var(--text-dark); white-space: nowrap;">Học kỳ:</div>
+            <select name="semester" class="form-control select2-filter" style="width: 350px;">
                 {% for sem in semesters %}
-                    <option value="{{ sem.id }}" {% if selected_semester and sem.id == selected_semester.id %}selected{% endif %}>{{ sem.academic_year.name }} - HK{{ sem.semester_num }}</option>
+                    <option value="{{ sem.id }}" {% if selected_semester and sem.id == selected_semester.id %}selected{% endif %}>{{ sem.academic_year.name }} - HK{{ sem.semester_num }} (Từ {{ sem.start_date|date:'d/m/Y' }} đến {{ sem.end_date|date:'d/m/Y' }})</option>
                 {% endfor %}
             </select>
 
-            <div style="font-weight: 600; color: var(--text-dark);">Tuần:</div>
+            <div style="font-weight: 600; color: var(--text-dark); white-space: nowrap;">Tuần:</div>
             <select name="week" class="form-control select2-filter" style="width: 320px;">
                 {% for w in weeks %}
                     <option value="{{ w.number }}" {% if selected_week and w.number == selected_week.number %}selected{% endif %}>{{ w.label }}</option>
@@ -56,12 +65,23 @@
             </select>
         </div>
         <div style="display: flex; gap: 12px; align-items: center;">
-            <a href="?semester={% if selected_semester %}{{ selected_semester.id }}{% endif %}" class="btn-secondary" style="padding: 8px 16px; text-decoration: none; font-weight: 500;">Tuần Hiện Tại</a>
+            <a href="?semester={% if selected_semester %}{{ selected_semester.id }}{% endif %}" class="btn-secondary" style="padding: 8px 16px; text-decoration: none; font-weight: 500; white-space: nowrap;">Tuần Hiện Tại</a>
+            <button type="button" id="btn-export-pdf" class="btn-pdf" style="padding: 10px 16px; border: none; cursor: pointer; font-family: inherit; font-size: inherit; font-weight: 500; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                Xuất PDF
+            </button>
         </div>
     </form>
+    
+    {% if selected_semester %}
+    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border-color); display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-medium);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        <span>Thời gian bắt đầu và kết thúc của <strong style="color: var(--primary-color, #1a6b3c);">Học kỳ {{ selected_semester.semester_num }} (Năm học {{ selected_semester.academic_year.name }})</strong>: Từ ngày <strong style="color: var(--text-dark);">{{ selected_semester.start_date|date:'d/m/Y' }}</strong> đến ngày <strong style="color: var(--text-dark);">{{ selected_semester.end_date|date:'d/m/Y' }}</strong></span>
+    </div>
+    {% endif %}
 </div>
 
-<div class="card" style="padding: 0; overflow-x: auto;">
+<div class="card" id="timetable-export-area" style="padding: 0; overflow-x: auto;">
     <div style="min-width: 1000px;">
         <table class="timetable-grid" style="width: 100%; border-collapse: collapse; text-align: center;">
             <thead>
@@ -87,9 +107,9 @@
                         {% elif schedule %}
                         <td rowspan="{{ schedule.rowspan }}" style="padding: 4px; border-right: 1px solid var(--border-color); vertical-align: middle; height: 60px;">
                             <div class="schedule-block" 
-                                 style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 8px; text-align: left; cursor: pointer; height: 100%; transition: all 0.2s;"
+                                 style="background: {{ schedule.bg_color }}; border: 1px solid {{ schedule.border_color }}; border-radius: 6px; padding: 8px; text-align: left; cursor: pointer; height: 100%; transition: all 0.2s;"
                                  onclick="openScheduleModal('{{ schedule.course_class.class_code|escapejs }}', '{{ schedule.course_class.course.course_name|escapejs }}', '{{ schedule.room.room_code|escapejs }}', '{{ schedule.start_period }}', '{{ schedule.end_period }}', '{{ schedule.pk }}', '{{ schedule.course_class.teacher.user.last_name|escapejs }} {{ schedule.course_class.teacher.user.first_name|escapejs }}')">
-                                <div style="font-size: 11px; font-weight: 700; color: #1d4ed8; margin-bottom: 4px; text-transform: uppercase;">
+                                <div style="font-size: 11px; font-weight: 700; color: {{ schedule.text_color }}; margin-bottom: 4px; text-transform: uppercase;">
                                     {{ schedule.course_class.class_code }}
                                 </div>
                                 <div style="font-size: 13px; font-weight: 600; color: var(--text-dark); margin-bottom: 6px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
@@ -105,7 +125,7 @@
                                         T{{ schedule.start_period }}-{{ schedule.end_period }}
                                     </div>
                                 </div>
-                                <div style="font-size: 11px; color: var(--text-medium); margin-top: 4px; border-top: 1px dashed #bfdbfe; padding-top: 4px;">
+                                <div style="font-size: 11px; color: var(--text-medium); margin-top: 4px; border-top: 1px dashed {{ schedule.border_color }}; padding-top: 4px;">
                                     GV: {{ schedule.course_class.teacher.user.last_name }} {{ schedule.course_class.teacher.user.first_name }}
                                 </div>
                             </div>
@@ -206,8 +226,23 @@ $(document).ready(function() {
     }).on('change', function() {
         $(this).closest('form').submit();
     });
+
+    $('#btn-export-pdf').on('click', function() {
+        var element = document.getElementById('timetable-export-area');
+        
+        var opt = {
+            margin:       [10, 10, 10, 10],
+            filename:     'ThoiKhoaBieu_{{ target_date }}.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'mm', format: 'a3', orientation: 'landscape' }
+        };
+        
+        html2pdf().set(opt).from(element).save();
+    });
 });
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 {% endblock %}
 
 {% endblock %}

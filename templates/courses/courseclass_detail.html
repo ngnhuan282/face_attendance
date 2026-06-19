@@ -15,8 +15,8 @@
             </svg>
         </div>
         <div class="stat-info">
-            <div class="stat-value">{{ courseclass.course.course_code }}</div>
-            <div class="stat-label">Mã Học Phần</div>
+            <div class="stat-value" style="font-size: 16px;">{{ courseclass.course.course_code }} - {{ courseclass.course.course_name }}</div>
+            <div class="stat-label">Học Phần • HK{{ courseclass.semester.semester_num }} ({{ courseclass.semester.academic_year.name }})</div>
         </div>
     </div>
     <div class="stat-card">

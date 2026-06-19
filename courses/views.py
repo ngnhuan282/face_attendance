@@ -266,16 +266,10 @@ def courseclass_create(request):
             max_students = request.POST.get('max_students')
             if not max_students or max_students.strip() == '':
                 max_students = 40
-                
-            total_sessions = request.POST.get('total_sessions')
-            if not total_sessions or total_sessions.strip() == '':
-                total_sessions = 15
-                
             try:
                 max_students = int(max_students)
-                total_sessions = int(total_sessions)
             except ValueError:
-                return JsonResponse({'error': 'Sĩ số và Tổng số buổi phải là một số hợp lệ'}, status=400)
+                return JsonResponse({'error': 'Sĩ số phải là một số hợp lệ'}, status=400)
             
             # Validation
             if not all([course_id, semester_id, teacher_id, class_code]):
@@ -300,7 +294,7 @@ def courseclass_create(request):
                 teacher=teacher,
                 class_code=class_code,
                 max_students=max_students,
-                total_sessions=total_sessions
+                total_sessions=0
             )
             
             messages.success(request, f'Tạo lớp học phần "{class_code}" thành công')
@@ -336,7 +330,6 @@ def courseclass_edit(request, pk):
             
             teacher_id = request.POST.get('teacher')
             max_students = request.POST.get('max_students')
-            total_sessions = request.POST.get('total_sessions')
             
             if teacher_id:
                 teacher = get_object_or_404(Teacher, pk=teacher_id)
@@ -348,11 +341,6 @@ def courseclass_edit(request, pk):
                 except ValueError:
                     return JsonResponse({'error': 'Sĩ số phải là một số hợp lệ'}, status=400)
                     
-            if total_sessions is not None and total_sessions.strip() != '':
-                try:
-                    courseclass.total_sessions = int(total_sessions)
-                except ValueError:
-                    return JsonResponse({'error': 'Tổng số buổi phải là một số hợp lệ'}, status=400)
             courseclass.save()
             
             messages.success(request, 'Cập nhật lớp học phần thành công')
@@ -792,17 +780,10 @@ def courseclass_export_excel(request, pk):
 @group_required(ADMIN_GROUP_NAME)
 def enrollment_export_all(request):
     """Xuất danh sách đăng ký ra file CSV"""
-    import csv
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
     from django.http import HttpResponse
-    
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="danh_sach_dang_ky.csv"'
-    
-    # Write BOM for Excel compatibility with UTF-8
-    response.write(u'\ufeff'.encode('utf8'))
-    
-    writer = csv.writer(response)
-    writer.writerow(['MSSV', 'Ho Ten', 'Ma Lop HP', 'Ten Hoc Phan', 'Hoc Ky', 'Trang Thai'])
+    from django.utils import timezone
     
     enrollments = Enrollment.objects.select_related('course_class__course', 'course_class__semester', 'student').all().order_by('id')
     
@@ -814,17 +795,78 @@ def enrollment_export_all(request):
             models.Q(course_class__class_code__icontains=search_query)
         )
         
-    for e in enrollments:
-        status = 'Hoat Dong' if e.is_active else 'Da Huy'
-        writer.writerow([
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Danh Sách Đăng Ký Học Phần"
+    
+    # Styles
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="1A6B3C", end_color="1A6B3C", fill_type="solid")
+    align_center = Alignment(horizontal="center", vertical="center")
+    align_left = Alignment(horizontal="left", vertical="center")
+    border = Border(
+        left=Side(border_style="thin", color="000000"),
+        right=Side(border_style="thin", color="000000"),
+        top=Side(border_style="thin", color="000000"),
+        bottom=Side(border_style="thin", color="000000")
+    )
+    
+    # Title
+    ws.merge_cells('A1:G1')
+    title_cell = ws.cell(row=1, column=1, value="DANH SÁCH ĐĂNG KÝ HỌC PHẦN TOÀN TRƯỜNG")
+    title_cell.font = Font(bold=True, size=14)
+    title_cell.alignment = align_center
+    
+    ws.merge_cells('A2:G2')
+    subtitle_cell = ws.cell(row=2, column=1, value=f"Ngày xuất: {timezone.now().strftime('%d/%m/%Y %H:%M')}")
+    subtitle_cell.font = Font(italic=True)
+    subtitle_cell.alignment = align_center
+    
+    # Header Row
+    headers = ["STT", "MSSV", "Họ Tên", "Mã Lớp HP", "Tên Học Phần", "Học Kỳ", "Trạng Thái"]
+    for col_num, header_title in enumerate(headers, 1):
+        cell = ws.cell(row=4, column=col_num, value=header_title)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = align_center
+        cell.border = border
+        
+    # Data Rows
+    for row_num, e in enumerate(enrollments, 1):
+        row = [
+            row_num,
             e.student.student_id,
             e.student.full_name,
             e.course_class.class_code,
             e.course_class.course.course_name,
             str(e.course_class.semester),
-            status
-        ])
+            "Đang học" if e.is_active else "Đã hủy"
+        ]
         
+        for col_num, cell_value in enumerate(row, 1):
+            cell = ws.cell(row=row_num + 4, column=col_num, value=cell_value)
+            cell.border = border
+            if col_num in [1, 2, 4, 6, 7]:
+                cell.alignment = align_center
+            else:
+                cell.alignment = align_left
+                
+            if col_num == 7: # Status
+                if e.is_active:
+                    cell.fill = PatternFill(start_color="dcfce7", end_color="dcfce7", fill_type="solid")
+                    cell.font = Font(color="166534")
+                else:
+                    cell.fill = PatternFill(start_color="fee2e2", end_color="fee2e2", fill_type="solid")
+                    cell.font = Font(color="991b1b")
+                    
+    # Auto-adjust column widths
+    column_widths = {'A': 6, 'B': 15, 'C': 30, 'D': 15, 'E': 40, 'F': 35, 'G': 15}
+    for col, width in column_widths.items():
+        ws.column_dimensions[col].width = width
+        
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="DanhSachDangKyHocPhan.xlsx"'
+    wb.save(response)
     return response
 
 @group_required(ADMIN_GROUP_NAME)
@@ -838,14 +880,9 @@ def enrollment_import_preview(request):
         if not csv_file:
             return JsonResponse({'error': 'Chưa chọn file'}, status=400)
         
-        if not csv_file.name.endswith('.csv'):
-            return JsonResponse({'error': 'Vui lòng chọn file CSV'}, status=400)
-        
-        from io import TextIOWrapper
-        import csv
-        stream = TextIOWrapper(csv_file.file, encoding='utf-8-sig')
-        csv_reader = csv.DictReader(stream)
-        
+        if not (csv_file.name.endswith('.csv') or csv_file.name.endswith('.xlsx')):
+            return JsonResponse({'error': 'Vui lòng chọn file CSV hoặc Excel (.xlsx)'}, status=400)
+            
         target_course_class = None
         if courseclass_id:
             try:
@@ -854,14 +891,47 @@ def enrollment_import_preview(request):
                 pass
 
         preview_data = []
-        for row_num, row in enumerate(csv_reader, start=2):
-            student_code = row.get('student_code', '').strip() or row.get('student_id', '').strip() or row.get('MSSV', '').strip()
+        
+        def get_rows(file):
+            import csv
+            import openpyxl
+            from io import TextIOWrapper
             
-            # If target_course_class is provided, use its class_code. Otherwise, read from CSV.
+            rows = []
+            if file.name.endswith('.csv'):
+                stream = TextIOWrapper(file.file, encoding='utf-8-sig')
+                reader = csv.DictReader(stream)
+                for i, row in enumerate(reader, start=2):
+                    rows.append((i, row.get('student_code', '').strip() or row.get('student_id', '').strip() or row.get('MSSV', '').strip(),
+                                 row.get('class_code', '').strip() or row.get('Mã Lớp HP', '').strip() or row.get('Ma Lop HP', '').strip()))
+            else:
+                wb = openpyxl.load_workbook(file, data_only=True)
+                ws = wb.active
+                header_row = None
+                headers = []
+                for i, row in enumerate(ws.iter_rows(values_only=True)):
+                    row_strs = [str(c).strip().upper() if c else '' for c in row]
+                    if any(h in row_strs for h in ['MSSV', 'STUDENT_CODE', 'STUDENT_ID']):
+                        header_row = i
+                        headers = row_strs
+                        break
+                
+                if header_row is not None:
+                    for i, row in enumerate(ws.iter_rows(min_row=header_row+2, values_only=True), start=header_row+2):
+                        row_dict = dict(zip(headers, [str(c).strip() if c else '' for c in row]))
+                        mssv = row_dict.get('MSSV', '') or row_dict.get('STUDENT_CODE', '') or row_dict.get('STUDENT_ID', '')
+                        class_code = row_dict.get('MÃ LỚP HP', '') or row_dict.get('MA LOP HP', '') or row_dict.get('CLASS_CODE', '')
+                        if mssv and mssv != 'None':
+                            rows.append((i, mssv, class_code))
+            return rows
+
+        for row_num, student_code, csv_class_code in get_rows(csv_file):
+            
+            # If target_course_class is provided, use its class_code. Otherwise, read from file.
             if target_course_class:
                 class_code = target_course_class.class_code
             else:
-                class_code = row.get('class_code', '').strip() or row.get('Ma Lop HP', '').strip()
+                class_code = csv_class_code
             
             row_data = {
                 'row_num': row_num,

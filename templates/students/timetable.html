@@ -44,6 +44,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
+    white-space: nowrap;
 }
 .sp-timetable-controls {
     display: flex;
@@ -142,10 +143,18 @@
     cursor: pointer;
     text-decoration: none;
     transition: all 0.2s;
+    white-space: nowrap;
 }
 .btn-outline-week:hover {
     background-color: #f3f4f6;
     border-color: #9ca3af;
+}
+.schedule-block {
+    transition: all 0.2s ease-in-out !important;
+}
+.schedule-block:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 12px -2px rgba(0,0,0,0.1);
 }
 </style>
 {% endblock %}
@@ -157,18 +166,18 @@
     <main class="sp-main">
         <div class="sp-container">
             <div class="sp-timetable-card">
-                <div class="sp-timetable-header">
+                <div class="sp-timetable-header" style="flex-direction: column; align-items: stretch; gap: 20px;">
                     <div class="sp-timetable-title">
                         <div class="sp-card-icon blue">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                         </div>
                         Lịch Học Của Bạn
                     </div>
-                    <div class="sp-timetable-controls">
-                        <form method="get" id="timetable-form" style="display:flex; gap:12px; margin:0;">
-                            <select name="semester" class="sp-select select2-filter" style="width: 250px;" onchange="document.getElementById('timetable-form').submit()">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                        <form method="get" id="timetable-form" style="display:flex; gap:12px; margin:0; flex-wrap: wrap;">
+                            <select name="semester" class="sp-select select2-filter" style="width: 350px;" onchange="document.getElementById('timetable-form').submit()">
                                 {% for sem in semesters %}
-                                <option value="{{ sem.id }}" {% if selected_semester and selected_semester.id == sem.id %}selected{% endif %}>{{ sem }}</option>
+                                <option value="{{ sem.id }}" {% if selected_semester and selected_semester.id == sem.id %}selected{% endif %}>{{ sem }} (Từ {{ sem.start_date|date:'d/m/Y' }} đến {{ sem.end_date|date:'d/m/Y' }})</option>
                                 {% endfor %}
                             </select>
                             
@@ -178,6 +187,7 @@
                                 {% endfor %}
                             </select>
                         </form>
+                        <div class="sp-timetable-controls" style="display: flex; gap: 12px; flex-wrap: wrap;">
                         {% if selected_week %}
                             {% if selected_week.number > 1 %}
                                 <a href="?semester={{ selected_semester.id }}&week={{ selected_week.number|add:'-1' }}" class="btn-outline-week" title="Tuần trước">&lsaquo; Trước</a>
@@ -186,56 +196,80 @@
                                 <a href="?semester={{ selected_semester.id }}&week={{ selected_week.number|add:'1' }}" class="btn-outline-week" title="Tuần sau">Sau &rsaquo;</a>
                             {% endif %}
                         {% endif %}
+                        <button type="button" class="btn-outline-week" id="btn-export-pdf" style="color: #ef4444; border-color: #fca5a5; display: flex; align-items: center; gap: 6px;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            Xuất PDF
+                        </button>
+                        </div>
                     </div>
                 </div>
-                <div class="sp-timetable-body">
-                    <table class="sp-table">
-                        <thead>
-                            <tr>
-                                <th>Tiết</th>
-                                {% for day in week_days %}
-                                <th {% if day.date == today %}class="today-highlight"{% endif %}>
-                                    {{ day.day_name }}<br>
-                                    <span style="font-weight:400; font-size:0.8rem; color:#6b7280;">{{ day.date|date:"d/m" }}</span>
-                                </th>
-                                {% endfor %}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in grid %}
-                            <tr>
-                                <td>Tiết {{ forloop.counter }}</td>
-                                {% for cell in row %}
-                                    {% if cell == 'spanned' %}
-                                        {# Do nothing, cell is spanned by previous schedule #}
-                                    {% elif cell %}
-                                        <td rowspan="{{ cell.rowspan }}" class="sp-cell-has-class">
-                                            <span class="sp-cell-course">{{ cell.course_class.course.course_name }}</span>
-                                            <div class="sp-cell-meta">
-                                                <span>
-                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                
+                {% if selected_semester %}
+                <div style="padding: 12px 24px; border-bottom: 1px dashed #e5e7eb; background: #f8fafc; font-size: 14px; color: #4b5563; display: flex; align-items: center; gap: 8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    <span>Thời gian bắt đầu và kết thúc của <strong style="color: #1e40af;">Học kỳ {{ selected_semester.semester_num }} (Năm học {{ selected_semester.academic_year.name }})</strong>: Từ ngày <strong style="color: #111827;">{{ selected_semester.start_date|date:'d/m/Y' }}</strong> đến ngày <strong style="color: #111827;">{{ selected_semester.end_date|date:'d/m/Y' }}</strong></span>
+                </div>
+                {% endif %}
+                
+                <div class="sp-timetable-body" style="padding: 0;">
+                    <div style="min-width: 1000px;">
+                        <table class="sp-table" style="width: 100%; border-collapse: collapse; text-align: center;">
+                            <thead>
+                                <tr style="background: #f9fafb; border-bottom: 2px solid #e5e7eb;">
+                                    <th style="width: 80px; padding: 16px 8px; border-right: 1px solid #e5e7eb; color: #4b5563; font-weight: 600; background: #f9fafb; position: sticky; left: 0; z-index: 10;">Tiết</th>
+                                    {% for day in week_days %}
+                                        <th style="padding: 16px 8px; border-right: 1px solid #e5e7eb; width: calc((100% - 80px) / 7);" {% if day.date == today %}class="today-highlight"{% endif %}>
+                                            <div style="font-weight: 700; color: #111827; margin-bottom: 4px;">{{ day.day_name }}</div>
+                                            <div style="font-size: 12px; color: #6b7280;">{{ day.date|date:"d/m" }}</div>
+                                        </th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in grid %}
+                                <tr style="border-bottom: 1px solid #e5e7eb;">
+                                    <td style="padding: 12px 8px; border-right: 1px solid #e5e7eb; background: #f9fafb; font-weight: 600; color: #4b5563; position: sticky; left: 0; z-index: 9;">
+                                        Tiết {{ forloop.counter }}
+                                    </td>
+                                    {% for cell in row %}
+                                        {% if cell == 'spanned' %}
+                                            <!-- skip spanned cell -->
+                                        {% elif cell %}
+                                        <td rowspan="{{ cell.rowspan }}" style="padding: 4px; border-right: 1px solid #e5e7eb; vertical-align: middle; height: 60px;">
+                                            <div class="schedule-block" 
+                                                 style="background: {{ cell.bg_color }}; border: 1px solid {{ cell.border_color }}; border-radius: 6px; padding: 8px; text-align: left; height: 100%;">
+                                                <div style="font-size: 11px; font-weight: 700; color: {{ cell.text_color }}; margin-bottom: 4px; text-transform: uppercase;">
                                                     {{ cell.course_class.class_code }}
-                                                </span>
-                                                <span>
-                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                                                    Phòng: {{ cell.room.room_code }}
-                                                </span>
+                                                </div>
+                                                <div style="font-size: 13px; font-weight: 600; color: #111827; margin-bottom: 6px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                                                    {{ cell.course_class.course.course_name }}
+                                                </div>
+                                                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #4b5563;">
+                                                    <div style="display: flex; align-items: center; gap: 4px;">
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                                                        {{ cell.room.room_code }}
+                                                    </div>
+                                                    <div style="display: flex; align-items: center; gap: 4px;">
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                                        T{{ cell.start_period }}-{{ cell.end_period }}
+                                                    </div>
+                                                </div>
                                                 {% if cell.course_class.teacher %}
-                                                <span>
-                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                                <div style="font-size: 11px; color: #4b5563; margin-top: 4px; border-top: 1px dashed {{ cell.border_color }}; padding-top: 4px;">
                                                     GV: {{ cell.course_class.teacher.user.get_full_name }}
-                                                </span>
+                                                </div>
                                                 {% endif %}
                                             </div>
                                         </td>
-                                    {% else %}
-                                        <td></td>
-                                    {% endif %}
+                                        {% else %}
+                                        <td style="padding: 4px; border-right: 1px solid #e5e7eb; vertical-align: top; height: 60px;"></td>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tr>
                                 {% endfor %}
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -256,6 +290,26 @@ $(document).ready(function() {
     $('.select2-filter').on('change', function() {
         document.getElementById('timetable-form').submit();
     });
+
+    $('#btn-export-pdf').on('click', function() {
+        var element = document.querySelector('.sp-timetable-card');
+        var opt = {
+            margin:       [10, 10, 10, 10],
+            filename:     'ThoiKhoaBieu_{{ target_date }}.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'mm', format: 'a3', orientation: 'landscape' }
+        };
+        
+        // Hide controls temporarily during PDF generation
+        var oldDisplay = document.querySelector('.sp-timetable-controls').style.display;
+        document.querySelector('.sp-timetable-controls').style.display = 'none';
+        
+        html2pdf().set(opt).from(element).save().then(function() {
+            document.querySelector('.sp-timetable-controls').style.display = oldDisplay || 'flex';
+        });
+    });
 });
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 {% endblock %}

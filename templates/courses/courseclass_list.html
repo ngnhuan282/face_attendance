@@ -218,13 +218,6 @@
                     <input type="number" name="max_students" id="modal_max_students" value="40" min="1" max="200" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none;">
                 </div>
 
-                <!-- Total Sessions -->
-                <div style="display: flex; flex-direction: column; gap: 6px;">
-                    <label for="modal_total_sessions" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
-                        Tổng Số Buổi
-                    </label>
-                    <input type="number" name="total_sessions" id="modal_total_sessions" value="15" min="1" max="30" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none;">
-                </div>
 
                 <!-- Buttons -->
                 <div style="display: flex; justify-content: center; gap: 12px; margin-top: 24px;">
@@ -299,13 +292,6 @@
                     <input type="number" name="max_students" id="edit_modal_max_students" min="1" max="200" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none;">
                 </div>
 
-                <!-- Total Sessions -->
-                <div style="display: flex; flex-direction: column; gap: 6px;">
-                    <label for="edit_modal_total_sessions" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
-                        Tổng Số Buổi
-                    </label>
-                    <input type="number" name="total_sessions" id="edit_modal_total_sessions" min="1" max="30" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none;">
-                </div>
 
                 <!-- Buttons -->
                 <div style="display: flex; justify-content: center; gap: 12px; margin-top: 24px;">
@@ -488,7 +474,6 @@ function openEditCourseClassModal(button) {
     const semesterName = row.dataset.semesterName;
     const teacherId = row.dataset.teacherId;
     const maxStudents = row.dataset.maxStudents;
-    const totalSessions = row.dataset.totalSessions;
     
     // Populate form
     document.getElementById('edit_courseclass_id').value = courseclassId;
@@ -496,7 +481,6 @@ function openEditCourseClassModal(button) {
     document.getElementById('edit_modal_semester_display').value = semesterName;
     document.getElementById('edit_modal_class_code').value = classCode;
     document.getElementById('edit_modal_max_students').value = maxStudents;
-    document.getElementById('edit_modal_total_sessions').value = totalSessions;
     
     // Update form action
     const form = document.getElementById('editCourseclassForm');
