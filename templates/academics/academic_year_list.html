@@ -1,0 +1,406 @@
+{% extends 'layouts/admin_base.html' %}
+
+{% block title %}EduFace - Quản Lý Năm Học{% endblock %}
+{% block page_title %}Quản Lý Năm Học{% endblock %}
+{% block breadcrumb %}Học Vụ / Năm Học{% endblock %}
+
+{% block extra_css %}
+<style>
+.year-period {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-align: center;
+}
+.year-period-main {
+    color: var(--text-dark);
+    font-weight: 700;
+}
+.year-period-sub {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+.year-count-link {
+    color: var(--primary-green, #1a6b3c);
+    font-weight: 700;
+    text-decoration: none;
+}
+.year-count-link:hover {
+    text-decoration: underline;
+}
+.btn-action-disabled {
+    opacity: 0.45;
+    cursor: not-allowed !important;
+}
+.academic-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+}
+.academic-modal.show {
+    display: flex;
+}
+.academic-modal-card {
+    width: 520px;
+    max-width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.18);
+}
+.academic-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+.academic-modal-title {
+    margin: 0;
+    color: var(--text-dark);
+    font-size: 18px;
+    font-weight: 700;
+}
+.academic-modal-close {
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 24px;
+    line-height: 1;
+}
+.academic-modal-grid {
+    display: grid;
+    gap: 14px;
+}
+.academic-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.academic-field label {
+    color: var(--text-dark);
+    font-size: 13px;
+    font-weight: 600;
+}
+.academic-field input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 1.5px solid var(--border-color, #e5e7eb);
+    border-radius: 6px;
+    color: var(--text-dark);
+    font: inherit;
+    outline: none;
+}
+.academic-field input:focus {
+    border-color: var(--primary-green, #1a6b3c);
+    box-shadow: 0 0 0 3px rgba(26, 107, 60, 0.1);
+}
+.academic-modal-error {
+    display: none;
+    padding: 12px;
+    background: #fee2e2;
+    border: 1px solid #fca5a5;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    color: #dc2626;
+    font-size: 13px;
+    white-space: pre-line;
+}
+@media (max-width: 900px) {
+    .table-toolbar form {
+        flex-wrap: wrap;
+    }
+}
+</style>
+{% endblock %}
+
+{% block page_content %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-value">{{ total_years }}</div>
+            <div class="stat-label">Tổng Năm Học</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-value">{{ total_semesters }}</div>
+            <div class="stat-label">Tổng Học Kỳ</div>
+        </div>
+    </div>
+</div>
+
+<div class="table-card">
+    <div class="table-card-header">
+        <div>
+            <div class="table-card-title">Danh Sách Năm Học</div>
+        </div>
+        <div class="table-toolbar">
+            <form method="get" style="display: flex; gap: 8px; align-items: center;">
+                <div class="search-input-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input class="search-input" type="text" name="q" placeholder="Tìm năm học..." value="{{ search_query }}">
+                </div>
+                <button type="submit" class="btn-secondary" style="padding: 8px 12px; font-size: 13px;" title="Tìm kiếm">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </button>
+                {% if search_query %}
+                <a href="{% url 'academics:academic_year_list' %}" style="font-size: 13px; color: var(--text-muted); text-decoration: none;">Xóa lọc</a>
+                {% endif %}
+            </form>
+            {% if request.user_permissions.academics.add %}
+            <button type="button" class="btn-primary" style="padding: 8px 16px; font-size: 13px; gap: 6px; border: none; cursor: pointer;" onclick="openAcademicYearModal()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Thêm Năm Học
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Năm Học</th>
+                    <th>Ngày Bắt Đầu</th>
+                    <th>Ngày Kết Thúc</th>
+                    <th>Học Kỳ</th>
+                    <th>Lớp HP</th>
+                    <th>Hành Động</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for year in page_obj %}
+                <tr>
+                    <td>
+                        <div class="year-period">
+                            <span class="year-period-main">{{ year.name }}</span>
+                            <span class="year-period-sub">{{ year.start_date|date:"d/m/Y" }} - {{ year.end_date|date:"d/m/Y" }}</span>
+                        </div>
+                    </td>
+                    <td>{{ year.start_date|date:"d/m/Y" }}</td>
+                    <td>{{ year.end_date|date:"d/m/Y" }}</td>
+                    <td style="text-align: center;">
+                        {% if year.semester_count %}
+                        <a href="{% url 'academics:semester_list' %}?year={{ year.pk }}" class="year-count-link">{{ year.semester_count }}</a>
+                        {% else %}
+                        {{ year.semester_count }}
+                        {% endif %}
+                    </td>
+                    <td style="text-align: center;">{{ year.course_class_count }}</td>
+                    <td>
+                        <div class="action-btns">
+                            {% if request.user_permissions.academics.edit %}
+                            <button type="button"
+                                    class="btn-action btn-action-edit"
+                                    data-action="{% url 'academics:academic_year_edit' year.pk %}"
+                                    data-name="{{ year.name }}"
+                                    data-start-date="{{ year.start_date|date:'Y-m-d' }}"
+                                    data-end-date="{{ year.end_date|date:'Y-m-d' }}"
+                                    onclick="openAcademicYearModal(this)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                Sửa
+                            </button>
+                            {% endif %}
+                            {% if request.user_permissions.academics.delete %}
+                                {% if year.semester_count %}
+                                <button type="button" class="btn-action btn-action-delete btn-action-disabled" title="Không thể xóa năm học đang có học kỳ" disabled>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                    Xóa
+                                </button>
+                                {% else %}
+                                <form method="post" action="{% url 'academics:academic_year_delete' year.pk %}" style="display: inline;" onsubmit="return confirm('Bạn có chắc muốn xóa năm học {{ year.name|escapejs }} không?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-action btn-action-delete" style="cursor: pointer;">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                        Xóa
+                                    </button>
+                                </form>
+                                {% endif %}
+                            {% endif %}
+                            {% if not request.user_permissions.academics.edit and not request.user_permissions.academics.delete %}
+                            <span style="font-size: 12px; color: var(--text-muted); font-style: italic;">Chỉ xem</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                        Chưa có năm học nào.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="table-card-footer pagination-centered-footer">
+        <div class="footer-info">
+            <span>Hiển thị {{ page_obj.start_index }} - {{ page_obj.end_index }} / {{ page_obj.paginator.count }} năm học</span>
+        </div>
+        <div class="footer-pagination">
+            <div class="pagination-buttons">
+                {% if page_obj.has_previous %}
+                <a href="?page=1{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Về đầu">&laquo;</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Trước">&lsaquo;</a>
+                {% else %}
+                <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&laquo;</span>
+                <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&lsaquo;</span>
+                {% endif %}
+
+                <span style="font-size: 13px; font-weight: 600; padding: 0 8px;">Trang {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Tiếp">&rsaquo;</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Về cuối">&raquo;</a>
+                {% else %}
+                <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&rsaquo;</span>
+                <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&raquo;</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="footer-spacer"></div>
+    </div>
+</div>
+
+<div id="academicYearModal" class="academic-modal">
+    <div class="academic-modal-card">
+        <div class="academic-modal-header">
+            <h3 id="academicYearModalTitle" class="academic-modal-title">Thêm Năm Học</h3>
+            <button type="button" class="academic-modal-close" onclick="closeAcademicYearModal()">×</button>
+        </div>
+
+        <div id="academicYearModalError" class="academic-modal-error"></div>
+
+        <form id="academicYearForm" method="post" action="{% url 'academics:academic_year_create' %}" onsubmit="submitAcademicYearForm(event)" novalidate>
+            {% csrf_token %}
+            <div class="academic-modal-grid">
+                <div class="academic-field">
+                    <label for="academic_year_name">Năm học</label>
+                    <input type="text" id="academic_year_name" name="name" placeholder="VD: 2025 - 2026" required>
+                </div>
+                <div class="academic-field">
+                    <label for="academic_year_start_date">Ngày bắt đầu</label>
+                    <input type="date" id="academic_year_start_date" name="start_date" required>
+                </div>
+                <div class="academic-field">
+                    <label for="academic_year_end_date">Ngày kết thúc</label>
+                    <input type="date" id="academic_year_end_date" name="end_date" required>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px;">
+                    <button type="button" class="btn-secondary" style="padding: 10px 22px; font-size: 13px; border: none; cursor: pointer;" onclick="closeAcademicYearModal()">Hủy</button>
+                    <button type="submit" id="academicYearSubmitBtn" class="btn-primary" style="padding: 10px 22px; font-size: 13px; border: none; cursor: pointer;">Lưu</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openAcademicYearModal(button) {
+    const modal = document.getElementById('academicYearModal');
+    const form = document.getElementById('academicYearForm');
+    const title = document.getElementById('academicYearModalTitle');
+    const errorDiv = document.getElementById('academicYearModalError');
+    const submitBtn = document.getElementById('academicYearSubmitBtn');
+
+    errorDiv.style.display = 'none';
+    errorDiv.textContent = '';
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Lưu';
+    form.reset();
+
+    if (button) {
+        title.textContent = 'Sửa Năm Học';
+        form.action = button.dataset.action;
+        document.getElementById('academic_year_name').value = button.dataset.name || '';
+        document.getElementById('academic_year_start_date').value = button.dataset.startDate || '';
+        document.getElementById('academic_year_end_date').value = button.dataset.endDate || '';
+    } else {
+        title.textContent = 'Thêm Năm Học';
+        form.action = "{% url 'academics:academic_year_create' %}";
+    }
+
+    modal.classList.add('show');
+}
+
+function closeAcademicYearModal() {
+    const modal = document.getElementById('academicYearModal');
+    modal.classList.remove('show');
+}
+
+function submitAcademicYearForm(event) {
+    event.preventDefault();
+    const form = event.target;
+    const errorDiv = document.getElementById('academicYearModalError');
+    const submitBtn = document.getElementById('academicYearSubmitBtn');
+
+    errorDiv.style.display = 'none';
+    errorDiv.textContent = '';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Đang lưu...';
+
+    fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || 'Vui lòng kiểm tra lại thông tin năm học.');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        }
+    })
+    .catch(error => {
+        errorDiv.textContent = error.message || 'Vui lòng kiểm tra lại thông tin năm học.';
+        errorDiv.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Lưu';
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('academicYearModal');
+    modal.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            closeAcademicYearModal();
+        }
+    });
+
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeAcademicYearModal();
+        }
+    });
+});
+</script>
+{% endblock %}
