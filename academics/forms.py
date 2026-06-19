@@ -1,19 +1,24 @@
-from datetime import timedelta
+import re
+from datetime import date, timedelta
 
 from django import forms
 
 from .models import AcademicYear, Semester
 
 
-class AcademicYearDateForm(forms.ModelForm):
+class AcademicYearForm(forms.ModelForm):
     class Meta:
         model = AcademicYear
-        fields = ['start_date', 'end_date']
+        fields = ['name', 'start_date', 'end_date']
         labels = {
-            'start_date': 'Ngày bắt đầu năm học',
-            'end_date': 'Ngày kết thúc năm học',
+            'name': 'Năm học',
+            'start_date': 'Ngày bắt đầu',
+            'end_date': 'Ngày kết thúc',
         }
         widgets = {
+            'name': forms.TextInput(
+                attrs={'class': 'form-control', 'placeholder': 'VD: 2025 - 2026'},
+            ),
             'start_date': forms.DateInput(
                 format='%Y-%m-%d',
                 attrs={'class': 'form-control', 'type': 'date'},
@@ -28,15 +33,60 @@ class AcademicYearDateForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['start_date'].input_formats = ['%Y-%m-%d']
         self.fields['end_date'].input_formats = ['%Y-%m-%d']
+        self.fields['name'].error_messages['required'] = 'Vui lòng nhập năm học.'
+        self.fields['start_date'].error_messages['required'] = 'Vui lòng nhập ngày bắt đầu.'
+        self.fields['end_date'].error_messages['required'] = 'Vui lòng nhập ngày kết thúc.'
+
+    def clean_name(self):
+        name = self.cleaned_data['name'].strip()
+        match = re.fullmatch(r'(\d{4})\s*-\s*(\d{4})', name)
+        if not match:
+            raise forms.ValidationError('Năm học phải có dạng 2025 - 2026.')
+
+        start_year = int(match.group(1))
+        end_year = int(match.group(2))
+        if end_year != start_year + 1:
+            raise forms.ValidationError('Năm học phải gồm 2 năm liên tiếp, ví dụ 2025 - 2026.')
+
+        normalized_name = f'{start_year} - {end_year}'
+        duplicated = AcademicYear.objects.filter(name=normalized_name)
+        if self.instance.pk:
+            duplicated = duplicated.exclude(pk=self.instance.pk)
+        if duplicated.exists():
+            raise forms.ValidationError('Năm học này đã tồn tại.')
+
+        return normalized_name
 
     def clean(self):
         cleaned_data = super().clean()
+        name = cleaned_data.get('name')
         start_date = cleaned_data.get('start_date')
         end_date = cleaned_data.get('end_date')
 
         if start_date and end_date and start_date > end_date:
-            self.add_error('end_date', 'Ngày kết thúc năm học phải lớn hơn hoặc bằng ngày bắt đầu.')
+            self.add_error('end_date', 'Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.')
             return cleaned_data
+
+        if name and start_date and end_date:
+            year_match = re.fullmatch(r'(\d{4})\s*-\s*(\d{4})', name)
+            if year_match:
+                start_year = int(year_match.group(1))
+                end_year = int(year_match.group(2))
+                if start_date.year != start_year:
+                    self.add_error(
+                        'start_date',
+                        f'Ngày bắt đầu của năm học {name} phải nằm trong năm {start_year}.',
+                    )
+                if end_date.year != end_year:
+                    self.add_error(
+                        'end_date',
+                        f'Ngày kết thúc của năm học {name} phải nằm trong năm {end_year}.',
+                    )
+                if start_date < date(start_year, 1, 1) or end_date > date(end_year, 12, 31):
+                    self.add_error(
+                        'start_date',
+                        f'Thời gian năm học {name} phải nằm trong khoảng năm {start_year} đến {end_year}.',
+                    )
 
         if start_date and end_date and self.instance.pk:
             outside_semester = (
@@ -56,6 +106,7 @@ class AcademicYearDateForm(forms.ModelForm):
                     f'Khoảng năm học phải bao phủ tất cả học kỳ hiện có. {outside_semester} đang nằm ngoài khoảng mới.',
                 )
 
+        if start_date and end_date:
             overlapping_year = (
                 AcademicYear.objects
                 .filter(start_date__lte=end_date, end_date__gte=start_date)
@@ -83,6 +134,7 @@ class SemesterForm(forms.ModelForm):
         choices=SEMESTER_CHOICES,
         label='Học kỳ',
         widget=forms.Select(attrs={'class': 'form-control'}),
+        error_messages={'required': 'Vui lòng chọn học kỳ.'},
     )
 
     class Meta:
@@ -113,6 +165,9 @@ class SemesterForm(forms.ModelForm):
         self.fields['academic_year'].empty_label = '-- Chọn năm học --'
         self.fields['start_date'].input_formats = ['%Y-%m-%d']
         self.fields['end_date'].input_formats = ['%Y-%m-%d']
+        self.fields['academic_year'].error_messages['required'] = 'Vui lòng chọn năm học.'
+        self.fields['start_date'].error_messages['required'] = 'Vui lòng nhập ngày bắt đầu.'
+        self.fields['end_date'].error_messages['required'] = 'Vui lòng nhập ngày kết thúc.'
 
     def clean_semester_num(self):
         return int(self.cleaned_data['semester_num'])
