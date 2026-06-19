@@ -114,5 +114,34 @@ class RoleFlagsMiddleware:
             request.can_view_permissions   = _can('permissions')
             request.can_view_notifications = _can('notifications')
 
+            # Shorthand flags cho add/edit/delete (dùng trong templates)
+            request.can_add_accounts      = _can('accounts', 'add')
+            request.can_edit_accounts     = _can('accounts', 'edit')
+            request.can_delete_accounts   = _can('accounts', 'delete')
+
+            request.can_add_students      = _can('students', 'add')
+            request.can_edit_students     = _can('students', 'edit')
+            request.can_delete_students   = _can('students', 'delete')
+
+            request.can_add_attendance    = _can('attendance', 'add')
+            request.can_edit_attendance   = _can('attendance', 'edit')
+            request.can_delete_attendance = _can('attendance', 'delete')
+
+            request.can_add_courses       = _can('courses', 'add')
+            request.can_edit_courses      = _can('courses', 'edit')
+            request.can_delete_courses    = _can('courses', 'delete')
+
+            request.can_add_schedules     = _can('schedules', 'add')
+            request.can_edit_schedules    = _can('schedules', 'edit')
+            request.can_delete_schedules  = _can('schedules', 'delete')
+
+            request.can_add_academics     = _can('academics', 'add')
+            request.can_edit_academics    = _can('academics', 'edit')
+            request.can_delete_academics  = _can('academics', 'delete')
+
+            request.can_add_reports       = _can('reports', 'add')
+            request.can_edit_reports      = _can('reports', 'edit')
+            request.can_delete_reports    = _can('reports', 'delete')
+
         return self.get_response(request)
 
