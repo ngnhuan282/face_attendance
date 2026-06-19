@@ -2,8 +2,6 @@ import json
 import logging
 import time
 import unicodedata
-from datetime import datetime
-from io import BytesIO
 from concurrent.futures import ThreadPoolExecutor
 
 import cv2
@@ -264,6 +262,30 @@ def _record_face_attendance(session, student, confidence, note):
         return record, False, False
 
 
+def _mark_unrecorded_students_absent(session):
+    recorded_student_ids = AttendanceRecord.objects.filter(session=session).values_list("student_id", flat=True)
+    missing_student_ids = (
+        Enrollment.objects.filter(course_class=session.course_class, is_active=True)
+        .exclude(student_id__in=recorded_student_ids)
+        .values_list("student_id", flat=True)
+    )
+    now = timezone.now()
+    absent_records = [
+        AttendanceRecord(
+            session=session,
+            student_id=student_id,
+            status="absent",
+            method="manual",
+            timestamp=now,
+            note="Tự động đánh vắng khi kết thúc buổi điểm danh",
+        )
+        for student_id in missing_student_ids
+    ]
+    if absent_records:
+        AttendanceRecord.objects.bulk_create(absent_records, ignore_conflicts=True)
+    return len(absent_records)
+
+
 def _camera_label(student):
     label = f"{student.student_id} - {student.full_name}"
     normalized = unicodedata.normalize("NFD", label)
@@ -475,26 +497,42 @@ def session_detail(request, pk):
 
     try:
         data = _json_body(request)
-        if "course_class_id" in data:
-            session.course_class = _check_course_class_access(
-                request,
-                get_object_or_404(CourseClass, pk=data["course_class_id"]),
-            )
-        if "schedule_id" in data:
-            session.schedule = get_object_or_404(Schedule, pk=data["schedule_id"]) if data["schedule_id"] else None
-            if session.schedule:
-                _check_course_class_access(request, session.schedule.course_class)
-        if "status" in data:
-            if data["status"] == "closed" and not data.get("confirm_close"):
-                return _error("Can xac nhan truoc khi ket thuc buoi diem danh.", status=400)
-            session.status = data["status"]
-            if data["status"] == "closed" and not session.ended_at:
-                session.ended_at = timezone.now()
-        if "note" in data:
-            session.note = data["note"]
-        session.full_clean()
-        session.save()
-        return _ok(_session_payload(session))
+        absent_created = 0
+        with transaction.atomic():
+            session = AttendanceSession.objects.select_for_update().select_related(
+                "course_class",
+                "course_class__teacher",
+                "schedule",
+                "created_by",
+            ).get(pk=session.pk)
+            _check_session_access(request, session)
+
+            if "course_class_id" in data:
+                session.course_class = _check_course_class_access(
+                    request,
+                    get_object_or_404(CourseClass, pk=data["course_class_id"]),
+                )
+            if "schedule_id" in data:
+                session.schedule = get_object_or_404(Schedule, pk=data["schedule_id"]) if data["schedule_id"] else None
+                if session.schedule:
+                    _check_course_class_access(request, session.schedule.course_class)
+            if "status" in data:
+                if data["status"] == "closed" and not data.get("confirm_close"):
+                    return _error("Can xac nhan truoc khi ket thuc buoi diem danh.", status=400)
+                session.status = data["status"]
+                if data["status"] == "closed" and not session.ended_at:
+                    session.ended_at = timezone.now()
+            if "note" in data:
+                session.note = data["note"]
+            session.full_clean()
+            session.save()
+
+            if session.status == "closed":
+                absent_created = _mark_unrecorded_students_absent(session)
+
+        payload = _session_payload(session)
+        payload["absent_created"] = absent_created
+        return _ok(payload)
     except (ValidationError, IntegrityError) as exc:
         return _error(str(exc), status=400)
 
@@ -651,7 +689,6 @@ def recognize_attendance(request):
 def export_session_excel(request, session_id):
     import openpyxl
     from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
-    from openpyxl.utils import get_column_letter
 
     session = get_object_or_404(
         _scope_sessions(
@@ -668,135 +705,122 @@ def export_session_excel(request, session_id):
         pk=session_id,
     )
 
+    course_class = session.course_class
     enrollments = (
-        Enrollment.objects.filter(course_class=session.course_class, is_active=True)
-        .select_related("student", "student__student_class")
+        Enrollment.objects.filter(course_class=course_class)
+        .select_related("student", "student__student_class", "student__student_class__department")
         .order_by("student__student_id")
     )
-    records = {
-        record.student_id: record
-        for record in AttendanceRecord.objects.filter(session=session).select_related("student")
-    }
+    all_records = AttendanceRecord.objects.filter(session__course_class=course_class)
+    sessions = AttendanceSession.objects.filter(course_class=course_class).order_by("started_at")
 
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = "Ket Qua Diem Danh"
+    ws.title = "Danh sách sinh viên"
 
-    title_fill = PatternFill("solid", fgColor="1F4E79")
-    header_fill = PatternFill("solid", fgColor="D9EAF7")
-    present_fill = PatternFill("solid", fgColor="C6EFCE")
-    late_fill = PatternFill("solid", fgColor="FFEB9C")
-    absent_fill = PatternFill("solid", fgColor="FFC7CE")
-    pending_fill = PatternFill("solid", fgColor="E5E7EB")
-    thin = Side(style="thin", color="BFBFBF")
-    border = Border(left=thin, right=thin, top=thin, bottom=thin)
-    center = Alignment(horizontal="center", vertical="center", wrap_text=True)
-    left = Alignment(horizontal="left", vertical="center", wrap_text=True)
-
-    headers = ["STT", "MSSV", "Ho va ten", "Lop SH", "Trang thai", "Phuong thuc", "Do tin cay", "Thoi gian", "Ghi chu"]
-    total_cols = len(headers)
-    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=total_cols)
-    title = ws.cell(1, 1, f"KET QUA DIEM DANH - {session.course_class.class_code}")
-    title.font = Font(bold=True, color="FFFFFF", size=14)
-    title.fill = title_fill
-    title.alignment = center
-
-    teacher_name = session.course_class.teacher.user.get_full_name() or session.course_class.teacher.user.username
-    ended_text = session.ended_at.strftime("%d/%m/%Y %H:%M") if session.ended_at else "Chua ket thuc"
-    ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=total_cols)
-    info = ws.cell(
-        2,
-        1,
-        (
-            f"Hoc phan: {session.course_class.course.course_name} | "
-            f"Hoc ky: {session.course_class.semester} | "
-            f"Giang vien: {teacher_name} | "
-            f"Bat dau: {session.started_at.strftime('%d/%m/%Y %H:%M')} | "
-            f"Ket thuc: {ended_text}"
-        ),
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="1A6B3C", end_color="1A6B3C", fill_type="solid")
+    align_center = Alignment(horizontal="center", vertical="center")
+    align_left = Alignment(horizontal="left", vertical="center")
+    border = Border(
+        left=Side(border_style="thin", color="000000"),
+        right=Side(border_style="thin", color="000000"),
+        top=Side(border_style="thin", color="000000"),
+        bottom=Side(border_style="thin", color="000000"),
     )
-    info.font = Font(italic=True, size=10)
-    info.alignment = center
 
-    for col_idx, header in enumerate(headers, 1):
-        cell = ws.cell(4, col_idx, header)
-        cell.font = Font(bold=True)
+    ws.merge_cells("A1:H1")
+    title_cell = ws.cell(row=1, column=1, value=f"DANH SÁCH SINH VIÊN - LỚP {course_class.class_code}")
+    title_cell.font = Font(bold=True, size=14)
+    title_cell.alignment = align_center
+
+    ws.merge_cells("A2:H2")
+    teacher_name = course_class.teacher.user.get_full_name() if course_class.teacher and course_class.teacher.user else ""
+    subtitle_cell = ws.cell(row=2, column=1, value=f"Môn học: {course_class.course.course_name} | Giảng viên: {teacher_name}")
+    subtitle_cell.font = Font(italic=True)
+    subtitle_cell.alignment = align_center
+
+    headers = ["STT", "MSSV", "Họ Tên", "Lớp Sinh Hoạt", "Ngành", "Trạng Thái", "Ngày Đăng Ký", "Tỉ lệ đi học"]
+    for attendance_session in sessions:
+        headers.append(timezone.localtime(attendance_session.started_at).strftime("%d/%m/%Y"))
+
+    for col_num, header_title in enumerate(headers, 1):
+        cell = ws.cell(row=4, column=col_num, value=header_title)
+        cell.font = header_font
         cell.fill = header_fill
-        cell.alignment = center
+        cell.alignment = align_center
         cell.border = border
 
-    status_labels = {
-        "present": "Co mat",
-        "late": "Di tre",
-        "absent": "Vang",
-        "pending": "Cho diem danh",
-    }
-    status_fills = {
-        "present": present_fill,
-        "late": late_fill,
-        "absent": absent_fill,
-        "pending": pending_fill,
-    }
-    method_labels = {
-        "face": "Nhan dien khuon mat",
-        "manual": "Thu cong",
-    }
+    session_list = list(sessions)
+    closed_session_ids = {attendance_session.id for attendance_session in session_list if attendance_session.status == "closed"}
 
-    totals = {"present": 0, "late": 0, "absent": 0, "pending": 0}
-    for index, enrollment in enumerate(enrollments, 1):
-        student = enrollment.student
-        record = records.get(student.id)
-        status = record.status if record else ("absent" if session.status == "closed" else "pending")
-        totals[status] += 1
-        row = 4 + index
-        values = [
-            index,
-            student.student_id,
-            student.full_name,
-            student.student_class.class_code if student.student_class else "",
-            status_labels.get(status, status),
-            method_labels.get(record.method, record.method) if record else "",
-            record.confidence if record else "",
-            record.timestamp.strftime("%d/%m/%Y %H:%M:%S") if record and record.timestamp else "",
-            record.note if record else "",
+    for row_num, enrollment in enumerate(enrollments, 1):
+        student_records = all_records.filter(student=enrollment.student)
+        student_records_dict = {record.session_id: record.status for record in student_records}
+        s_total = len(set(student_records_dict) | closed_session_ids)
+        if s_total > 0:
+            s_present = sum(1 for status in student_records_dict.values() if status == "present")
+            attendance_rate = f"{round((s_present / s_total) * 100, 1)}%"
+        else:
+            attendance_rate = "Chưa có DL"
+
+        student_class = enrollment.student.student_class
+        row = [
+            row_num,
+            enrollment.student.student_id,
+            enrollment.student.full_name,
+            student_class.class_code if student_class else "",
+            student_class.department.name if student_class and student_class.department else "",
+            "Đang học" if enrollment.is_active else "Nghỉ học",
+            timezone.localtime(enrollment.enrolled_at).strftime("%d/%m/%Y"),
+            attendance_rate,
         ]
-        for col_idx, value in enumerate(values, 1):
-            cell = ws.cell(row, col_idx, value)
+
+        for attendance_session in session_list:
+            status = student_records_dict.get(attendance_session.id)
+            if status == "present":
+                row.append("Có mặt")
+            elif status == "absent":
+                row.append("Vắng")
+            elif status == "late":
+                row.append("Đi trễ")
+            elif status == "excused":
+                row.append("Có phép")
+            elif attendance_session.status == "closed":
+                row.append("Vắng")
+            else:
+                row.append("-")
+
+        for col_num, cell_value in enumerate(row, 1):
+            cell = ws.cell(row=row_num + 4, column=col_num, value=cell_value)
             cell.border = border
-            cell.alignment = left if col_idx in {3, 9} else center
-            if col_idx == 5:
-                cell.fill = status_fills.get(status, pending_fill)
+            if col_num in [1, 2, 6, 7, 8] or col_num > 8:
+                cell.alignment = align_center
+            else:
+                cell.alignment = align_left
 
-    summary_row = 5 + len(enrollments)
-    ws.merge_cells(start_row=summary_row, start_column=1, end_row=summary_row, end_column=total_cols)
-    summary = ws.cell(
-        summary_row,
-        1,
-        (
-            f"Tong sinh vien: {sum(totals.values())} | "
-            f"Co mat: {totals['present']} | "
-            f"Di tre: {totals['late']} | "
-            f"Vang: {totals['absent']} | "
-            f"Cho diem danh: {totals['pending']}"
-        ),
-    )
-    summary.font = Font(bold=True)
-    summary.fill = header_fill
-    summary.alignment = center
+            if cell_value == "Có mặt":
+                cell.fill = PatternFill(start_color="dcfce7", end_color="dcfce7", fill_type="solid")
+                cell.font = Font(color="166534")
+            elif cell_value == "Vắng":
+                cell.fill = PatternFill(start_color="fee2e2", end_color="fee2e2", fill_type="solid")
+                cell.font = Font(color="991b1b")
+            elif cell_value == "Đi trễ":
+                cell.fill = PatternFill(start_color="fef9c3", end_color="fef9c3", fill_type="solid")
+                cell.font = Font(color="854d0e")
+            elif cell_value == "Có phép":
+                cell.fill = PatternFill(start_color="e0e7ff", end_color="e0e7ff", fill_type="solid")
+                cell.font = Font(color="3730a3")
 
-    widths = [6, 14, 28, 14, 16, 22, 12, 22, 30]
-    for col_idx, width in enumerate(widths, 1):
-        ws.column_dimensions[get_column_letter(col_idx)].width = width
-    ws.freeze_panes = "A5"
+    column_widths = {"A": 6, "B": 15, "C": 30, "D": 15, "E": 25, "F": 15, "G": 15, "H": 12}
+    for idx in range(sessions.count()):
+        col_letter = openpyxl.utils.get_column_letter(idx + 9)
+        column_widths[col_letter] = 15
 
-    output = BytesIO()
-    wb.save(output)
-    output.seek(0)
+    for col, width in column_widths.items():
+        ws.column_dimensions[col].width = width
 
-    filename = f"diem_danh_buoi_{session.id}_{session.course_class.class_code}_{datetime.now().strftime('%Y%m%d%H%M')}.xlsx"
-    response = HttpResponse(
-        output.getvalue(),
-        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    )
-    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response["Content-Disposition"] = f'attachment; filename="DSSV_{course_class.class_code}.xlsx"'
+    wb.save(response)
     return response

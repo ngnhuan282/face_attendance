@@ -5,6 +5,7 @@
 {% block breadcrumb %}Quản Lý / Điểm Danh{% endblock %}
 
 {% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
 <style>
     .attendance-layout {
         display: grid;
@@ -58,6 +59,77 @@
     textarea.form-control {
         min-height: 88px;
         resize: vertical;
+    }
+
+    select.select2-hidden-accessible {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        border: none !important;
+        padding: 0 !important;
+    }
+
+    .attendance-form-grid .select2-container {
+        width: 100% !important;
+    }
+
+    .attendance-form-grid .select2-container .select2-selection--single {
+        height: 42px !important;
+        border: 1.5px solid var(--border-color, #e5e7eb) !important;
+        border-radius: var(--radius-sm, 6px) !important;
+        background: var(--bg-input, #fff) !important;
+        display: flex !important;
+        align-items: center !important;
+        font-size: 14px !important;
+        font-family: var(--font-base) !important;
+        transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+    }
+
+    .attendance-form-grid .select2-container--default .select2-selection--single .select2-selection__rendered {
+        padding-left: 12px !important;
+        padding-right: 28px !important;
+        line-height: normal !important;
+        color: var(--text-dark, #1f2937) !important;
+    }
+
+    .attendance-form-grid .select2-container--default .select2-selection--single .select2-selection__placeholder {
+        color: var(--text-light, #94a3b8) !important;
+    }
+
+    .attendance-form-grid .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 40px !important;
+        right: 6px !important;
+    }
+
+    .attendance-form-grid .select2-container--default.select2-container--focus .select2-selection--single,
+    .attendance-form-grid .select2-container--default.select2-container--open .select2-selection--single {
+        border-color: var(--primary-green, #1a6b3c) !important;
+        box-shadow: 0 0 0 3px rgba(26,107,60,0.1) !important;
+        background: #fff !important;
+    }
+
+    .select2-dropdown {
+        border: 1.5px solid var(--border-color, #e5e7eb) !important;
+        border-radius: var(--radius-sm, 6px) !important;
+        font-family: var(--font-base) !important;
+        font-size: 14px !important;
+        overflow: hidden;
+    }
+
+    .select2-container--default .select2-search--dropdown .select2-search__field {
+        border: 1.5px solid var(--border-color, #e5e7eb) !important;
+        border-radius: var(--radius-sm, 6px) !important;
+        outline: none;
+        padding: 8px 10px;
+        font-family: var(--font-base) !important;
+    }
+
+    .select2-container--default .select2-search--dropdown .select2-search__field:focus {
+        border-color: var(--primary-green, #1a6b3c) !important;
+    }
+
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background: var(--primary-green, #1a6b3c) !important;
     }
 
     .session-workspace {
@@ -204,6 +276,10 @@
 
     .is-present td {
         background: #f0fdf4;
+    }
+
+    .is-absent td {
+        background: #fef2f2;
     }
 
     .roster-scroll {
@@ -407,7 +483,7 @@
                 {% csrf_token %}
                 <div>
                     <label class="field-label" for="courseClass">Lớp học phần</label>
-                    <select class="form-control" id="courseClass" name="course_class_id" required>
+                    <select class="form-control select2-course-class" id="courseClass" name="course_class_id" required>
                         <option value="">Chọn lớp học phần</option>
                         {% for course_class in course_classes %}
                             <option value="{{ course_class.id }}" {% if selected_session and selected_session.course_class_id == course_class.id %}selected{% endif %}>
@@ -471,7 +547,7 @@
                     <tbody>
                         {% for row in page_obj %}
                             {% with student=row.student record=row.record %}
-                            <tr id="student-row-{{ student.student_id }}" class="{% if record and record.status == 'present' %}is-present{% endif %}" data-present="{% if record and record.status == 'present' %}true{% else %}false{% endif %}">
+                            <tr id="student-row-{{ student.student_id }}" class="{% if record and record.status == 'present' %}is-present{% elif record and record.status == 'absent' %}is-absent{% endif %}" data-present="{% if record and record.status == 'present' %}true{% else %}false{% endif %}">
                                 <td style="font-weight:600;color:var(--text-dark);font-family:monospace;">{{ student.student_id }}</td>
                                 <td>
                                     <div class="cell-user">
@@ -485,6 +561,10 @@
                                 <td class="attendance-status-cell" data-status-for="{{ student.student_id }}">
                                     {% if record and record.status == 'present' %}
                                         <span class="badge badge-green"><span class="badge-dot"></span>Có mặt</span>
+                                    {% elif record and record.status == 'absent' %}
+                                        <span class="badge badge-red"><span class="badge-dot"></span>Vắng</span>
+                                    {% elif record and record.status == 'late' %}
+                                        <span class="badge badge-blue"><span class="badge-dot"></span>Đi trễ</span>
                                     {% else %}
                                         <span class="badge badge-gray"><span class="badge-dot"></span>Chờ nhận diện</span>
                                     {% endif %}
@@ -581,7 +661,25 @@
 
 {% block extra_js %}
 {{ session_id_json|json_script:"session-id" }}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 <script>
+    $(document).ready(function() {
+        $('#courseClass').select2({
+            width: '100%',
+            placeholder: 'Chọn lớp học phần',
+            allowClear: false,
+            language: {
+                noResults: function() {
+                    return 'Không tìm thấy lớp học phần';
+                },
+                searching: function() {
+                    return 'Đang tìm...';
+                }
+            }
+        });
+    });
+
     const sessionId = JSON.parse(document.getElementById("session-id").textContent);
     const streamImage = document.getElementById("cameraStream");
     const placeholder = document.getElementById("cameraPlaceholder");
@@ -676,16 +774,25 @@
         window.setTimeout(() => closeAttendanceToast(toast), 2000);
     }
 
-    function markPresent(record) {
+    function markRecordStatus(record) {
         const code = record.student_code;
         const row = document.getElementById(`student-row-${code}`);
         const statusCell = document.querySelector(`[data-status-for="${code}"]`);
+        const statusConfig = {
+            present: {rowClass: "is-present", badgeClass: "badge-green", label: "Có mặt"},
+            absent: {rowClass: "is-absent", badgeClass: "badge-red", label: "Vắng"},
+            late: {rowClass: "", badgeClass: "badge-blue", label: "Đi trễ"},
+        };
+        const config = statusConfig[record.status];
+        if (!config) return;
+
         if (row) {
-            row.classList.add("is-present");
-            row.dataset.present = "true";
+            row.classList.remove("is-present", "is-absent");
+            if (config.rowClass) row.classList.add(config.rowClass);
+            row.dataset.present = record.status === "present" ? "true" : "false";
         }
         if (statusCell) {
-            statusCell.innerHTML = '<span class="badge badge-green"><span class="badge-dot"></span>Có mặt</span>';
+            statusCell.innerHTML = `<span class="badge ${config.badgeClass}"><span class="badge-dot"></span>${config.label}</span>`;
         }
     }
 
@@ -699,7 +806,7 @@
             if (presentCount) {
                 presentCount.textContent = data.results.filter((record) => record.status === "present").length;
             }
-            data.results.filter((record) => record.status === "present").forEach(markPresent);
+            data.results.forEach(markRecordStatus);
         } catch (error) {
             setStatus("Mất kết nối cập nhật điểm danh");
             if (!recordsErrorShown) {
@@ -762,6 +869,7 @@
 
             sessionClosed = true;
             stopCamera();
+            await refreshRecords();
             if (sessionBadge) {
                 sessionBadge.classList.remove("badge-green");
                 sessionBadge.classList.add("badge-gray");
