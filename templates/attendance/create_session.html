@@ -195,17 +195,31 @@
     .camera-actions {
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: flex-start;
         gap: 10px;
         padding: 16px 20px;
         border-top: 1px solid var(--border-color);
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
     }
 
     .action-group {
         display: flex;
         gap: 10px;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+        align-items: center;
+        width: 100%;
+    }
+
+    #startCameraBtn {
+        padding: 12px 18px;
+        min-width: 190px;
+    }
+
+    #startCameraBtn:disabled {
+        opacity: 0.28;
+        cursor: not-allowed;
+        pointer-events: none;
+        filter: grayscale(0.7);
     }
 
     .btn-end-session {
@@ -236,6 +250,7 @@
         background: #fff;
         border-radius: var(--radius-sm);
         padding: 10px 16px;
+        margin-left: auto;
         font: inherit;
         font-weight: 600;
         cursor: pointer;
@@ -451,6 +466,7 @@
 
         .camera-actions {
             align-items: stretch;
+            flex-wrap: wrap;
         }
 
         .camera-actions .btn-primary,
@@ -464,6 +480,11 @@
 
         .action-group {
             width: 100%;
+            flex-wrap: wrap;
+        }
+
+        .btn-export-session {
+            margin-left: 0;
         }
     }
 </style>
@@ -630,12 +651,10 @@
             </div>
             <div class="camera-actions">
                 <div class="action-group">
-                    <button class="btn-primary" type="button" id="startCameraBtn" {% if selected_session.status == 'closed' %}disabled{% endif %}>Bắt đầu livestream</button>
+                    <button class="btn-primary" type="button" id="startCameraBtn" {% if selected_session.status == 'closed' %}disabled{% endif %}>Bắt đầu điểm danh</button>
                     <button class="btn-outline" type="button" id="stopCameraBtn" disabled>Dừng camera</button>
-                </div>
-                <div class="action-group">
-                    <a class="btn-export-session" href="{% url 'attendance:export_session_excel' selected_session.id %}">Xuất Excel</a>
                     <button class="btn-end-session" type="button" id="endSessionBtn" {% if selected_session.status == 'closed' %}disabled{% endif %}>Kết thúc buổi</button>
+                    <a class="btn-export-session" href="{% url 'attendance:export_session_excel' selected_session.id %}">Xuất Excel</a>
                 </div>
             </div>
         </div>
@@ -696,6 +715,7 @@
     const recordsUrl = "{% url 'attendance:record_list_create' %}";
     let recordPoller = null;
     let streamActive = false;
+    let attendanceStarted = false;
     let sessionClosed = {% if selected_session and selected_session.status == "closed" %}true{% else %}false{% endif %};
     const attendanceDialog = document.getElementById("attendanceDialog");
     const attendanceDialogTitle = document.getElementById("attendanceDialogTitle");
@@ -818,12 +838,14 @@
 
     function startCamera() {
         if (!sessionId || sessionClosed || !streamImage) return;
+        attendanceStarted = true;
         streamActive = true;
         streamImage.src = `${streamUrl}?ts=${Date.now()}`;
         streamImage.hidden = false;
         placeholder.hidden = true;
         startButton.disabled = true;
         stopButton.disabled = false;
+        stopButton.textContent = "Dừng camera";
         setStatus("Đang livestream và tự động nhận diện");
         refreshRecords();
         recordPoller = window.setInterval(refreshRecords, 1500);
@@ -836,11 +858,22 @@
             streamImage.hidden = true;
         }
         if (placeholder) placeholder.hidden = false;
-        if (startButton) startButton.disabled = sessionClosed;
-        if (stopButton) stopButton.disabled = true;
+        if (startButton) startButton.disabled = sessionClosed || attendanceStarted;
+        if (stopButton) {
+            stopButton.disabled = sessionClosed || !attendanceStarted;
+            if (!sessionClosed && attendanceStarted) stopButton.textContent = "Mở camera";
+        }
         if (recordPoller) window.clearInterval(recordPoller);
         recordPoller = null;
         if (!sessionClosed) setStatus("Camera đã dừng");
+    }
+
+    function toggleCamera() {
+        if (streamActive) {
+            stopCamera();
+        } else {
+            startCamera();
+        }
     }
 
     async function endSession() {
@@ -888,7 +921,7 @@
     }
 
     if (startButton) startButton.addEventListener("click", startCamera);
-    if (stopButton) stopButton.addEventListener("click", stopCamera);
+    if (stopButton) stopButton.addEventListener("click", toggleCamera);
     if (endButton) endButton.addEventListener("click", endSession);
     if (streamImage) streamImage.addEventListener("error", () => {
         if (!streamActive) return;
