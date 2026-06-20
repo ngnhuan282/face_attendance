@@ -65,7 +65,6 @@
                     <th>Tên Học Phần</th>
                     <th>Tín Chỉ</th>
                     <th>Phòng Ban</th>
-                    <th>Phòng Học</th>
                     <th>Mô Tả</th>
                     <th>Hành Động</th>
                 </tr>
@@ -77,7 +76,6 @@
                     <td style="font-weight: 500;">{{ course.course_name }}</td>
                     <td style="text-align: center;">{{ course.credits }}</td>
                     <td>{{ course.department.code }}</td>
-                    <td>{{ course.room.room_code|default:"—" }}</td>
                     <td style="font-size: 12px; color: var(--text-medium); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ course.description|default:"—" }}</td>
                     <td>
                         <div class="action-btns">
@@ -191,18 +189,6 @@
                     <input type="number" name="credits" id="modal_credits" value="3" min="1" max="10" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none;">
                 </div>
 
-                <!-- Room -->
-                <div style="display: flex; flex-direction: column; gap: 6px;">
-                    <label for="modal_room" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
-                        Phòng Học
-                    </label>
-                    <select name="room" id="modal_room" class="select2-modal" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none; width: 100%;">
-                        <option value="">-- Chọn Phòng Học --</option>
-                        {% for room in rooms %}
-                        <option value="{{ room.id }}">{{ room.room_code }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
 
                 <!-- Description -->
                 <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -277,18 +263,6 @@
                     <input type="number" name="credits" id="edit_modal_credits" min="1" max="10" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none;">
                 </div>
 
-                <!-- Room -->
-                <div style="display: flex; flex-direction: column; gap: 6px;">
-                    <label for="edit_modal_room" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">
-                        Phòng Học
-                    </label>
-                    <select name="room" id="edit_modal_room" class="select2-modal" style="padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: var(--font-base); outline: none; width: 100%;">
-                        <option value="">-- Chọn Phòng Học --</option>
-                        {% for room in rooms %}
-                        <option value="{{ room.id }}">{{ room.room_code }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
 
                 <!-- Description -->
                 <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -418,12 +392,9 @@ function openCourseModal() {
         if ($('#modal_department').hasClass('select2-hidden-accessible')) {
             $('#modal_department').select2('destroy');
         }
-        if ($('#modal_room').hasClass('select2-hidden-accessible')) {
-            $('#modal_room').select2('destroy');
-        }
         
         // Sau đó mới khởi tạo lại
-        $('#modal_department, #modal_room').select2({
+        $('#modal_department').select2({
             width: '100%',
             placeholder: '-- Chọn --',
             allowClear: false,
@@ -551,7 +522,6 @@ function openEditCourseModal(button) {
     const credits = row.dataset.credits;
     const description = row.dataset.description;
     const departmentId = row.dataset.departmentId;
-    const roomId = row.dataset.roomId;
     
     // Populate form
     document.getElementById('edit_course_id').value = courseId;
@@ -575,16 +545,12 @@ function openEditCourseModal(button) {
         if ($('#edit_modal_department').hasClass('select2-hidden-accessible')) {
             $('#edit_modal_department').select2('destroy');
         }
-        if ($('#edit_modal_room').hasClass('select2-hidden-accessible')) {
-            $('#edit_modal_room').select2('destroy');
-        }
         
         // Set values before initializing Select2
         document.getElementById('edit_modal_department').value = departmentId || '';
-        document.getElementById('edit_modal_room').value = roomId || '';
         
         // Initialize Select2
-        $('#edit_modal_department, #edit_modal_room').select2({
+        $('#edit_modal_department').select2({
             width: '100%',
             placeholder: '-- Chọn --',
             allowClear: false,
@@ -593,7 +559,6 @@ function openEditCourseModal(button) {
         
         // Trigger change to update selected value display
         $('#edit_modal_department').trigger('change');
-        $('#edit_modal_room').trigger('change');
     }, 50);
 }
 

@@ -55,3 +55,17 @@ class Schedule(models.Model):
             f"{self.course_class.class_code} — "
             f"Buổi {self.session_number} — {self.date}"
         )
+
+# ================= SIGNALS =================
+
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
+
+@receiver(post_save, sender=Schedule)
+@receiver(post_delete, sender=Schedule)
+def update_course_class_total_sessions(sender, instance, **kwargs):
+    """Tự động cập nhật tổng số buổi học của lớp học phần khi thêm/xóa lịch học"""
+    if instance.course_class_id:
+        course_class = instance.course_class
+        course_class.total_sessions = course_class.schedules.count()
+        course_class.save(update_fields=['total_sessions'])

@@ -27,7 +27,7 @@
                 <select name="courseclass_id" id="filter_courseclass" class="form-control" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color);">
                     <option value="">-- Tất cả lớp học phần --</option>
                     {% for c in course_classes %}
-                    <option value="{{ c.id }}" {% if c.id == courseclass_id %}selected{% endif %}>{{ c.class_code }} - {{ c.course.course_name }}</option>
+                    <option value="{{ c.id }}" {% if c.id == courseclass_id %}selected{% endif %}>{{ c.class_code }} - {{ c.course.course_name }} (HK{{ c.semester.semester_num }} - Từ {{ c.semester.start_date|date:'d/m/Y' }} đến {{ c.semester.end_date|date:'d/m/Y' }})</option>
                     {% endfor %}
                 </select>
             </div>
@@ -50,6 +50,7 @@
         <table class="data-table">
             <thead>
                 <tr>
+                    <th>Học Kỳ</th>
                     <th>Lớp HP</th>
                     <th>Buổi</th>
                     <th>Ngày Học</th>
@@ -66,6 +67,11 @@
                     data-date="{{ schedule.date|date:'Y-m-d' }}"
                     data-start-period="{{ schedule.start_period }}"
                     data-end-period="{{ schedule.end_period }}">
+                    <td>
+                        <div style="font-weight: 500; color: var(--text-dark);">HK{{ schedule.course_class.semester.semester_num }}</div>
+                        <div style="font-size: 12px; color: var(--text-light);">{{ schedule.course_class.semester.academic_year.name }}</div>
+                        <div style="font-size: 11px; color: var(--text-medium); margin-top: 4px;">{{ schedule.course_class.semester.start_date|date:'d/m/Y' }} - {{ schedule.course_class.semester.end_date|date:'d/m/Y' }}</div>
+                    </td>
                     <td>
                         <div style="font-weight: 600; color: var(--text-dark);">{{ schedule.course_class.class_code }}</div>
                         <div style="font-size: 12px; color: var(--text-light);">{{ schedule.course_class.course.course_name }}</div>
@@ -97,7 +103,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" style="text-align: center; padding: 30px; color: var(--text-light);">
+                    <td colspan="8" style="text-align: center; padding: 30px; color: var(--text-light);">
                         Không tìm thấy lịch học nào.
                     </td>
                 </tr>
@@ -154,7 +160,7 @@
                 <select name="course_class" id="bulk_course_class" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit;">
                     <option value="">-- Chọn lớp học phần --</option>
                     {% for c in course_classes %}
-                    <option value="{{ c.id }}">{{ c.class_code }} - {{ c.course.course_name }}</option>
+                    <option value="{{ c.id }}">{{ c.class_code }} - {{ c.course.course_name }} (HK{{ c.semester.semester_num }} - Từ {{ c.semester.start_date|date:'d/m/Y' }} đến {{ c.semester.end_date|date:'d/m/Y' }})</option>
                     {% endfor %}
                 </select>
             </div>

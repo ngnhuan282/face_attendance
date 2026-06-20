@@ -195,6 +195,10 @@ def schedule_create_bulk(request):
         if start_date > end_date:
             return JsonResponse({'error': 'Ngày bắt đầu không được lớn hơn ngày kết thúc'}, status=400)
             
+        semester = course_class.semester
+        if start_date < semester.start_date or end_date > semester.end_date:
+            return JsonResponse({'error': f'Khoảng thời gian lịch học phải nằm trong Học kỳ ({semester.start_date.strftime("%d/%m/%Y")} - {semester.end_date.strftime("%d/%m/%Y")}).'}, status=400)
+            
         days_diff = (end_date - start_date).days
         if days_diff < 42:
             return JsonResponse({'error': 'Khoảng thời gian tạo lịch học phải tối thiểu 7 tuần.'}, status=400)
@@ -293,6 +297,10 @@ def schedule_edit(request, pk):
             return JsonResponse({'error': 'Tiết kết thúc phải lớn hơn hoặc bằng tiết bắt đầu'}, status=400)
             
         date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
+        
+        semester = schedule.course_class.semester
+        if date_obj < semester.start_date or date_obj > semester.end_date:
+            return JsonResponse({'error': f'Ngày học phải nằm trong khoảng thời gian của học kỳ ({semester.start_date.strftime("%d/%m/%Y")} - {semester.end_date.strftime("%d/%m/%Y")}).'}, status=400)
         
         # day_of_week
         day_of_week = date_obj.weekday() + 2
@@ -425,8 +433,24 @@ def timetable_view(request):
     if hasattr(request.user, 'teacher'):
         schedules = schedules.filter(course_class__teacher=request.user.teacher)
     
+    COLORS = [
+        ('#eff6ff', '#bfdbfe', '#1d4ed8'), # Blue
+        ('#f0fdf4', '#bbf7d0', '#15803d'), # Green
+        ('#fdf2f8', '#fbcfe8', '#be185d'), # Pink
+        ('#fffbeb', '#fde68a', '#b45309'), # Yellow/Amber
+        ('#f5f3ff', '#ddd6fe', '#6d28d9'), # Purple
+        ('#ecfdf5', '#a7f3d0', '#047857'), # Emerald
+        ('#fff1f2', '#fecdd3', '#e11d48'), # Rose
+        ('#f0f9ff', '#bae6fd', '#0369a1'), # Light Blue
+        ('#fdf4ff', '#f5d0fe', '#a21caf'), # Fuchsia
+        ('#fff7ed', '#fed7aa', '#c2410c'), # Orange
+    ]
+
     grid = [[None for _ in range(7)] for _ in range(10)]
     for schedule in schedules:
+        color_idx = schedule.course_class_id % len(COLORS)
+        schedule.bg_color, schedule.border_color, schedule.text_color = COLORS[color_idx]
+        
         day_idx = (schedule.date - monday).days
         start_p = schedule.start_period - 1
         end_p = schedule.end_period - 1
@@ -452,3 +476,196 @@ def timetable_view(request):
         'periods': range(1, 11),
     }
     return render(request, 'schedules/timetable.html', context)
+
+
+@group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
+def timetable_export_excel(request):
+    """Xuất Thời Khóa Biểu ra file Excel"""
+    from academics.models import Semester
+    from datetime import datetime, timedelta
+    from django.utils import timezone
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from django.http import HttpResponse
+    
+    semesters = Semester.objects.all().order_by('-academic_year__start_date', '-semester_num')
+    selected_semester = None
+    semester_id = request.GET.get('semester')
+    if semester_id:
+        try:
+            selected_semester = Semester.objects.get(id=semester_id)
+        except Semester.DoesNotExist:
+            pass
+    if not selected_semester:
+        selected_semester = Semester.objects.filter(is_active=True).first() or semesters.first()
+
+    weeks = []
+    target_date = timezone.now().date()
+    if selected_semester:
+        sem_start_monday = selected_semester.start_date - timedelta(days=selected_semester.start_date.weekday())
+        sem_end_sunday = selected_semester.end_date + timedelta(days=6 - selected_semester.end_date.weekday())
+        total_weeks = (sem_end_sunday - sem_start_monday).days // 7 + 1
+        for w in range(total_weeks):
+            w_monday = sem_start_monday + timedelta(weeks=w)
+            weeks.append({'number': w + 1, 'monday': w_monday, 'sunday': w_monday + timedelta(days=6)})
+            
+        week_num = request.GET.get('week')
+        if week_num:
+            try:
+                week_idx = int(week_num) - 1
+                if 0 <= week_idx < len(weeks):
+                    target_date = weeks[week_idx]['monday']
+            except ValueError:
+                pass
+        else:
+            today = timezone.now().date()
+            current_week = next((w for w in weeks if w['monday'] <= today <= w['sunday']), None)
+            if current_week:
+                target_date = current_week['monday']
+            else:
+                target_date = weeks[0]['monday'] if weeks else today
+                
+    monday = target_date - timedelta(days=target_date.weekday())
+    sunday = monday + timedelta(days=6)
+    selected_week = next((w for w in weeks if w['monday'] == monday), None)
+    
+    week_days = []
+    for i in range(7):
+        week_days.append({
+            'date': monday + timedelta(days=i),
+            'day_name': f"Thứ {i+2}" if i < 6 else "Chủ Nhật"
+        })
+        
+    schedules = Schedule.objects.select_related(
+        'course_class', 'course_class__course', 'room', 'course_class__teacher__user'
+    ).filter(
+        date__range=[monday, sunday]
+    )
+    if hasattr(request.user, 'teacher'):
+        schedules = schedules.filter(course_class__teacher=request.user.teacher)
+    
+    COLORS = [
+        ('EFF6FF', 'BFDBFE', '1D4ED8'), # Blue
+        ('F0FDF4', 'BBF7D0', '15803D'), # Green
+        ('FDF2F8', 'FBCFE8', 'BE185D'), # Pink
+        ('FFFBEB', 'FDE68A', 'B45309'), # Yellow
+        ('F5F3FF', 'DDD6FE', '6D28D9'), # Purple
+        ('ECFDF5', 'A7F3D0', '047857'), # Emerald
+        ('FFF1F2', 'FECDD3', 'E11D48'), # Rose
+        ('F0F9FF', 'BAE6FD', '0369A1'), # Light Blue
+        ('FDF4FF', 'F5D0FE', 'A21CAF'), # Fuchsia
+        ('FFF7ED', 'FED7AA', 'C2410C'), # Orange
+    ]
+    
+    grid = [[None for _ in range(7)] for _ in range(10)]
+    COLORS = [
+        ('EFF6FF', 'BFDBFE', '1D4ED8'), # Blue
+        ('F0FDF4', 'BBF7D0', '15803D'), # Green
+        ('FDF2F8', 'FBCFE8', 'BE185D'), # Pink
+        ('FFFBEB', 'FDE68A', 'B45309'), # Yellow
+        ('F5F3FF', 'DDD6FE', '6D28D9'), # Purple
+        ('ECFDF5', 'A7F3D0', '047857'), # Emerald
+        ('FFF1F2', 'FECDD3', 'E11D48'), # Rose
+        ('F0F9FF', 'BAE6FD', '0369A1'), # Light Blue
+        ('FDF4FF', 'F5D0FE', 'A21CAF'), # Fuchsia
+        ('FFF7ED', 'FED7AA', 'C2410C'), # Orange
+    ]
+    
+    for schedule in schedules:
+        color_idx = schedule.course_class_id % len(COLORS)
+        schedule.bg_hex, schedule.border_hex, schedule.text_hex = COLORS[color_idx]
+        
+        day_idx = (schedule.date - monday).days
+        start_p = schedule.start_period - 1
+        end_p = schedule.end_period - 1
+        
+        if 0 <= day_idx < 7 and 0 <= start_p < 10:
+            schedule.rowspan = schedule.end_period - schedule.start_period + 1
+            grid[start_p][day_idx] = schedule
+            for p in range(start_p + 1, min(end_p + 1, 10)):
+                grid[p][day_idx] = 'spanned'
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Thời Khóa Biểu"
+    
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="1A6B3C", end_color="1A6B3C", fill_type="solid")
+    align_center = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    border = Border(
+        left=Side(border_style="thin", color="000000"),
+        right=Side(border_style="thin", color="000000"),
+        top=Side(border_style="thin", color="000000"),
+        bottom=Side(border_style="thin", color="000000")
+    )
+    
+    # Title
+    ws.merge_cells('A1:H1')
+    title_text = f"THỜI KHÓA BIỂU TUẦN {selected_week['number'] if selected_week else ''}"
+    title_cell = ws.cell(row=1, column=1, value=title_text)
+    title_cell.font = Font(bold=True, size=16)
+    title_cell.alignment = align_center
+    
+    ws.merge_cells('A2:H2')
+    sub_text = f"Từ ngày {monday.strftime('%d/%m/%Y')} đến ngày {sunday.strftime('%d/%m/%Y')}"
+    subtitle_cell = ws.cell(row=2, column=1, value=sub_text)
+    subtitle_cell.font = Font(italic=True, size=12)
+    subtitle_cell.alignment = align_center
+    
+    # Header Row
+    ws.cell(row=4, column=1, value="Tiết").font = header_font
+    ws.cell(row=4, column=1).fill = header_fill
+    ws.cell(row=4, column=1).alignment = align_center
+    ws.cell(row=4, column=1).border = border
+    
+    for i, day in enumerate(week_days):
+        col = i + 2
+        cell = ws.cell(row=4, column=col, value=f"{day['day_name']}\n{day['date'].strftime('%d/%m')}")
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = align_center
+        cell.border = border
+        ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 22
+        
+    ws.column_dimensions['A'].width = 10
+    
+    # Data Rows
+    for period in range(10):
+        row_idx = period + 5
+        cell = ws.cell(row=row_idx, column=1, value=f"Tiết {period + 1}")
+        cell.alignment = align_center
+        cell.border = border
+        
+        for day_idx in range(7):
+            col_idx = day_idx + 2
+            cell_data = grid[period][day_idx]
+            cell = ws.cell(row=row_idx, column=col_idx)
+            cell.alignment = align_center
+            cell.border = border
+            
+            if cell_data == 'spanned':
+                continue
+                
+            if cell_data:
+                teacher_name = cell_data.course_class.teacher.user.get_full_name() if cell_data.course_class.teacher else ""
+                lines = [
+                    f"[{cell_data.course_class.class_code}]",
+                    f"{cell_data.course_class.course.course_name}",
+                    f"Phòng: {cell_data.room.room_code}",
+                ]
+                if teacher_name:
+                    lines.append(f"GV: {teacher_name}")
+                cell.value = "\n".join(lines)
+                
+                cell.fill = PatternFill(start_color=cell_data.bg_hex, end_color=cell_data.bg_hex, fill_type="solid")
+                cell.font = Font(color=cell_data.text_hex, bold=True)
+                
+                if cell_data.rowspan > 1:
+                    ws.merge_cells(start_row=row_idx, start_column=col_idx, end_row=row_idx + cell_data.rowspan - 1, end_column=col_idx)
+                    for r in range(row_idx, row_idx + cell_data.rowspan):
+                        ws.cell(row=r, column=col_idx).border = border
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="ThoiKhoaBieu_{monday.strftime("%Y%m%d")}.xlsx"'
+    wb.save(response)
+    return response

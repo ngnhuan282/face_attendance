@@ -78,34 +78,34 @@
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
+    z-index: 999;
     align-items: center;
     justify-content: center;
-    padding: 18px;
 }
 .academic-modal.show {
     display: flex;
 }
 .academic-modal-card {
-    width: 560px;
-    max-width: 100%;
+    width: 550px;
+    max-width: calc(100vw - 24px);
     max-height: 90vh;
     overflow-y: auto;
     background: #fff;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
     padding: 24px;
-    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.18);
 }
 .academic-modal-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 .academic-modal-title {
     margin: 0;
     color: var(--text-dark);
-    font-size: 18px;
+    font-size: 15px;
     font-weight: 700;
 }
 .academic-modal-close {
@@ -118,7 +118,7 @@
 }
 .academic-modal-grid {
     display: grid;
-    gap: 14px;
+    gap: 16px;
 }
 .academic-field {
     display: flex;
@@ -393,9 +393,9 @@
                     <label for="semester_year_end_date">Ngày kết thúc</label>
                     <input type="date" id="semester_year_end_date" name="end_date" required>
                 </div>
-                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px;">
-                    <button type="button" class="btn-secondary" style="padding: 10px 22px; font-size: 13px; border: none; cursor: pointer;" onclick="closeSemesterYearModal()">Hủy</button>
-                    <button type="submit" id="semesterYearSubmitBtn" class="btn-primary" style="padding: 10px 22px; font-size: 13px; border: none; cursor: pointer;">Lưu</button>
+                <div style="display: flex; justify-content: center; gap: 12px; margin-top: 24px;">
+                    <button type="button" class="btn-secondary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer;" onclick="closeSemesterYearModal()">Hủy</button>
+                    <button type="submit" id="semesterYearSubmitBtn" class="btn-primary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer;">Lưu</button>
                 </div>
             </div>
         </form>
@@ -443,9 +443,9 @@
                     <input type="checkbox" id="semester_is_active" name="is_active">
                     <label for="semester_is_active">Đang áp dụng</label>
                 </div>
-                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px;">
-                    <button type="button" class="btn-secondary" style="padding: 10px 22px; font-size: 13px; border: none; cursor: pointer;" onclick="closeSemesterModal()">Hủy</button>
-                    <button type="submit" id="semesterSubmitBtn" class="btn-primary" style="padding: 10px 22px; font-size: 13px; border: none; cursor: pointer;">Lưu</button>
+                <div style="display: flex; justify-content: center; gap: 12px; margin-top: 24px;">
+                    <button type="button" class="btn-secondary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer;" onclick="closeSemesterModal()">Hủy</button>
+                    <button type="submit" id="semesterSubmitBtn" class="btn-primary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer;">Lưu</button>
                 </div>
             </div>
         </form>

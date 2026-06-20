@@ -834,8 +834,24 @@ def student_timetable(request):
         course_class__enrollments__is_active=True
     )
     
+    COLORS = [
+        ('#eff6ff', '#bfdbfe', '#1d4ed8'), # Blue
+        ('#f0fdf4', '#bbf7d0', '#15803d'), # Green
+        ('#fdf2f8', '#fbcfe8', '#be185d'), # Pink
+        ('#fffbeb', '#fde68a', '#b45309'), # Yellow/Amber
+        ('#f5f3ff', '#ddd6fe', '#6d28d9'), # Purple
+        ('#ecfdf5', '#a7f3d0', '#047857'), # Emerald
+        ('#fff1f2', '#fecdd3', '#e11d48'), # Rose
+        ('#f0f9ff', '#bae6fd', '#0369a1'), # Light Blue
+        ('#fdf4ff', '#f5d0fe', '#a21caf'), # Fuchsia
+        ('#fff7ed', '#fed7aa', '#c2410c'), # Orange
+    ]
+
     grid = [[None for _ in range(7)] for _ in range(10)]
     for schedule in schedules:
+        color_idx = schedule.course_class_id % len(COLORS)
+        schedule.bg_color, schedule.border_color, schedule.text_color = COLORS[color_idx]
+
         day_idx = (schedule.date - monday).days
         start_p = schedule.start_period - 1
         end_p = schedule.end_period - 1

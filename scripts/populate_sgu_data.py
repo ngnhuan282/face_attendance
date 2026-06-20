@@ -559,7 +559,7 @@ def run():
             
             c_room = random.choice(rooms_list)
             dow = random.randint(2, 7)
-            start_p = random.choice([1, 4, 7, 10]) # Các ca học thường thấy
+            start_p = random.choice([1, 4, 7]) # Chỉ lấy 1, 4, 7 để không bị trùng giờ và không vượt tiết 10
             end_p = start_p + 2
             
             # Tính ngày của buổi học đầu tiên

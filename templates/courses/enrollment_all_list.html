@@ -262,7 +262,7 @@
             <form method="post" action="{% url 'courses:enrollment_import_preview' %}" enctype="multipart/form-data" id="importForm" onsubmit="submitImportForm(event)" novalidate>
                 {% csrf_token %}
                 <div style="margin-bottom: 20px;">
-                    <input type="file" name="csv_file" accept=".csv" required style="width: 100%; padding: 10px; border: 1.5px dashed var(--border-color); border-radius: 6px; cursor: pointer; font-family: var(--font-base); font-size: 13px;">
+                    <input type="file" name="csv_file" accept=".csv,.xlsx" required style="width: 100%; padding: 10px; border: 1.5px dashed var(--border-color); border-radius: 6px; cursor: pointer; font-family: var(--font-base); font-size: 13px;">
                 </div>
                 <div style="display: flex; gap: 12px;">
                     <button type="submit" class="btn-primary" id="btn_submit_import" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; flex: 1;">

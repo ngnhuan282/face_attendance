@@ -83,7 +83,7 @@
                 <a href="{% url 'accounts:list' %}" style="font-size:13px;color:var(--text-muted);text-decoration:none;">Xóa lọc</a>
                 {% endif %}
             </form>
-            {% if request.is_admin_group %}
+            {% if request.can_add_accounts %}
             <a href="{% url 'accounts:create' %}" class="btn-primary" style="padding:8px 16px;font-size:13px;gap:6px;text-decoration:none;display:flex;align-items:center;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Thêm Tài Khoản
@@ -152,7 +152,7 @@
                     <td>{{ u.date_joined|date:"d/m/Y" }}</td>
                     <td>
                         <div class="action-btns">
-                            {% if request.is_admin_group %}
+                            {% if request.can_edit_accounts %}
                             <a href="{% url 'accounts:edit' u.pk %}" class="btn-action btn-action-edit">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -160,7 +160,8 @@
                                 </svg>
                                 Sửa
                             </a>
-                            {% if u != request.user %}
+                            {% endif %}
+                            {% if request.can_delete_accounts and u != request.user %}
                             <button type="button" class="btn-action btn-action-delete" style="cursor:pointer;" onclick="openDeleteAccountModal('{% url 'accounts:delete' u.pk %}', '{{ u.get_full_name|escapejs }} ({{ u.username|escapejs }})')">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polyline points="3 6 5 6 21 6"/>
@@ -169,7 +170,7 @@
                                 Xóa
                             </button>
                             {% endif %}
-                            {% else %}
+                            {% if not request.can_edit_accounts and not request.can_delete_accounts %}
                             <span style="font-size:12px;color:var(--text-muted);font-style:italic;">Chỉ xem</span>
                             {% endif %}
                         </div>

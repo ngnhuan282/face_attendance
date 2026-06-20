@@ -69,7 +69,7 @@ def account_list(request):
     })
 
 
-@group_required(ADMIN_GROUP_NAME)
+@module_permission_required('accounts', 'add')
 def account_create(request):
     """Thêm tài khoản mới (Admin / Giảng viên / Sinh viên) – chỉ Admin."""
     if request.method == 'POST':
@@ -133,7 +133,7 @@ def account_create(request):
     })
 
 
-@group_required(ADMIN_GROUP_NAME)
+@module_permission_required('accounts', 'edit')
 def account_edit(request, pk):
     """Chỉnh sửa tài khoản – chỉ Admin."""
     user = get_object_or_404(User, pk=pk)
@@ -253,7 +253,7 @@ def _unlink_student(user):
     Student.objects.filter(user=user).update(user=None)
 
 
-@group_required(ADMIN_GROUP_NAME)
+@module_permission_required('accounts', 'delete')
 @require_POST
 def account_delete(request, pk):
     """Xóa tài khoản – chỉ Admin (AJAX)."""
