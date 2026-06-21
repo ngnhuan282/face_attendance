@@ -1,6 +1,27 @@
 from django import forms
+from django.forms.models import ModelChoiceIterator
+from itertools import groupby
 from .models import Student, StudentClass
 from academics.models import Department
+
+
+# ── Grouped choice field: nhóm lớp sinh hoạt theo Ngành ──
+class GroupedStudentClassIterator(ModelChoiceIterator):
+    """Iterator trả về (group_label, [(val, label), ...]) thay vì flat list."""
+    def __iter__(self):
+        if self.field.empty_label is not None:
+            yield ('', self.field.empty_label)
+        queryset = self.queryset.select_related('department').order_by('department__name', 'class_code')
+        for dept, items in groupby(queryset, key=lambda x: x.department.name if x.department else '—'):
+            choices = [(self.choice(c)[0], self.choice(c)[1]) for c in items]
+            yield (dept, choices)
+
+
+class GroupedModelChoiceField(forms.ModelChoiceField):
+    iterator = GroupedStudentClassIterator
+
+    def label_from_instance(self, obj):
+        return str(obj)
 
 
 class StudentClassForm(forms.ModelForm):
@@ -58,6 +79,19 @@ class StudentClassForm(forms.ModelForm):
 class StudentForm(forms.ModelForm):
     """Form thêm / sửa sinh viên (có upload ảnh khuôn mặt)."""
 
+    # Override field student_class: dùng grouped choice (nhóm theo Ngành)
+    student_class = GroupedModelChoiceField(
+        queryset=StudentClass.objects.select_related('department').order_by('department__name', 'class_code'),
+        required=False,
+        empty_label='-- Chọn lớp sinh hoạt --',
+        label='Lớp sinh hoạt',
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+            'id': 'id_student_class',
+        }),
+        error_messages={'required': 'Lớp không được để trống.'},
+    )
+
     class Meta:
         model = Student
         fields = [
@@ -65,10 +99,6 @@ class StudentForm(forms.ModelForm):
             'date_of_birth', 'email', 'phone', 'photo', 'is_active',
         ]
         widgets = {
-            'student_class': forms.Select(attrs={
-                'class': 'form-control',
-                'id': 'id_student_class',
-            }),
             'student_id': forms.TextInput(attrs={
                 'class': 'form-control',
                 'id': 'id_student_id',
@@ -105,7 +135,6 @@ class StudentForm(forms.ModelForm):
             }),
         }
         labels = {
-            'student_class': 'Lớp sinh hoạt',
             'student_id': 'Mã sinh viên (MSSV)',
             'full_name': 'Họ tên',
             'date_of_birth': 'Ngày sinh',
@@ -115,9 +144,6 @@ class StudentForm(forms.ModelForm):
             'is_active': 'Đang học',
         }
         error_messages = {
-            'student_class': {
-                'required': 'Lớp không được để trống.',
-            },
             'student_id': {
                 'required': 'Mã sinh viên không được để trống.',
                 'unique': 'Mã sinh viên này đã tồn tại.',

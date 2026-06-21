@@ -5,8 +5,11 @@ from django.db import transaction
 from django.db.models import Q, Count
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST
-import csv
 import io
+from datetime import datetime
+import openpyxl
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+from openpyxl.utils import get_column_letter
 
 from accounts.constants import ADMIN_GROUP_NAME, TEACHER_GROUP_NAME
 from accounts.permissions import group_required
@@ -426,9 +429,9 @@ def student_detail(request, pk):
 
 @group_required(ADMIN_GROUP_NAME)
 def student_import_csv(request):
-    """Import hàng loạt sinh viên từ file CSV.
+    """Import hàng loạt sinh viên từ file Excel (.xlsx).
 
-    Định dạng CSV:
+    Định dạng Excel (các cột theo thứ tự hoặc theo tên header):
         student_id, full_name, date_of_birth, email, phone, class_code
 
     Kết quả trả về JSON với:
@@ -437,7 +440,7 @@ def student_import_csv(request):
         - skipped: số dòng bỏ qua (MSSV đã tồn tại)
 
     GET: Trang form upload
-    POST: Xử lý file CSV
+    POST: Xử lý file Excel
     """
     if request.method == 'GET':
         all_classes = StudentClass.objects.select_related('department').order_by('class_code')
@@ -446,45 +449,39 @@ def student_import_csv(request):
             'all_classes': all_classes,
         })
 
-    # ── POST: xử lý file CSV ──
-    csv_file = request.FILES.get('csv_file')
-    if not csv_file:
-        return JsonResponse({'error': 'Chưa chọn file CSV.'}, status=400)
+    # ── POST: xử lý file Excel ──
+    excel_file = request.FILES.get('csv_file')
+    if not excel_file:
+        return JsonResponse({'error': 'Chưa chọn file Excel.'}, status=400)
 
-    if not csv_file.name.lower().endswith('.csv'):
-        return JsonResponse({'error': 'File phải có định dạng .csv'}, status=400)
+    if not excel_file.name.lower().endswith('.xlsx'):
+        return JsonResponse({'error': 'File phải có định dạng .xlsx (Excel)'}, status=400)
 
-    if csv_file.size > 5 * 1024 * 1024:  # 5MB limit
-        return JsonResponse({'error': 'File quá lớn (tối đa 5MB).'}, status=400)
+    if excel_file.size > 10 * 1024 * 1024:  # 10MB limit
+        return JsonResponse({'error': 'File quá lớn (tối đa 10MB).'}, status=400)
 
-    # Đọc nội dung — thử UTF-8-sig (BOM), rồi UTF-8, rồi latin-1
+    # Đọc file Excel bằng openpyxl
     try:
-        raw = csv_file.read()
-        for enc in ('utf-8-sig', 'utf-8', 'latin-1'):
-            try:
-                content = raw.decode(enc)
-                break
-            except UnicodeDecodeError:
-                continue
-        else:
-            return JsonResponse({'error': 'Không thể đọc file. Vui lòng lưu file với định dạng UTF-8.'}, status=400)
+        wb = openpyxl.load_workbook(io.BytesIO(excel_file.read()), read_only=True, data_only=True)
+        ws = wb.active
     except Exception as e:
-        return JsonResponse({'error': f'Lỗi đọc file: {str(e)}'}, status=400)
+        return JsonResponse({'error': f'Không thể đọc file Excel: {str(e)}'}, status=400)
 
-    reader = csv.DictReader(io.StringIO(content))
+    # Lấy header từ dòng đầu tiên
+    header_row = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 
-    # Kiểm tra header
+    # Kiểm tra header bắt buộc
     required_fields = {'student_id', 'full_name'}
-    if not reader.fieldnames:
-        return JsonResponse({'error': 'File CSV trống hoặc không có header.'}, status=400)
-
-    headers = {str(f).replace('\ufeff', '').strip().lower() for f in reader.fieldnames if f}
-    missing = required_fields - headers
+    headers_set = {h for h in header_row if h}
+    missing = required_fields - headers_set
     if missing:
         return JsonResponse({
-            'error': f'File CSV thiếu cột bắt buộc: {", ".join(sorted(missing))}. '
-                     f'Các cột hiện có: {", ".join(sorted(headers))}'
+            'error': f'File Excel thiếu cột bắt buộc: {", ".join(sorted(missing))}. '
+                     f'Các cột hiện có: {", ".join(h for h in header_row if h)}'
         }, status=400)
+
+    # Tạo mapping: tên cột → index
+    col_map = {name: idx for idx, name in enumerate(header_row) if name}
 
     created_count = 0
     skipped_count = 0
@@ -492,12 +489,20 @@ def student_import_csv(request):
 
     try:
         with transaction.atomic():
-            for row_num, row in enumerate(reader, start=2):
-                # Chuẩn hóa key (bỏ khoảng trắng và ký tự BOM)
-                row = {str(k).replace('\ufeff', '').strip().lower(): (str(v).strip() if v else '') for k, v in row.items() if k}
+            for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                # Bỏ qua hàng trống hoàn toàn
+                if not any(row):
+                    continue
 
-                student_id = row.get('student_id', '').strip()
-                full_name  = row.get('full_name', '').strip()
+                def get_cell(col_name):
+                    idx = col_map.get(col_name)
+                    if idx is None or idx >= len(row):
+                        return ''
+                    val = row[idx]
+                    return str(val).strip() if val is not None else ''
+
+                student_id = get_cell('student_id')
+                full_name  = get_cell('full_name')
 
                 # Validate bắt buộc
                 if not student_id:
@@ -515,7 +520,7 @@ def student_import_csv(request):
 
                 # Lớp sinh hoạt (tùy chọn)
                 student_class = None
-                class_code = row.get('class_code', '').strip()
+                class_code = get_cell('class_code')
                 if class_code:
                     try:
                         student_class = StudentClass.objects.get(class_code=class_code)
@@ -524,23 +529,27 @@ def student_import_csv(request):
                     except StudentClass.MultipleObjectsReturned:
                         student_class = StudentClass.objects.filter(class_code=class_code).first()
 
-                # Ngày sinh (tùy chọn) — chấp nhận dd/mm/yyyy hoặc yyyy-mm-dd
+                # Ngày sinh — openpyxl có thể trả về datetime trực tiếp
                 dob = None
-                dob_str = row.get('date_of_birth', '').strip()
-                if dob_str:
-                    from datetime import datetime
-                    for fmt in ('%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y'):
-                        try:
-                            dob = datetime.strptime(dob_str, fmt).date()
-                            break
-                        except ValueError:
-                            continue
-                    if dob is None:
-                        errors.append({'row': row_num, 'msg': f'{student_id}: Ngày sinh "{dob_str}" không hợp lệ — bỏ qua trường này.'})
+                dob_raw = row[col_map['date_of_birth']] if 'date_of_birth' in col_map and col_map['date_of_birth'] < len(row) else None
+                if dob_raw is not None:
+                    if hasattr(dob_raw, 'date'):
+                        # openpyxl đọc được datetime object trực tiếp
+                        dob = dob_raw.date()
+                    else:
+                        dob_str = str(dob_raw).strip()
+                        if dob_str and dob_str != 'None':
+                            for fmt in ('%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y'):
+                                try:
+                                    dob = datetime.strptime(dob_str, fmt).date()
+                                    break
+                                except ValueError:
+                                    continue
+                            if dob is None:
+                                errors.append({'row': row_num, 'msg': f'{student_id}: Ngày sinh "{dob_str}" không hợp lệ — bỏ qua trường này.'})
 
-                # Email
-                email = row.get('email', '').strip()
-                phone = row.get('phone', '').strip()
+                email = get_cell('email')
+                phone = get_cell('phone')
 
                 try:
                     with transaction.atomic():
@@ -582,39 +591,113 @@ def student_import_csv(request):
 
 @group_required(ADMIN_GROUP_NAME)
 def student_import_csv_template(request):
-    """Tải xuống file CSV mẫu để hướng dẫn import."""
-    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
-    response['Content-Disposition'] = 'attachment; filename="mau_import_sinhvien.csv"'
-    response.write('\ufeff')  # BOM for Excel
+    """Tải xuống file Excel (.xlsx) mẫu để hướng dẫn import."""
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Mẫu Import Sinh Viên'
 
-    writer = csv.writer(response)
-    writer.writerow(['student_id', 'full_name', 'date_of_birth', 'email', 'phone', 'class_code'])
-    writer.writerow(['SV220001', 'Nguyễn Văn A', '01/01/2004', 'sva@email.com', '0901234567', 'DHKTPM17A'])
-    writer.writerow(['SV220002', 'Trần Thị B', '15/03/2004', 'svb@email.com', '0902345678', 'DHKTPM17A'])
-    writer.writerow(['SV220003', 'Lê Văn C', '', '', '', ''])
+    # Styles
+    header_font = Font(bold=True, color='FFFFFF')
+    header_fill = PatternFill(start_color='1A6B3C', end_color='1A6B3C', fill_type='solid')
+    align_center = Alignment(horizontal='center', vertical='center')
+    align_left   = Alignment(horizontal='left',   vertical='center')
+    border = Border(
+        left=Side(border_style='thin', color='000000'),
+        right=Side(border_style='thin', color='000000'),
+        top=Side(border_style='thin', color='000000'),
+        bottom=Side(border_style='thin', color='000000'),
+    )
+
+    # Header row (dòng 1)
+    headers = ['student_id', 'full_name', 'date_of_birth', 'email', 'phone', 'class_code']
+    for col_num, h in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num, value=h)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = align_center
+        cell.border = border
+
+    # Dữ liệu mẫu
+    sample_rows = [
+        ['SV220001', 'Nguyễn Văn A', '01/01/2004', 'sva@email.com', '0901234567', 'DHKTPM17A'],
+        ['SV220002', 'Trần Thị B',   '15/03/2004', 'svb@email.com', '0902345678', 'DHKTPM17A'],
+        ['SV220003', 'Lê Văn C',     '',           '',              '',            ''],
+    ]
+    for row_num, row_data in enumerate(sample_rows, 2):
+        for col_num, val in enumerate(row_data, 1):
+            cell = ws.cell(row=row_num, column=col_num, value=val)
+            cell.border = border
+            cell.alignment = align_center if col_num != 2 else align_left
+
+    # Độ rộng cột
+    col_widths = {'A': 15, 'B': 30, 'C': 15, 'D': 30, 'E': 15, 'F': 20}
+    for col, width in col_widths.items():
+        ws.column_dimensions[col].width = width
+
+    # Freeze header row
+    ws.freeze_panes = 'A2'
+
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    response = HttpResponse(
+        output.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = 'attachment; filename="mau_import_sinhvien.xlsx"'
     return response
 
 
 @group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
 def student_export_excel(request):
-    """Xuất danh sách sinh viên ra file Excel."""
-    import openpyxl
-    from openpyxl.styles import Font, Alignment
-    from django.http import HttpResponse
+    """Xuất danh sách sinh viên ra file Excel với format màu chuẩn."""
+    from django.utils import timezone
 
-    # Khởi tạo workbook
+    # ── Styles ──
+    header_font  = Font(bold=True, color='FFFFFF')
+    header_fill  = PatternFill(start_color='1A6B3C', end_color='1A6B3C', fill_type='solid')
+    active_fill  = PatternFill(start_color='DCFCE7', end_color='DCFCE7', fill_type='solid')
+    active_font  = Font(color='166534')
+    inactive_fill = PatternFill(start_color='FEE2E2', end_color='FEE2E2', fill_type='solid')
+    inactive_font = Font(color='991B1B')
+    align_center = Alignment(horizontal='center', vertical='center')
+    align_left   = Alignment(horizontal='left',   vertical='center')
+    border = Border(
+        left=Side(border_style='thin', color='000000'),
+        right=Side(border_style='thin', color='000000'),
+        top=Side(border_style='thin', color='000000'),
+        bottom=Side(border_style='thin', color='000000'),
+    )
+
+    # ── Workbook ──
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = "DanhSachSinhVien"
+    ws.title = 'Danh Sách Sinh Viên'
 
-    # Header
-    headers = ['STT', 'MSSV', 'Họ Tên', 'Ngày Sinh', 'Email', 'Điện Thoại', 'Lớp Sinh Hoạt', 'Ngành']
-    for col_num, header_title in enumerate(headers, 1):
-        cell = ws.cell(row=1, column=col_num, value=header_title)
-        cell.font = Font(bold=True)
-        cell.alignment = Alignment(horizontal='center', vertical='center')
+    # ── Tiêu đề ──
+    NUM_COLS = 8
+    ws.merge_cells(f'A1:{get_column_letter(NUM_COLS)}1')
+    title_cell = ws.cell(row=1, column=1, value='DANH SÁCH SINH VIÊN')
+    title_cell.font = Font(bold=True, size=14)
+    title_cell.alignment = align_center
 
-    # Lấy dữ liệu giống như bộ lọc ở student_list
+    ws.merge_cells(f'A2:{get_column_letter(NUM_COLS)}2')
+    subtitle_cell = ws.cell(row=2, column=1, value=f"Ngày xuất: {timezone.now().strftime('%d/%m/%Y %H:%M')}")
+    subtitle_cell.font = Font(italic=True)
+    subtitle_cell.alignment = align_center
+
+    # ── Header ──
+    HEADER_ROW = 4
+    headers = ['STT', 'MSSV', 'Họ Tên', 'Ngày Sinh', 'Email', 'Điện Thoại', 'Lớp Sinh Hoạt', 'Trạng Thái']
+    for col_num, h in enumerate(headers, 1):
+        cell = ws.cell(row=HEADER_ROW, column=col_num, value=h)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = align_center
+        cell.border = border
+
+    # ── Query với bộ lọc giống student_list ──
     qs = Student.objects.select_related('student_class', 'student_class__department')
 
     q = request.GET.get('q', '').strip()
@@ -635,30 +718,69 @@ def student_export_excel(request):
 
     qs = qs.order_by('student_class__class_code', 'student_id')
 
-    # Ghi dữ liệu
-    for row_num, student in enumerate(qs, 2):
-        ws.cell(row=row_num, column=1, value=row_num - 1)
-        ws.cell(row=row_num, column=2, value=student.student_id)
-        ws.cell(row=row_num, column=3, value=student.full_name)
-        ws.cell(row=row_num, column=4, value=student.date_of_birth.strftime('%d/%m/%Y') if student.date_of_birth else '')
-        ws.cell(row=row_num, column=5, value=student.email)
-        ws.cell(row=row_num, column=6, value=student.phone)
-        ws.cell(row=row_num, column=7, value=student.student_class.class_code if student.student_class else '')
-        ws.cell(row=row_num, column=8, value=student.student_class.department.name if student.student_class and student.student_class.department else '')
+    # ── Data rows ──
+    for stt, student in enumerate(qs, 1):
+        excel_row = HEADER_ROW + stt
+        is_active = student.is_active
+        status_text = 'Đang học' if is_active else 'Đã nghỉ'
 
-    # Điều chỉnh độ rộng cột
-    ws.column_dimensions['B'].width = 15
-    ws.column_dimensions['C'].width = 30
-    ws.column_dimensions['D'].width = 15
-    ws.column_dimensions['E'].width = 30
-    ws.column_dimensions['F'].width = 15
-    ws.column_dimensions['G'].width = 20
-    ws.column_dimensions['H'].width = 30
+        row_data = [
+            stt,
+            student.student_id,
+            student.full_name,
+            student.date_of_birth.strftime('%d/%m/%Y') if student.date_of_birth else '',
+            student.email,
+            student.phone,
+            student.student_class.class_code if student.student_class else '',
+            status_text,
+        ]
 
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename=danh_sach_sinh_vien.xlsx'
-    wb.save(response)
+        for col_num, val in enumerate(row_data, 1):
+            cell = ws.cell(row=excel_row, column=col_num, value=val)
+            cell.border = border
+            cell.alignment = align_left if col_num in (3, 5) else align_center
 
+            # Tô màu cột trạng thái
+            if col_num == 8:
+                if is_active:
+                    cell.fill = active_fill
+                    cell.font = active_font
+                else:
+                    cell.fill = inactive_fill
+                    cell.font = inactive_font
+
+    # ── Tổng kết ──
+    total_students = qs.count()
+    total_row = HEADER_ROW + total_students + 1
+    summary_fill = PatternFill(start_color='E2EFDA', end_color='E2EFDA', fill_type='solid')
+    summary_font = Font(bold=True, color='166534')
+    ws.merge_cells(f'A{total_row}:G{total_row}')
+    summary_cell = ws.cell(row=total_row, column=1, value=f'Tổng cộng: {total_students} sinh viên')
+    summary_cell.font = summary_font
+    summary_cell.fill = summary_fill
+    summary_cell.border = border
+    summary_cell.alignment = align_center
+    ws.cell(row=total_row, column=8).border = border
+    ws.cell(row=total_row, column=8).fill = summary_fill
+
+    # ── Độ rộng cột ──
+    col_widths = {'A': 6, 'B': 15, 'C': 30, 'D': 15, 'E': 30, 'F': 15, 'G': 20, 'H': 12}
+    for col, width in col_widths.items():
+        ws.column_dimensions[col].width = width
+
+    # Freeze header
+    ws.freeze_panes = f'A{HEADER_ROW + 1}'
+
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    filename = f"danh_sach_sinh_vien_{datetime.now().strftime('%Y%m%d')}.xlsx"
+    response = HttpResponse(
+        output.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
 
 
