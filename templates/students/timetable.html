@@ -204,6 +204,15 @@
                     </div>
                 </div>
                 
+                <div id="pdf-student-info" style="display: none; padding: 24px 24px 0; color: #1f2937;">
+                    <h2 style="text-align: center; margin-bottom: 20px; font-size: 24px; color: #1e40af; font-weight: bold;">THỜI KHÓA BIỂU SINH VIÊN</h2>
+                    <div style="display: flex; gap: 40px; font-size: 16px; margin-bottom: 12px; justify-content: center;">
+                        <div><strong>Họ và tên:</strong> {{ request.user.student.full_name }}</div>
+                        <div><strong>Mã số sinh viên:</strong> {{ request.user.student.student_id }}</div>
+                        <div><strong>Lớp:</strong> {{ request.user.student.student_class.class_code }}</div>
+                    </div>
+                </div>
+                
                 {% if selected_semester %}
                 <div style="padding: 12px 24px; border-bottom: 1px dashed #e5e7eb; background: #f8fafc; font-size: 14px; color: #4b5563; display: flex; align-items: center; gap: 8px;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
@@ -293,20 +302,23 @@ $(document).ready(function() {
 
     $('#btn-export-pdf').on('click', function() {
         var element = document.querySelector('.sp-timetable-card');
+        
+        // Chuẩn bị giao diện cho PDF
+        document.getElementById('pdf-student-info').style.display = 'block';
+        document.querySelector('.sp-timetable-header').style.display = 'none';
+        
         var opt = {
             margin:       [10, 10, 10, 10],
-            filename:     'ThoiKhoaBieu_{{ target_date }}.pdf',
+            filename:     'ThoiKhoaBieu_{{ request.user.student.student_id }}_{{ target_date }}.pdf',
             image:        { type: 'jpeg', quality: 0.98 },
             html2canvas:  { scale: 2, useCORS: true },
             jsPDF:        { unit: 'mm', format: 'a3', orientation: 'landscape' }
         };
         
-        // Hide controls temporarily during PDF generation
-        var oldDisplay = document.querySelector('.sp-timetable-controls').style.display;
-        document.querySelector('.sp-timetable-controls').style.display = 'none';
-        
         html2pdf().set(opt).from(element).save().then(function() {
-            document.querySelector('.sp-timetable-controls').style.display = oldDisplay || 'flex';
+            // Trả lại giao diện web bình thường
+            document.getElementById('pdf-student-info').style.display = 'none';
+            document.querySelector('.sp-timetable-header').style.display = 'flex';
         });
     });
 });
