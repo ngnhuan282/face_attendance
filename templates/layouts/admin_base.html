@@ -68,6 +68,7 @@
                 Sinh Viên
             </a>
             {% endif %}
+            {% if request.can_view_attendance %}
             <a href="{% url 'attendance:demo' %}" class="sidebar-link {% if active_menu == 'attendance' %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="9 11 12 14 22 4"/>
@@ -75,6 +76,7 @@
                 </svg>
                 Điểm Danh
             </a>
+            {% endif %}
             {% if request.can_view_courses %}
             <a href="{% url 'courses:course_list' %}" class="sidebar-link {% if active_menu == 'courses' %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -163,7 +165,9 @@
                 Thời Khóa Biểu
             </a>
 
+            {% if request.can_view_reports or request.can_view_notifications %}
             <div class="sidebar-nav-label">Phân Tích</div>
+            {% if request.can_view_reports %}
             <a href="{% url 'reports:index' %}" class="sidebar-link {% if active_menu == 'reports' %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="20" x2="18" y2="10"/>
@@ -172,13 +176,16 @@
                 </svg>
                 Báo Cáo
             </a>
+            {% endif %}
+            
+            {% if request.can_view_notifications %}
             <a href="{% url 'notifications:list' %}" class="sidebar-link {% if active_menu == 'notifications' %}active{% endif %}"
                style="position:relative;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
                     <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
                 </svg>
-                Cảnh Báo
+                Thông Báo
                 {% if unread_noti_count > 0 %}
                 <span style="
                     display:inline-flex;align-items:center;justify-content:center;
@@ -189,6 +196,8 @@
                 ">{{ unread_noti_count }}</span>
                 {% endif %}
             </a>
+            {% endif %}
+            {% endif %}
 
             {% if request.can_view_permissions %}
             <div class="sidebar-nav-label">Hệ Thống</div>
