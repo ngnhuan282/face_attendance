@@ -219,6 +219,7 @@ const MODULES = [
     {
         group: 'Quản Lý Chính',
         items: [
+            { id: 'dashboard',   label: 'Dashboard',    icon: 'grid',       desc: 'Trang tổng quan thống kê hệ thống' },
             { id: 'accounts',    label: 'Tài Khoản',    icon: 'user',       desc: 'Quản lý người dùng và tài khoản hệ thống' },
             { id: 'students',    label: 'Sinh Viên',    icon: 'users',      desc: 'Thông tin hồ sơ và danh sách sinh viên' },
             { id: 'attendance',  label: 'Điểm Danh',   icon: 'check',      desc: 'Ghi nhận và xem lịch sử điểm danh' },
@@ -248,6 +249,7 @@ const MODULES = [
    ============================================================ */
 const DEFAULT_PERMS = {
     admin: {
+        dashboard:          { view:true,  add:false, edit:false, delete:false },
         accounts:           { view:true,  add:true,  edit:true,  delete:true  },
         students:           { view:true,  add:true,  edit:true,  delete:true  },
         attendance:         { view:true,  add:true,  edit:true,  delete:true  },
@@ -260,6 +262,7 @@ const DEFAULT_PERMS = {
         notifications:      { view:true,  add:true,  edit:true,  delete:true  },
     },
     teacher: {
+        dashboard:          { view:false, add:false, edit:false, delete:false },
         accounts:           { view:false, add:false, edit:false, delete:false },
         students:           { view:true,  add:false, edit:true,  delete:false },
         attendance:         { view:true,  add:true,  edit:true,  delete:false },
@@ -289,6 +292,7 @@ let permState = deepClone(DEFAULT_PERMS);
    SVG ICONS
    ============================================================ */
 const ICONS = {
+    'grid':      '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
     'user':      '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
     'users':     '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
     'check':     '<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',

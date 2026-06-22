@@ -34,7 +34,7 @@
 
         <!-- Navigation -->
         <nav class="sidebar-nav">
-            {% if request.is_admin_group %}
+            {% if request.can_view_dashboard %}
             <div class="sidebar-nav-label">Tổng Quan</div>
             <a href="{% url 'dashboard' %}" class="sidebar-link {% if active_menu == 'dashboard' %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

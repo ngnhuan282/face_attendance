@@ -7,7 +7,7 @@ from django.db.models import Count, Avg, Q, FloatField
 from django.db.models.functions import Cast
 
 from accounts.constants import ADMIN_GROUP_NAME, TEACHER_GROUP_NAME
-from accounts.permissions import group_required
+from accounts.permissions import group_required, module_permission_required
 
 from students.models import Student
 from courses.models import CourseClass
@@ -21,22 +21,14 @@ def home(request):
     return render(request, 'dashboards/home.html')
 
 
-@login_required
+@module_permission_required('dashboard', 'view')
 def dashboard(request):
-    """Dashboard chính – yêu cầu đăng nhập."""
+    """Dashboard chính – yêu cầu quyền xem dashboard."""
     user = request.user
 
     # Sinh viên → chuyển về trang hồ sơ sinh viên
     if hasattr(user, 'student') and user.student is not None:
         return redirect('students:student_profile')
-
-    # Không thuộc nhóm nào → redirect login
-    if not (request.is_admin_group or request.is_teacher_group):
-        return redirect('login')
-
-    if request.is_teacher_group and not request.is_admin_group:
-        # Giảng viên không có quyền xem dashboard thống kê chung
-        return redirect('students:list')
 
     # Nếu là Giảng viên, có thể lọc bớt dữ liệu (ví dụ chỉ lấy các lớp của GV đó)
     # Tuy nhiên, đối với "Tổng Quan" cấp trường, thường Admin thấy tất cả, GV cũng có thể thấy tổng quan

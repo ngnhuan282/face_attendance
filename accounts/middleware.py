@@ -105,6 +105,7 @@ class RoleFlagsMiddleware:
             def _can(module, action='view'):
                 return perms.get(module, {}).get(action, False)
 
+            request.can_view_dashboard          = _can('dashboard')
             request.can_view_accounts           = _can('accounts')
             request.can_view_students           = _can('students')
             request.can_view_attendance         = _can('attendance')

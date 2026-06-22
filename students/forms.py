@@ -206,29 +206,29 @@ class StudentPasswordForm(forms.Form):
     """Form de sinh vien tu doi mat khau."""
 
     current_password = forms.CharField(
-        label='Mat khau hien tai',
+        label='Mật khẩu hiện tại',
         widget=forms.PasswordInput(attrs={
             'class': 'form-control',
             'id': 'id_sv_current_pw',
-            'placeholder': 'Mat khau hien tai',
+            'placeholder': 'Mật khẩu hiện tại',
         }),
     )
     new_password = forms.CharField(
-        label='Mat khau moi',
+        label='Mật khẩu mới',
         widget=forms.PasswordInput(attrs={
             'class': 'form-control',
             'id': 'id_sv_new_pw',
-            'placeholder': 'Mat khau moi',
+            'placeholder': 'Mật khẩu mới',
         }),
         min_length=6,
-        error_messages={'min_length': 'Mat khau moi phai it nhat 6 ky tu.'}
+        error_messages={'min_length': 'Mật khẩu mới phải ít nhất 6 ký tự.'}
     )
     confirm_password = forms.CharField(
-        label='Xac nhan mat khau moi',
+        label='Xác nhận mật khẩu mới',
         widget=forms.PasswordInput(attrs={
             'class': 'form-control',
             'id': 'id_sv_confirm_pw',
-            'placeholder': 'Xac nhan mat khau moi',
+            'placeholder': 'Xác nhận mật khẩu mới',
         }),
     )
 
@@ -244,9 +244,9 @@ class StudentPasswordForm(forms.Form):
 
         if current_pw and self.user_instance:
             if not self.user_instance.check_password(current_pw):
-                self.add_error('current_password', 'Mat khau hien tai khong dung.')
+                self.add_error('current_password', 'Mật khẩu hiện tại không đúng.')
 
         if new_pw and confirm_pw and new_pw != confirm_pw:
-            self.add_error('confirm_password', 'Mat khau xac nhan khong khop.')
+            self.add_error('confirm_password', 'Mật khẩu xác nhận không khớp.')
 
         return cleaned_data
