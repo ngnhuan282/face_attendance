@@ -8,28 +8,30 @@ from .constants import ADMIN_GROUP_NAME, TEACHER_GROUP_NAME, STUDENT_GROUP_NAME
 # Default permissions (fallback nếu DB chưa có record)
 _DEFAULT_PERMS = {
     'admin': {
-        'accounts':      {'view': True,  'add': True,  'edit': True,  'delete': True},
-        'students':      {'view': True,  'add': True,  'edit': True,  'delete': True},
-        'attendance':    {'view': True,  'add': True,  'edit': True,  'delete': True},
-        'courses':       {'view': True,  'add': True,  'edit': True,  'delete': True},
-        'schedules':     {'view': True,  'add': True,  'edit': True,  'delete': True},
-        'academics':     {'view': True,  'add': True,  'edit': True,  'delete': True},
-        'reports':       {'view': True,  'add': True,  'edit': True,  'delete': True},
-        'recognition':   {'view': True,  'add': True,  'edit': True,  'delete': True},
-        'permissions':   {'view': True,  'add': True,  'edit': True,  'delete': True},
-        'notifications': {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'accounts':           {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'students':           {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'attendance':         {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'courses':            {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'schedules':          {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'academics':          {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'faculty_department': {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'reports':            {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'recognition':        {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'permissions':        {'view': True,  'add': True,  'edit': True,  'delete': True},
+        'notifications':      {'view': True,  'add': True,  'edit': True,  'delete': True},
     },
     'teacher': {
-        'accounts':      {'view': False, 'add': False, 'edit': False, 'delete': False},
-        'students':      {'view': False, 'add': False, 'edit': False, 'delete': False},
-        'attendance':    {'view': True,  'add': True,  'edit': True,  'delete': False},
-        'courses':       {'view': False, 'add': False, 'edit': False, 'delete': False},
-        'schedules':     {'view': False, 'add': False, 'edit': False, 'delete': False},
-        'academics':     {'view': False, 'add': False, 'edit': False, 'delete': False},
-        'reports':       {'view': False, 'add': False, 'edit': False, 'delete': False},
-        'recognition':   {'view': True,  'add': False, 'edit': False, 'delete': False},
-        'permissions':   {'view': False, 'add': False, 'edit': False, 'delete': False},
-        'notifications': {'view': True,  'add': True,  'edit': False, 'delete': False},
+        'accounts':           {'view': False, 'add': False, 'edit': False, 'delete': False},
+        'students':           {'view': False, 'add': False, 'edit': False, 'delete': False},
+        'attendance':         {'view': True,  'add': True,  'edit': True,  'delete': False},
+        'courses':            {'view': False, 'add': False, 'edit': False, 'delete': False},
+        'schedules':          {'view': False, 'add': False, 'edit': False, 'delete': False},
+        'academics':          {'view': False, 'add': False, 'edit': False, 'delete': False},
+        'faculty_department': {'view': False, 'add': False, 'edit': False, 'delete': False},
+        'reports':            {'view': False, 'add': False, 'edit': False, 'delete': False},
+        'recognition':        {'view': True,  'add': False, 'edit': False, 'delete': False},
+        'permissions':        {'view': False, 'add': False, 'edit': False, 'delete': False},
+        'notifications':      {'view': True,  'add': True,  'edit': False, 'delete': False},
     },
 }
 
@@ -90,8 +92,8 @@ class RoleFlagsMiddleware:
 
             # Xác định role và load permissions từ DB
             if user.is_superuser or request.is_admin_group:
-                # Admin luôn có full quyền, không cần đọc DB
-                perms = _DEFAULT_PERMS['admin']
+                # Admin: merge _DEFAULT_PERMS với DB (đảm bảo module mới luôn có)
+                perms = _get_role_perms('admin')
             elif request.is_teacher_group:
                 perms = _get_role_perms('teacher')
             else:
@@ -103,16 +105,17 @@ class RoleFlagsMiddleware:
             def _can(module, action='view'):
                 return perms.get(module, {}).get(action, False)
 
-            request.can_view_accounts      = _can('accounts')
-            request.can_view_students      = _can('students')
-            request.can_view_attendance    = _can('attendance')
-            request.can_view_courses       = _can('courses')
-            request.can_view_schedules     = _can('schedules')
-            request.can_view_academics     = _can('academics')
-            request.can_view_reports       = _can('reports')
-            request.can_view_recognition   = _can('recognition')
-            request.can_view_permissions   = _can('permissions')
-            request.can_view_notifications = _can('notifications')
+            request.can_view_accounts           = _can('accounts')
+            request.can_view_students           = _can('students')
+            request.can_view_attendance         = _can('attendance')
+            request.can_view_courses            = _can('courses')
+            request.can_view_schedules          = _can('schedules')
+            request.can_view_academics          = _can('academics')
+            request.can_view_faculty_department = _can('faculty_department')
+            request.can_view_reports            = _can('reports')
+            request.can_view_recognition        = _can('recognition')
+            request.can_view_permissions        = _can('permissions')
+            request.can_view_notifications      = _can('notifications')
 
             # Shorthand flags cho add/edit/delete (dùng trong templates)
             request.can_add_accounts      = _can('accounts', 'add')
@@ -139,9 +142,12 @@ class RoleFlagsMiddleware:
             request.can_edit_academics    = _can('academics', 'edit')
             request.can_delete_academics  = _can('academics', 'delete')
 
+            request.can_add_faculty_department    = _can('faculty_department', 'add')
+            request.can_edit_faculty_department   = _can('faculty_department', 'edit')
+            request.can_delete_faculty_department = _can('faculty_department', 'delete')
+
             request.can_add_reports       = _can('reports', 'add')
             request.can_edit_reports      = _can('reports', 'edit')
             request.can_delete_reports    = _can('reports', 'delete')
 
         return self.get_response(request)
-

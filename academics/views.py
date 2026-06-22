@@ -9,8 +9,8 @@ from django.views.decorators.http import require_http_methods
 
 from accounts.permissions import module_permission_required
 
-from .forms import AcademicYearForm, SemesterForm
-from .models import AcademicYear, Semester
+from .forms import AcademicYearForm, DepartmentForm, FacultyForm, SemesterForm
+from .models import AcademicYear, Department, Faculty, Semester
 
 
 def _sync_active_semester(semester):
@@ -51,6 +51,253 @@ def _ajax_form_error(form):
         },
         status=400,
     )
+
+
+
+# ============================================================
+# FACULTY (KHOA) VIEWS
+# ============================================================
+
+@module_permission_required('faculty_department', 'view')
+def faculty_list(request):
+    search_query = request.GET.get('q', '').strip()
+
+    faculties = (
+        Faculty.objects
+        .annotate(
+            department_count=Count('departments', distinct=True),
+        )
+        .order_by('code')
+    )
+
+    if search_query:
+        from django.db.models import Q
+        faculties = faculties.filter(
+            Q(code__icontains=search_query) | Q(name__icontains=search_query)
+        )
+
+    paginator = Paginator(faculties, 15)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'active_menu': 'faculty_department',
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'total_faculties': Faculty.objects.count(),
+        'total_departments': Department.objects.count(),
+    }
+    return render(request, 'academics/faculty_list.html', context)
+
+
+@module_permission_required('faculty_department', 'add')
+@require_http_methods(['GET', 'POST'])
+def faculty_create(request):
+    if request.method == 'POST':
+        form = FacultyForm(request.POST)
+        if form.is_valid():
+            faculty = form.save()
+            if _is_ajax(request):
+                return JsonResponse({
+                    'success': True,
+                    'message': f'Thêm khoa {faculty.name} thành công.',
+                })
+            messages.success(request, f'Thêm khoa {faculty.name} thành công.')
+            return redirect('academics:faculty_list')
+        if _is_ajax(request):
+            return _ajax_form_error(form)
+    else:
+        form = FacultyForm()
+
+    if _is_ajax(request):
+        return _ajax_form_error(form)
+    return redirect('academics:faculty_list')
+
+
+@module_permission_required('faculty_department', 'edit')
+@require_http_methods(['GET', 'POST'])
+def faculty_edit(request, pk):
+    faculty = get_object_or_404(Faculty, pk=pk)
+
+    if request.method == 'POST':
+        form = FacultyForm(request.POST, instance=faculty)
+        if form.is_valid():
+            faculty = form.save()
+            if _is_ajax(request):
+                return JsonResponse({
+                    'success': True,
+                    'message': f'Cập nhật khoa {faculty.name} thành công.',
+                })
+            messages.success(request, f'Cập nhật khoa {faculty.name} thành công.')
+            return redirect('academics:faculty_list')
+        if _is_ajax(request):
+            return _ajax_form_error(form)
+    else:
+        if _is_ajax(request):
+            return JsonResponse({
+                'success': True,
+                'faculty': {
+                    'pk': faculty.pk,
+                    'code': faculty.code,
+                    'name': faculty.name,
+                }
+            })
+        return redirect('academics:faculty_list')
+
+
+@module_permission_required('faculty_department', 'delete')
+@require_http_methods(['POST'])
+def faculty_delete(request, pk):
+    faculty = get_object_or_404(Faculty, pk=pk)
+    name = faculty.name
+
+    if faculty.departments.exists():
+        if _is_ajax(request):
+            return JsonResponse({'success': False, 'error': 'Không thể xóa khoa đang có ngành.'}, status=400)
+        messages.error(request, 'Không thể xóa khoa đang có ngành.')
+        return redirect('academics:faculty_list')
+
+    try:
+        faculty.delete()
+        if _is_ajax(request):
+            return JsonResponse({'success': True, 'message': f'Xóa khoa {name} thành công.'})
+        messages.success(request, f'Xóa khoa {name} thành công.')
+    except Exception as e:
+        if _is_ajax(request):
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+        messages.error(request, f'Không thể xóa: {e}')
+
+    return redirect('academics:faculty_list')
+
+
+# ============================================================
+# DEPARTMENT (NGÀNH) VIEWS
+# ============================================================
+
+@module_permission_required('faculty_department', 'view')
+def department_list(request):
+    search_query = request.GET.get('q', '').strip()
+    selected_faculty_id = request.GET.get('faculty', '').strip()
+    selected_faculty = None
+
+    departments = (
+        Department.objects
+        .select_related('faculty')
+        .annotate(
+            student_class_count=Count('student_classes', distinct=True),
+        )
+        .order_by('faculty__code', 'code')
+    )
+
+    if selected_faculty_id and selected_faculty_id.isdigit():
+        selected_faculty = Faculty.objects.filter(pk=selected_faculty_id).first()
+        if selected_faculty:
+            departments = departments.filter(faculty=selected_faculty)
+        else:
+            selected_faculty_id = ''
+
+    if search_query:
+        from django.db.models import Q
+        departments = departments.filter(
+            Q(code__icontains=search_query) | Q(name__icontains=search_query)
+        )
+
+    paginator = Paginator(departments, 15)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'active_menu': 'faculty_department',
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'selected_faculty': selected_faculty,
+        'selected_faculty_id': selected_faculty_id,
+        'all_faculties': Faculty.objects.order_by('code'),
+        'total_faculties': Faculty.objects.count(),
+        'total_departments': Department.objects.count(),
+    }
+    return render(request, 'academics/department_list.html', context)
+
+
+@module_permission_required('faculty_department', 'add')
+@require_http_methods(['GET', 'POST'])
+def department_create(request):
+    if request.method == 'POST':
+        form = DepartmentForm(request.POST)
+        if form.is_valid():
+            department = form.save()
+            if _is_ajax(request):
+                return JsonResponse({
+                    'success': True,
+                    'message': f'Thêm ngành {department.name} thành công.',
+                })
+            messages.success(request, f'Thêm ngành {department.name} thành công.')
+            return redirect('academics:department_list')
+        if _is_ajax(request):
+            return _ajax_form_error(form)
+    else:
+        form = DepartmentForm()
+
+    if _is_ajax(request):
+        return _ajax_form_error(form)
+    return redirect('academics:department_list')
+
+
+@module_permission_required('faculty_department', 'edit')
+@require_http_methods(['GET', 'POST'])
+def department_edit(request, pk):
+    department = get_object_or_404(Department.objects.select_related('faculty'), pk=pk)
+
+    if request.method == 'POST':
+        form = DepartmentForm(request.POST, instance=department)
+        if form.is_valid():
+            department = form.save()
+            if _is_ajax(request):
+                return JsonResponse({
+                    'success': True,
+                    'message': f'Cập nhật ngành {department.name} thành công.',
+                })
+            messages.success(request, f'Cập nhật ngành {department.name} thành công.')
+            return redirect('academics:department_list')
+        if _is_ajax(request):
+            return _ajax_form_error(form)
+    else:
+        if _is_ajax(request):
+            return JsonResponse({
+                'success': True,
+                'department': {
+                    'pk': department.pk,
+                    'code': department.code,
+                    'name': department.name,
+                    'faculty_id': department.faculty_id,
+                }
+            })
+        return redirect('academics:department_list')
+
+
+@module_permission_required('faculty_department', 'delete')
+@require_http_methods(['POST'])
+def department_delete(request, pk):
+    department = get_object_or_404(Department, pk=pk)
+    name = department.name
+
+    if department.student_classes.exists():
+        if _is_ajax(request):
+            return JsonResponse({'success': False, 'error': 'Không thể xóa ngành đang có lớp sinh hoạt.'}, status=400)
+        messages.error(request, 'Không thể xóa ngành đang có lớp sinh hoạt.')
+        return redirect('academics:department_list')
+
+    try:
+        department.delete()
+        if _is_ajax(request):
+            return JsonResponse({'success': True, 'message': f'Xóa ngành {name} thành công.'})
+        messages.success(request, f'Xóa ngành {name} thành công.')
+    except Exception as e:
+        if _is_ajax(request):
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+        messages.error(request, f'Không thể xóa: {e}')
+
+    return redirect('academics:department_list')
 
 
 @module_permission_required('academics', 'view')

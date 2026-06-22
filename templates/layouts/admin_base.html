@@ -103,12 +103,19 @@
             {% endif %}
 
             {% if request.can_view_academics %}
+            <a href="{% url 'academics:faculty_list' %}" class="sidebar-link {% if active_menu == 'faculty_department' %}active{% endif %}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                Khoa &amp; Ng&#224;nh
+            </a>
             <a href="{% url 'academics:academic_year_list' %}" class="sidebar-link {% if active_menu == 'academic_years' %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
                     <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
                 </svg>
-                Năm Học
+                N&#259;m H&#7885;c
             </a>
             <a href="{% url 'academics:semester_list' %}" class="sidebar-link {% if active_menu == 'semesters' %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -116,7 +123,7 @@
                     <path d="m3 12 9 5 9-5"/>
                     <path d="m3 17 9 5 9-5"/>
                 </svg>
-                Học Kỳ
+                H&#7885;c K&#7923;
             </a>
             {% endif %}
 

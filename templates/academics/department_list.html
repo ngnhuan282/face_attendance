@@ -1,0 +1,618 @@
+{% extends 'layouts/admin_base.html' %}
+
+{% block title %}EduFace - Quản Lý Ngành{% endblock %}
+{% block page_title %}Quản Lý Ngành{% endblock %}
+{% block breadcrumb %}Học Vụ / Khoa & Ngành / Ngành{% endblock %}
+
+{% block extra_css %}
+<style>
+.fd-tabs {
+    display: flex;
+    gap: 4px;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+.fd-tab {
+    flex: 1;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-muted, #64748b);
+    text-decoration: none;
+    text-align: center;
+    transition: background .15s, color .15s;
+    font-family: inherit;
+}
+.fd-tab.active,
+.fd-tab:hover {
+    background: #fff;
+    color: var(--primary-green, #1a6b3c);
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
+}
+.faculty-badge {
+    display: inline-flex;
+    align-items: center;
+    background: #ede9fe;
+    color: #5b21b6;
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.dept-badge {
+    display: inline-flex;
+    align-items: center;
+    background: #dcfce7;
+    color: #166534;
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 600;
+}
+/* Modal styles */
+.fd-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.5);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+}
+.fd-modal.show { display: flex; }
+.fd-modal-card {
+    width: 500px;
+    max-width: calc(100vw - 24px);
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid var(--border-color, #e5e7eb);
+    box-shadow: 0 20px 50px rgba(0,0,0,.15);
+    padding: 28px;
+}
+.fd-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+.fd-modal-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-dark, #1e293b);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.fd-modal-close {
+    border: none;
+    background: transparent;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--text-muted, #64748b);
+    padding: 4px;
+    border-radius: 6px;
+    transition: background .15s;
+}
+.fd-modal-close:hover { background: #f1f5f9; }
+.fd-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+.fd-field label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dark, #1e293b);
+}
+.fd-field input,
+.fd-field select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 1.5px solid var(--border-color, #e5e7eb);
+    border-radius: 8px;
+    font: inherit;
+    font-size: 14px;
+    color: var(--text-dark, #1e293b);
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+}
+.fd-field input:focus,
+.fd-field select:focus {
+    border-color: var(--primary-green, #1a6b3c);
+    box-shadow: 0 0 0 3px rgba(26,107,60,.1);
+}
+.fd-modal-error {
+    display: none;
+    padding: 10px 14px;
+    background: #fee2e2;
+    border: 1px solid #fca5a5;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    color: #dc2626;
+    font-size: 13px;
+    white-space: pre-line;
+}
+.fd-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+.btn-action-disabled {
+    opacity: .45;
+    cursor: not-allowed !important;
+}
+.filter-faculty-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+</style>
+{% endblock %}
+
+{% block page_content %}
+
+<!-- Tab switch -->
+<div class="fd-tabs">
+    <a href="{% url 'academics:faculty_list' %}" class="fd-tab">
+        🏛️ Khoa ({{ total_faculties }})
+    </a>
+    <a href="{% url 'academics:department_list' %}" class="fd-tab active">
+        📚 Ngành ({{ total_departments }})
+    </a>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#ede9fe;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#5b21b6" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-value">{{ total_faculties }}</div>
+            <div class="stat-label">Tổng Số Khoa</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-value">{{ total_departments }}</div>
+            <div class="stat-label">Tổng Số Ngành</div>
+        </div>
+    </div>
+</div>
+
+<!-- Table card -->
+<div class="table-card">
+    <div class="table-card-header">
+        <div>
+            <div class="table-card-title">Danh Sách Ngành
+                {% if selected_faculty %}<span style="font-size:13px;font-weight:400;color:var(--text-muted);"> — Khoa {{ selected_faculty.name }}</span>{% endif %}
+            </div>
+        </div>
+        <div class="table-toolbar">
+            <form method="get" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <!-- Filter by faculty -->
+                <select name="faculty" style="padding:8px 12px;border:1.5px solid var(--border-color,#e5e7eb);border-radius:8px;font:inherit;font-size:13px;outline:none;color:var(--text-dark);" onchange="this.form.submit()">
+                    <option value="">-- Tất cả khoa --</option>
+                    {% for fac in all_faculties %}
+                    <option value="{{ fac.pk }}" {% if selected_faculty and selected_faculty.pk == fac.pk %}selected{% endif %}>{{ fac.code }} — {{ fac.name }}</option>
+                    {% endfor %}
+                </select>
+                <!-- Search -->
+                <div class="search-input-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input class="search-input" type="text" name="q" placeholder="Tìm mã hoặc tên ngành..." value="{{ search_query }}">
+                </div>
+                <button type="submit" class="btn-secondary" style="padding:8px 12px;font-size:13px;" title="Tìm kiếm">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </button>
+                {% if search_query or selected_faculty_id %}
+                <a href="{% url 'academics:department_list' %}" style="font-size:13px;color:var(--text-muted);text-decoration:none;">Xóa lọc</a>
+                {% endif %}
+            </form>
+            {% if request.user_permissions.faculty_department.add %}
+            <button type="button" class="btn-primary" style="padding:8px 16px;font-size:13px;gap:6px;border:none;cursor:pointer;" onclick="openDepartmentModal()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Thêm Ngành
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <div style="overflow-x:auto;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Mã Ngành</th>
+                    <th>Tên Ngành</th>
+                    <th>Khoa</th>
+                    <th style="text-align:center;">Lớp Sinh Hoạt</th>
+                    <th>Hành Động</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dept in page_obj %}
+                <tr>
+                    <td>
+                        <span class="dept-badge">{{ dept.code }}</span>
+                    </td>
+                    <td style="font-weight:600;color:var(--text-dark);">{{ dept.name }}</td>
+                    <td>
+                        <a href="{% url 'academics:faculty_list' %}?q={{ dept.faculty.code }}" class="faculty-badge" style="text-decoration:none;">{{ dept.faculty.code }}</a>
+                        <span style="font-size:12px;color:var(--text-muted);margin-left:4px;">{{ dept.faculty.name }}</span>
+                    </td>
+                    <td style="text-align:center;">
+                        {% if dept.student_class_count %}
+                        <span style="font-weight:700;color:var(--primary-green,#1a6b3c);">{{ dept.student_class_count }}</span>
+                        {% else %}
+                        <span style="color:var(--text-muted);">0</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="action-btns">
+                            {% if request.user_permissions.faculty_department.edit %}
+                            <button type="button" class="btn-action btn-action-edit"
+                                    data-pk="{{ dept.pk }}"
+                                    data-code="{{ dept.code }}"
+                                    data-name="{{ dept.name }}"
+                                    data-faculty-id="{{ dept.faculty_id }}"
+                                    data-action="{% url 'academics:department_edit' dept.pk %}"
+                                    onclick="openDepartmentModal(this)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                Sửa
+                            </button>
+                            {% endif %}
+                            {% if request.user_permissions.faculty_department.delete %}
+                                {% if dept.student_class_count %}
+                                <button type="button" class="btn-action btn-action-delete btn-action-disabled" title="Không thể xóa ngành đang có lớp sinh hoạt" disabled>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                    Xóa
+                                </button>
+                                {% else %}
+                                <button type="button" class="btn-action btn-action-delete"
+                                        data-action="{% url 'academics:department_delete' dept.pk %}"
+                                        data-name="{{ dept.name }}"
+                                        onclick="openDeleteDeptModal(this)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                    Xóa
+                                </button>
+                                {% endif %}
+                            {% endif %}
+                            {% if not request.user_permissions.faculty_department.edit and not request.user_permissions.faculty_department.delete %}
+                            <span style="font-size:12px;color:var(--text-muted);font-style:italic;">Chỉ xem</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted);">
+                        {% if search_query or selected_faculty %}Không tìm thấy ngành nào phù hợp.{% else %}Chưa có ngành nào.{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="table-card-footer pagination-centered-footer">
+        <div class="footer-info">
+            <span>Hiển thị {{ page_obj.start_index }} - {{ page_obj.end_index }} / {{ page_obj.paginator.count }} ngành</span>
+        </div>
+        <div class="footer-pagination">
+            <div class="pagination-buttons">
+                {% if page_obj.has_previous %}
+                <a href="?page=1{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if selected_faculty_id %}&faculty={{ selected_faculty_id }}{% endif %}" class="btn-secondary" style="padding:6px 12px;font-size:14px;text-decoration:none;font-weight:bold;">&laquo;</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if selected_faculty_id %}&faculty={{ selected_faculty_id }}{% endif %}" class="btn-secondary" style="padding:6px 12px;font-size:14px;text-decoration:none;font-weight:bold;">&lsaquo;</a>
+                {% else %}
+                <span class="btn-secondary" style="padding:6px 12px;font-size:14px;opacity:.5;cursor:not-allowed;font-weight:bold;">&laquo;</span>
+                <span class="btn-secondary" style="padding:6px 12px;font-size:14px;opacity:.5;cursor:not-allowed;font-weight:bold;">&lsaquo;</span>
+                {% endif %}
+                <span style="font-size:13px;font-weight:600;padding:0 8px;">Trang {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if selected_faculty_id %}&faculty={{ selected_faculty_id }}{% endif %}" class="btn-secondary" style="padding:6px 12px;font-size:14px;text-decoration:none;font-weight:bold;">&rsaquo;</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if selected_faculty_id %}&faculty={{ selected_faculty_id }}{% endif %}" class="btn-secondary" style="padding:6px 12px;font-size:14px;text-decoration:none;font-weight:bold;">&raquo;</a>
+                {% else %}
+                <span class="btn-secondary" style="padding:6px 12px;font-size:14px;opacity:.5;cursor:not-allowed;font-weight:bold;">&rsaquo;</span>
+                <span class="btn-secondary" style="padding:6px 12px;font-size:14px;opacity:.5;cursor:not-allowed;font-weight:bold;">&raquo;</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="footer-spacer"></div>
+    </div>
+</div>
+
+<!-- ===== THÊM / SỬA NGÀNH MODAL ===== -->
+<div id="deptModal" class="fd-modal">
+    <div class="fd-modal-card">
+        <div class="fd-modal-header">
+            <h3 id="deptModalTitle" class="fd-modal-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a6b3c" stroke-width="2">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                </svg>
+                Thêm Ngành
+            </h3>
+            <button class="fd-modal-close" onclick="closeDeptModal()">×</button>
+        </div>
+
+        <div id="deptModalError" class="fd-modal-error"></div>
+
+        <form id="deptForm" method="post" action="{% url 'academics:department_create' %}" onsubmit="submitDeptForm(event)" novalidate>
+            {% csrf_token %}
+            <div class="fd-field">
+                <label for="dept_faculty">Khoa <span style="color:#ef4444;">*</span></label>
+                <select id="dept_faculty" name="faculty" required>
+                    <option value="">-- Chọn khoa --</option>
+                    {% for fac in all_faculties %}
+                    <option value="{{ fac.pk }}">{{ fac.code }} — {{ fac.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="fd-field">
+                <label for="dept_code">Mã Ngành <span style="color:#ef4444;">*</span></label>
+                <input type="text" id="dept_code" name="code" placeholder="VD: KTPM" maxlength="10" required>
+            </div>
+            <div class="fd-field">
+                <label for="dept_name">Tên Ngành <span style="color:#ef4444;">*</span></label>
+                <input type="text" id="dept_name" name="name" placeholder="VD: Kỹ Thuật Phần Mềm" maxlength="100" required>
+            </div>
+            <div class="fd-modal-actions">
+                <button type="button" class="btn-secondary" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;" onclick="closeDeptModal()">Hủy</button>
+                <button type="submit" id="deptSubmitBtn" class="btn-primary" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;">Lưu</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ===== XÓA NGÀNH MODAL ===== -->
+<div id="deleteDeptModal" class="fd-modal">
+    <div class="fd-modal-card" style="max-width:400px;">
+        <div class="fd-modal-header">
+            <h3 class="fd-modal-title" style="color:#dc2626;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                </svg>
+                Xác Nhận Xóa
+            </h3>
+            <button class="fd-modal-close" onclick="closeDeleteDeptModal()">×</button>
+        </div>
+        <p style="color:var(--text-medium);margin:0 0 20px;">
+            Bạn có chắc muốn xóa ngành <strong id="deleteDeptName" style="color:var(--text-dark);"></strong> không?
+            <span style="display:block;font-size:12px;color:var(--text-muted);margin-top:6px;">Hành động này không thể hoàn tác.</span>
+        </p>
+        <div id="deleteDeptError" class="fd-modal-error"></div>
+        <form id="deleteDeptForm" method="post" style="display:flex;gap:10px;" novalidate>
+            {% csrf_token %}
+            <button type="submit" class="btn-primary" style="flex:1;padding:10px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:#dc2626;">Có, Xóa</button>
+            <button type="button" class="btn-secondary" style="flex:1;padding:10px;font-size:13px;font-weight:600;border:none;cursor:pointer;" onclick="closeDeleteDeptModal()">Hủy</button>
+        </form>
+    </div>
+</div>
+
+<style>
+@keyframes slideInRight {
+    from { transform: translateX(110%); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes fadeOutRight {
+    from { transform: translateX(0);    opacity: 1; }
+    to   { transform: translateX(110%); opacity: 0; }
+}
+</style>
+
+<script>
+const DEPT_CREATE_URL = "{% url 'academics:department_create' %}";
+
+/* ──────────────────────────────────────────
+   TOAST
+────────────────────────────────────────── */
+function showToast(msg, type = 'success') {
+    const COLORS = { success: '#10b981', error: '#ef4444', warning: '#f59e0b', info: '#3b82f6' };
+    const ICONS = {
+        success: '<polyline points="20 6 9 17 4 12"/>',
+        error:   '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>',
+        warning: '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+        info:    '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
+    };
+    const color = COLORS[type] || COLORS.info;
+    const icon  = ICONS[type]  || ICONS.info;
+
+    const toast = document.createElement('div');
+    toast.style.cssText = [
+        'position:fixed', 'top:20px', 'right:20px', 'z-index:99999',
+        'min-width:280px', 'max-width:400px',
+        'background:#fff', 'border-radius:12px',
+        `border-left:4px solid ${color}`,
+        'box-shadow:0 10px 30px rgba(0,0,0,0.13)',
+        'padding:14px 16px',
+        'display:flex', 'align-items:center', 'gap:10px',
+        'font-size:14px', 'font-weight:500', 'color:#1e293b', 'line-height:1.5',
+        'animation:slideInRight .3s cubic-bezier(.175,.885,.32,1.275)',
+        'cursor:pointer',
+        'overflow:hidden',
+    ].join(';');
+
+    toast.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.5" style="flex-shrink:0">
+            ${icon}
+        </svg>
+        <span style="flex:1">${msg}</span>
+        <button onclick="event.stopPropagation();this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:18px;line-height:1;padding:0 2px;">×</button>
+    `;
+    toast.setAttribute('data-toast', '');
+    toast.addEventListener('click', () => {
+        toast.style.animation = 'fadeOutRight .25s ease forwards';
+        setTimeout(() => toast.remove(), 250);
+    });
+    document.body.appendChild(toast);
+
+    // Animated progress bar
+    const bar = document.createElement('div');
+    bar.style.cssText = `position:absolute;bottom:0;left:0;height:3px;background:${color};border-radius:0 0 0 8px;width:100%`;
+    toast.appendChild(bar);
+
+    const DURATION = 3500;
+    let start = null;
+    (function animate(ts) {
+        if (!start) start = ts;
+        const pct = Math.min(100, ((ts - start) / DURATION) * 100);
+        bar.style.width = (100 - pct) + '%';
+        if (pct < 100) requestAnimationFrame(animate);
+    })(performance.now());
+
+    setTimeout(() => {
+        toast.style.animation = 'fadeOutRight .25s ease forwards';
+        setTimeout(() => toast.remove(), 250);
+    }, DURATION);
+}
+
+function openDepartmentModal(btn) {
+    const modal = document.getElementById('deptModal');
+    const form = document.getElementById('deptForm');
+    const title = document.getElementById('deptModalTitle');
+    const errDiv = document.getElementById('deptModalError');
+    const submitBtn = document.getElementById('deptSubmitBtn');
+
+    errDiv.style.display = 'none';
+    errDiv.textContent = '';
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Lưu';
+    form.reset();
+
+    if (btn) {
+        title.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a6b3c" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> Sửa Ngành`;
+        form.action = btn.dataset.action;
+        document.getElementById('dept_code').value = btn.dataset.code || '';
+        document.getElementById('dept_name').value = btn.dataset.name || '';
+        const select = document.getElementById('dept_faculty');
+        const facultyId = btn.dataset.facultyId;
+        if (facultyId) {
+            for (let opt of select.options) {
+                opt.selected = (opt.value === String(facultyId));
+            }
+        }
+    } else {
+        title.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a6b3c" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> Thêm Ngành`;
+        form.action = DEPT_CREATE_URL;
+        {% if selected_faculty %}
+        const sel = document.getElementById('dept_faculty');
+        for (let opt of sel.options) { opt.selected = (opt.value === "{{ selected_faculty.pk }}"); }
+        {% endif %}
+    }
+    modal.classList.add('show');
+    document.getElementById('dept_code').focus();
+}
+
+function closeDeptModal() {
+    document.getElementById('deptModal').classList.remove('show');
+}
+
+function openDeleteDeptModal(btn) {
+    const modal = document.getElementById('deleteDeptModal');
+    const form = document.getElementById('deleteDeptForm');
+    const errDiv = document.getElementById('deleteDeptError');
+
+    document.getElementById('deleteDeptName').textContent = btn.dataset.name || '';
+    form.action = btn.dataset.action;
+    errDiv.style.display = 'none';
+    errDiv.textContent = '';
+    modal.classList.add('show');
+}
+
+function closeDeleteDeptModal() {
+    document.getElementById('deleteDeptModal').classList.remove('show');
+}
+
+function submitDeptForm(event) {
+    event.preventDefault();
+    const form = event.target;
+    const errDiv = document.getElementById('deptModalError');
+    const submitBtn = document.getElementById('deptSubmitBtn');
+    const isEdit = form.action !== DEPT_CREATE_URL;
+
+    errDiv.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Đang lưu...';
+
+    fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.ok ? r.json() : r.json().then(d => { throw new Error(d.error || 'Lỗi không xác định.'); }))
+    .then(data => {
+        if (data.success) {
+            closeDeptModal();
+            showToast(data.message || (isEdit ? '✅ Cập nhật ngành thành công!' : '✅ Thêm ngành thành công!'), 'success');
+            setTimeout(() => window.location.reload(), 1200);
+        } else { throw new Error(data.error || 'Lỗi không xác định.'); }
+    })
+    .catch(err => {
+        errDiv.textContent = err.message;
+        errDiv.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Lưu';
+        showToast('❌ ' + err.message, 'error');
+    });
+}
+
+document.getElementById('deleteDeptForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const errDiv = document.getElementById('deleteDeptError');
+    const btn = this.querySelector('[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Đang xóa...';
+
+    fetch(this.action, {
+        method: 'POST',
+        body: new FormData(this),
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.ok ? r.json() : r.json().then(d => { throw new Error(d.error || 'Lỗi khi xóa.'); }))
+    .then(data => {
+        if (data.success) {
+            closeDeleteDeptModal();
+            showToast(data.message || '🗑️ Đã xóa ngành thành công!', 'success');
+            setTimeout(() => window.location.reload(), 1200);
+        } else { throw new Error(data.error || 'Lỗi khi xóa.'); }
+    })
+    .catch(err => {
+        errDiv.textContent = err.message;
+        errDiv.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Có, Xóa';
+        showToast('❌ ' + err.message, 'error');
+    });
+});
+
+// Close on backdrop click / Escape
+document.querySelectorAll('.fd-modal').forEach(modal => {
+    modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('show'); });
+});
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') document.querySelectorAll('.fd-modal').forEach(m => m.classList.remove('show'));
+});
+</script>
+{% endblock %}
+
+

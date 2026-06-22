@@ -3,7 +3,82 @@ from datetime import date, timedelta
 
 from django import forms
 
-from .models import AcademicYear, Semester
+from .models import AcademicYear, Department, Faculty, Semester
+
+
+class FacultyForm(forms.ModelForm):
+    class Meta:
+        model = Faculty
+        fields = ['code', 'name']
+        labels = {
+            'code': 'Mã khoa',
+            'name': 'Tên khoa',
+        }
+        widgets = {
+            'code': forms.TextInput(
+                attrs={'class': 'form-control', 'placeholder': 'VD: CNTT'},
+            ),
+            'name': forms.TextInput(
+                attrs={'class': 'form-control', 'placeholder': 'VD: Công Nghệ Thông Tin'},
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['code'].error_messages['required'] = 'Vui lòng nhập mã khoa.'
+        self.fields['name'].error_messages['required'] = 'Vui lòng nhập tên khoa.'
+
+    def clean_code(self):
+        code = self.cleaned_data['code'].strip().upper()
+        qs = Faculty.objects.filter(code=code)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError('Mã khoa này đã tồn tại.')
+        return code
+
+    def clean_name(self):
+        return self.cleaned_data['name'].strip()
+
+
+class DepartmentForm(forms.ModelForm):
+    class Meta:
+        model = Department
+        fields = ['faculty', 'code', 'name']
+        labels = {
+            'faculty': 'Khoa',
+            'code': 'Mã ngành',
+            'name': 'Tên ngành',
+        }
+        widgets = {
+            'faculty': forms.Select(attrs={'class': 'form-control'}),
+            'code': forms.TextInput(
+                attrs={'class': 'form-control', 'placeholder': 'VD: KTPM'},
+            ),
+            'name': forms.TextInput(
+                attrs={'class': 'form-control', 'placeholder': 'VD: Kỹ Thuật Phần Mềm'},
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['faculty'].queryset = Faculty.objects.order_by('code')
+        self.fields['faculty'].empty_label = '-- Chọn khoa --'
+        self.fields['faculty'].error_messages['required'] = 'Vui lòng chọn khoa.'
+        self.fields['code'].error_messages['required'] = 'Vui lòng nhập mã ngành.'
+        self.fields['name'].error_messages['required'] = 'Vui lòng nhập tên ngành.'
+
+    def clean_code(self):
+        code = self.cleaned_data['code'].strip().upper()
+        qs = Department.objects.filter(code=code)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError('Mã ngành này đã tồn tại.')
+        return code
+
+    def clean_name(self):
+        return self.cleaned_data['name'].strip()
 
 
 class AcademicYearForm(forms.ModelForm):
