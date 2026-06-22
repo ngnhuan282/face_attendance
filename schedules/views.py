@@ -53,6 +53,7 @@ def room_create(request):
         except ValueError:
             return JsonResponse({'error': 'Sức chứa phải là một số hợp lệ'}, status=400)
         has_camera = request.POST.get('has_camera') == 'on'
+        campus = request.POST.get('campus', '')
         
         if not room_code:
             return JsonResponse({'error': 'Vui lòng điền mã phòng'}, status=400)
@@ -63,6 +64,7 @@ def room_create(request):
         Room.objects.create(
             room_code=room_code,
             building=building,
+            campus=campus,
             capacity=capacity,
             has_camera=has_camera
         )
@@ -88,6 +90,7 @@ def room_edit(request, pk):
         except ValueError:
             return JsonResponse({'error': 'Sức chứa phải là một số hợp lệ'}, status=400)
         has_camera = request.POST.get('has_camera') == 'on'
+        campus = request.POST.get('campus', '')
         
         if not room_code:
             return JsonResponse({'error': 'Vui lòng điền mã phòng'}, status=400)
@@ -97,6 +100,7 @@ def room_edit(request, pk):
             
         room.room_code = room_code
         room.building = building
+        room.campus = campus
         room.capacity = capacity
         room.has_camera = has_camera
         room.save()

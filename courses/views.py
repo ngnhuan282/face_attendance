@@ -94,6 +94,8 @@ def course_create(request):
             )
             
             messages.success(request, f'Tạo học phần "{course_name}" thành công')
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': True})
             from django.urls import reverse
             return redirect(reverse('courses:course_list') + '?page=999999')
         except Exception as e:
@@ -131,6 +133,11 @@ def course_edit(request, pk):
             
             course.description = request.POST.get('description', course.description)
             
+            from academics.models import Department
+            department_id = request.POST.get('department')
+            if department_id:
+                course.department = get_object_or_404(Department, pk=department_id)
+            
             room_id = request.POST.get('room')
             if room_id:
                 course.room = get_object_or_404(Room, pk=room_id)
@@ -140,6 +147,8 @@ def course_edit(request, pk):
             course.save()
             
             messages.success(request, 'Cập nhật học phần thành công')
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': True})
             return redirect('courses:course_list')
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
@@ -276,15 +285,17 @@ def courseclass_create(request):
                 return JsonResponse({'error': 'Vui lòng điền đầy đủ thông tin'}, status=400)
             
             # Check unique constraint
+            course = get_object_or_404(Course, pk=course_id)
+            from academics.models import Semester
+            semester = get_object_or_404(Semester, pk=semester_id)
+            
             if CourseClass.objects.filter(
-                course_id=course_id,
-                semester_id=semester_id,
+                course=course,
+                semester=semester,
                 class_code=class_code
             ).exists():
-                return JsonResponse({'error': 'Lớp học phần này đã tồn tại'}, status=400)
+                return JsonResponse({'error': f'Mã lớp "{class_code}" đã tồn tại trong học kỳ "{semester.semester_num}" của môn "{course.course_name}"'}, status=400)
             
-            course = get_object_or_404(Course, pk=course_id)
-            semester = get_object_or_404(Semester, pk=semester_id)
             from accounts.models import Teacher
             teacher = get_object_or_404(Teacher, pk=teacher_id)
             
@@ -298,6 +309,8 @@ def courseclass_create(request):
             )
             
             messages.success(request, f'Tạo lớp học phần "{class_code}" thành công')
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': True})
             from django.urls import reverse
             return redirect(reverse('courses:courseclass_list') + '?page=999999')
         except Exception as e:
@@ -344,6 +357,8 @@ def courseclass_edit(request, pk):
             courseclass.save()
             
             messages.success(request, 'Cập nhật lớp học phần thành công')
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': True})
             return redirect('courses:courseclass_list')
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
