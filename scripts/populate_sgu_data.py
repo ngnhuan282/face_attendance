@@ -55,6 +55,7 @@ def run():
     from accounts.models import RolePermission
     from accounts.middleware import _DEFAULT_PERMS
 
+    RolePermission.objects.all().delete()
     for role_name, perms in _DEFAULT_PERMS.items():
         RolePermission.objects.create(role=role_name, permissions=perms)
     print("Role permissions initialized.")

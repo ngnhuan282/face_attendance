@@ -336,10 +336,16 @@ def api_get_permissions(request):
     """API GET – Trả về ma trận quyền hiện tại cho tất cả role."""
     from .models import RolePermission
     import copy
+    # Bắt đầu từ default (bao gồm module mới như faculty_department)
     result = copy.deepcopy(_DEFAULT_PERMS)
+    # Merge với DB: module có trong DB sẽ ghi đè default
     for rp in RolePermission.objects.all():
-        if rp.role in result:
-            result[rp.role] = rp.permissions
+        if rp.role in result and rp.permissions:
+            for module, perms in rp.permissions.items():
+                if module in result[rp.role]:
+                    result[rp.role][module].update(perms)
+                else:
+                    result[rp.role][module] = perms
     return JsonResponse({'permissions': result}, json_dumps_params={'ensure_ascii': False})
 
 
