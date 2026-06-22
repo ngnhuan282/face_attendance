@@ -228,13 +228,15 @@
                                     Xóa
                                 </button>
                                 {% else %}
-                                <form method="post" action="{% url 'academics:academic_year_delete' year.pk %}" style="display: inline;" onsubmit="return confirm('Bạn có chắc muốn xóa năm học {{ year.name|escapejs }} không?');">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn-action btn-action-delete" style="cursor: pointer;">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                                        Xóa
-                                    </button>
-                                </form>
+                                <button type="button"
+                                        class="btn-action btn-action-delete"
+                                        style="cursor: pointer;"
+                                        data-action="{% url 'academics:academic_year_delete' year.pk %}"
+                                        data-name="{{ year.name }}"
+                                        onclick="openDeleteAcademicYearModal(this)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                    Xóa
+                                </button>
                                 {% endif %}
                             {% endif %}
                             {% if not request.user_permissions.academics.edit and not request.user_permissions.academics.delete %}
@@ -316,6 +318,32 @@
     </div>
 </div>
 
+<div id="deleteAcademicYearModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center;">
+    <div class="card" style="max-width: 400px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div class="card-title" style="margin: 0; color: #dc2626;">Xác Nhận Xóa</div>
+            <button type="button" onclick="closeDeleteAcademicYearModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light);">×</button>
+        </div>
+
+        <div style="margin-bottom: 24px; color: var(--text-medium);">
+            Bạn có chắc muốn xóa năm học <strong id="delete_academic_year_name" style="color: var(--text-dark);"></strong> không?
+            <div style="font-size: 12px; color: var(--text-lighter); margin-top: 8px;">Hành động này không thể hoàn tác.</div>
+        </div>
+
+        <div id="deleteAcademicYearError" style="display: none; padding: 12px; background: #fee2e2; border: 1.5px solid #fca5a5; border-radius: 6px; margin-bottom: 16px; color: #dc2626; font-size: 13px;"></div>
+
+        <form method="post" id="deleteAcademicYearForm" style="display: flex; gap: 12px;" novalidate>
+            {% csrf_token %}
+            <button type="submit" class="btn-primary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; background: #dc2626; flex: 1;">
+                Có, Xóa
+            </button>
+            <button type="button" class="btn-secondary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; text-decoration: none; border: none; cursor: pointer; flex: 1;" onclick="closeDeleteAcademicYearModal()">
+                Không, Hủy
+            </button>
+        </form>
+    </div>
+</div>
+
 <script>
 function openAcademicYearModal(button) {
     const modal = document.getElementById('academicYearModal');
@@ -347,6 +375,25 @@ function openAcademicYearModal(button) {
 function closeAcademicYearModal() {
     const modal = document.getElementById('academicYearModal');
     modal.classList.remove('show');
+}
+
+function openDeleteAcademicYearModal(button) {
+    const modal = document.getElementById('deleteAcademicYearModal');
+    const form = document.getElementById('deleteAcademicYearForm');
+    const errorDiv = document.getElementById('deleteAcademicYearError');
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    document.getElementById('delete_academic_year_name').textContent = button.dataset.name || '';
+    form.action = button.dataset.action;
+    errorDiv.style.display = 'none';
+    errorDiv.textContent = '';
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Có, Xóa';
+    modal.style.display = 'flex';
+}
+
+function closeDeleteAcademicYearModal() {
+    document.getElementById('deleteAcademicYearModal').style.display = 'none';
 }
 
 function submitAcademicYearForm(event) {
@@ -396,9 +443,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    const deleteModal = document.getElementById('deleteAcademicYearModal');
+    deleteModal.addEventListener('click', function(event) {
+        if (event.target === deleteModal) {
+            closeDeleteAcademicYearModal();
+        }
+    });
+
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
             closeAcademicYearModal();
+            closeDeleteAcademicYearModal();
         }
     });
 });

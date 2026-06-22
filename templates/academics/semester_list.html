@@ -314,13 +314,15 @@
                                     Xóa
                                 </button>
                                 {% else %}
-                                <form method="post" action="{% url 'academics:semester_delete' semester.pk %}" style="display: inline;" onsubmit="return confirm('Bạn có chắc muốn xóa học kỳ {{ semester|escapejs }} không?');">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn-action btn-action-delete" style="cursor: pointer;">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                                        Xóa
-                                    </button>
-                                </form>
+                                <button type="button"
+                                        class="btn-action btn-action-delete"
+                                        style="cursor: pointer;"
+                                        data-action="{% url 'academics:semester_delete' semester.pk %}"
+                                        data-name="{{ semester }}"
+                                        onclick="openDeleteSemesterModal(this)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                    Xóa
+                                </button>
                                 {% endif %}
                             {% endif %}
                             {% if not request.user_permissions.academics.edit and not request.user_permissions.academics.delete %}
@@ -452,6 +454,32 @@
     </div>
 </div>
 
+<div id="deleteSemesterModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center;">
+    <div class="card" style="max-width: 400px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div class="card-title" style="margin: 0; color: #dc2626;">Xác Nhận Xóa</div>
+            <button type="button" onclick="closeDeleteSemesterModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light);">×</button>
+        </div>
+
+        <div style="margin-bottom: 24px; color: var(--text-medium);">
+            Bạn có chắc muốn xóa học kỳ <strong id="delete_semester_name" style="color: var(--text-dark);"></strong> không?
+            <div style="font-size: 12px; color: var(--text-lighter); margin-top: 8px;">Hành động này không thể hoàn tác.</div>
+        </div>
+
+        <div id="deleteSemesterError" style="display: none; padding: 12px; background: #fee2e2; border: 1.5px solid #fca5a5; border-radius: 6px; margin-bottom: 16px; color: #dc2626; font-size: 13px;"></div>
+
+        <form method="post" id="deleteSemesterForm" style="display: flex; gap: 12px;" novalidate>
+            {% csrf_token %}
+            <button type="submit" class="btn-primary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; background: #dc2626; flex: 1;">
+                Có, Xóa
+            </button>
+            <button type="button" class="btn-secondary" style="padding: 10px 24px; font-size: 13px; font-weight: 600; text-decoration: none; border: none; cursor: pointer; flex: 1;" onclick="closeDeleteSemesterModal()">
+                Không, Hủy
+            </button>
+        </form>
+    </div>
+</div>
+
 <script>
 const selectedAcademicYearId = "{{ selected_year|default:'' }}";
 
@@ -556,6 +584,25 @@ function closeSemesterModal() {
     modal.classList.remove('show');
 }
 
+function openDeleteSemesterModal(button) {
+    const modal = document.getElementById('deleteSemesterModal');
+    const form = document.getElementById('deleteSemesterForm');
+    const errorDiv = document.getElementById('deleteSemesterError');
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    document.getElementById('delete_semester_name').textContent = button.dataset.name || '';
+    form.action = button.dataset.action;
+    errorDiv.style.display = 'none';
+    errorDiv.textContent = '';
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Có, Xóa';
+    modal.style.display = 'flex';
+}
+
+function closeDeleteSemesterModal() {
+    document.getElementById('deleteSemesterModal').style.display = 'none';
+}
+
 function submitSemesterForm(event) {
     event.preventDefault();
     const form = event.target;
@@ -610,10 +657,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    const deleteModal = document.getElementById('deleteSemesterModal');
+    deleteModal.addEventListener('click', function(event) {
+        if (event.target === deleteModal) {
+            closeDeleteSemesterModal();
+        }
+    });
+
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
             closeSemesterModal();
             closeSemesterYearModal();
+            closeDeleteSemesterModal();
         }
     });
 });

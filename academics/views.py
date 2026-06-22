@@ -92,12 +92,13 @@ def academic_year_create(request):
         form = AcademicYearForm(request.POST)
         if form.is_valid():
             academic_year = form.save()
+            success_message = f'Thêm năm học {academic_year.name} thành công.'
+            messages.success(request, success_message)
             if _is_ajax(request):
                 return JsonResponse({
                     'success': True,
-                    'message': f'Thêm năm học {academic_year.name} thành công.',
+                    'message': success_message,
                 })
-            messages.success(request, f'Thêm năm học {academic_year.name} thành công.')
             return redirect('academics:academic_year_list')
         if _is_ajax(request):
             return _ajax_form_error(form)
@@ -124,12 +125,13 @@ def academic_year_edit(request, pk):
         form = AcademicYearForm(request.POST, instance=academic_year)
         if form.is_valid():
             academic_year = form.save()
+            success_message = f'Cập nhật năm học {academic_year.name} thành công.'
+            messages.success(request, success_message)
             if _is_ajax(request):
                 return JsonResponse({
                     'success': True,
-                    'message': f'Cập nhật năm học {academic_year.name} thành công.',
+                    'message': success_message,
                 })
-            messages.success(request, f'Cập nhật năm học {academic_year.name} thành công.')
             return redirect('academics:academic_year_list')
         if _is_ajax(request):
             return _ajax_form_error(form)
@@ -230,12 +232,13 @@ def semester_create(request):
             with transaction.atomic():
                 semester = form.save()
                 _sync_active_semester(semester)
+            success_message = f'Thêm học kỳ {semester} thành công.'
+            messages.success(request, success_message)
             if _is_ajax(request):
                 return JsonResponse({
                     'success': True,
-                    'message': f'Thêm học kỳ {semester} thành công.',
+                    'message': success_message,
                 })
-            messages.success(request, f'Thêm học kỳ {semester} thành công.')
             return redirect('academics:semester_list')
         if _is_ajax(request):
             return _ajax_form_error(form)
@@ -268,12 +271,13 @@ def semester_edit(request, pk):
             with transaction.atomic():
                 semester = form.save()
                 _sync_active_semester(semester)
+            success_message = f'Cập nhật học kỳ {semester} thành công.'
+            messages.success(request, success_message)
             if _is_ajax(request):
                 return JsonResponse({
                     'success': True,
-                    'message': f'Cập nhật học kỳ {semester} thành công.',
+                    'message': success_message,
                 })
-            messages.success(request, f'Cập nhật học kỳ {semester} thành công.')
             return redirect('academics:semester_list')
         if _is_ajax(request):
             return _ajax_form_error(form)

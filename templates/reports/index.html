@@ -34,6 +34,27 @@
             <div class="table-card-title">Danh Sách Lớp Học Phần</div>
             <div style="font-size:13px;color:var(--text-light);margin-top:3px;">{{ selected_sem }}</div>
         </div>
+        <div class="table-toolbar">
+            <form method="get" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <input type="hidden" name="semester" value="{{ selected_sem.pk }}">
+                <div class="search-input-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input class="search-input" type="text" name="search" placeholder="Tìm mã lớp, học phần, giảng viên..." value="{{ search_query }}">
+                </div>
+                <button type="submit" class="btn-secondary" style="padding:8px 12px;font-size:13px;" title="Tìm kiếm">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                </button>
+                {% if search_query %}
+                <a href="{% url 'reports:index' %}?semester={{ selected_sem.pk }}" style="font-size:13px;color:var(--text-muted);text-decoration:none;">Xóa lọc</a>
+                {% endif %}
+            </form>
+        </div>
     </div>
 
     {% if course_classes %}
@@ -91,8 +112,8 @@
             {% if page_obj.has_other_pages %}
             <div class="pagination-buttons">
                 {% if page_obj.has_previous %}
-                <a href="?page=1{% if request.GET.semester %}&semester={{ request.GET.semester }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Về đầu">&laquo;</a>
-                <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.semester %}&semester={{ request.GET.semester }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Trước">&lsaquo;</a>
+                <a href="?page=1{% if request.GET.semester %}&semester={{ request.GET.semester }}{% endif %}{% if search_query %}&search={{ search_query|urlencode }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Về đầu">&laquo;</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.semester %}&semester={{ request.GET.semester }}{% endif %}{% if search_query %}&search={{ search_query|urlencode }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Trước">&lsaquo;</a>
                 {% else %}
                 <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&laquo;</span>
                 <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&lsaquo;</span>
@@ -101,8 +122,8 @@
                 <span style="font-size: 13px; font-weight: 600; padding: 0 8px;">Trang {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
                 
                 {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}{% if request.GET.semester %}&semester={{ request.GET.semester }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Tiếp">&rsaquo;</a>
-                <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.semester %}&semester={{ request.GET.semester }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Về cuối">&raquo;</a>
+                <a href="?page={{ page_obj.next_page_number }}{% if request.GET.semester %}&semester={{ request.GET.semester }}{% endif %}{% if search_query %}&search={{ search_query|urlencode }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Tiếp">&rsaquo;</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.semester %}&semester={{ request.GET.semester }}{% endif %}{% if search_query %}&search={{ search_query|urlencode }}{% endif %}" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; text-decoration: none; font-weight: bold;" title="Về cuối">&raquo;</a>
                 {% else %}
                 <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&rsaquo;</span>
                 <span class="btn-secondary" style="padding: 6px 12px; font-size: 14px; opacity: 0.5; cursor: not-allowed; font-weight: bold;">&raquo;</span>
@@ -114,7 +135,11 @@
     </div>
     {% else %}
     <div style="padding:48px;text-align:center;color:var(--text-light);">
+        {% if search_query %}
+        Không tìm thấy lớp học phần phù hợp.
+        {% else %}
         Chưa có lớp học phần nào trong học kỳ này.
+        {% endif %}
     </div>
     {% endif %}
 </div>

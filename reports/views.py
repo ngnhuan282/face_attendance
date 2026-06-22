@@ -5,6 +5,7 @@ from datetime import datetime
 
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
+from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
@@ -99,6 +100,7 @@ def report_index(request):
     course_classes = CourseClass.objects.none()
 
     sem_id = request.GET.get('semester')
+    search_query = request.GET.get('search', '').strip()
     page_obj = None
     if sem_id:
         selected_sem   = get_object_or_404(Semester, pk=sem_id)
@@ -112,6 +114,15 @@ def report_index(request):
         teacher = _teacher_scope(request)
         if teacher:
             course_classes = course_classes.filter(teacher=teacher)
+        if search_query:
+            course_classes = course_classes.filter(
+                Q(class_code__icontains=search_query) |
+                Q(course__course_code__icontains=search_query) |
+                Q(course__course_name__icontains=search_query) |
+                Q(teacher__user__first_name__icontains=search_query) |
+                Q(teacher__user__last_name__icontains=search_query) |
+                Q(teacher__user__username__icontains=search_query)
+            )
         from django.core.paginator import Paginator
         paginator = Paginator(course_classes, 10)
         page_number = request.GET.get('page', 1)
@@ -122,6 +133,7 @@ def report_index(request):
         'selected_sem'  : selected_sem,
         'course_classes': course_classes,
         'page_obj'      : page_obj,
+        'search_query'  : search_query,
         'active_menu'   : 'reports',
     })
 
