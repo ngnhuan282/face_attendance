@@ -493,6 +493,8 @@
 .badge-orange .badge-dot { background: #ea580c; }
 .badge-gray   { background: #f3f4f6; color: #6b7280; }
 .badge-gray   .badge-dot { background: #9ca3af; }
+.badge-purple { background: #f5f3ff; color: #6d28d9; }
+.badge-purple .badge-dot { background: #7c3aed; }
 
 /* Action buttons */
 .action-btns { display: flex; gap: 6px; justify-content: center; }
