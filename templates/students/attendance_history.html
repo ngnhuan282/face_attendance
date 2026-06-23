@@ -358,9 +358,9 @@
 }
 
 .att-pagination {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    justify-content: space-between;
     gap: 12px;
     padding: 14px 20px;
     border-top: 1px solid #e5e7eb;
@@ -370,6 +370,8 @@
 .att-page-links {
     display: flex;
     gap: 8px;
+    align-items: center;
+    justify-content: center;
 }
 
 .att-page {
@@ -384,11 +386,33 @@
     font-weight: 700;
 }
 
-.att-page.active,
+.att-page-label {
+    color: #111827;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 0 8px;
+    white-space: nowrap;
+}
+
 .att-page:hover {
     background: #1a6b3c;
     border-color: #1a6b3c;
     color: #fff;
+}
+
+.att-page.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.att-pagination-info {
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.att-pagination-spacer {
+    display: block;
 }
 
 @media (max-width: 900px) {
@@ -396,6 +420,19 @@
     .att-pagination {
         align-items: stretch;
         flex-direction: column;
+    }
+
+    .att-pagination {
+        display: flex;
+        text-align: center;
+    }
+
+    .att-pagination-info {
+        text-align: center;
+    }
+
+    .att-pagination-spacer {
+        display: none;
     }
 
     .att-filter-form,
@@ -605,28 +642,33 @@
                     </table>
                 </div>
 
-                {% if history_page_obj.has_other_pages %}
                 <div class="att-pagination">
-                    <div style="color:#6b7280;font-size:13px;">
+                    <div class="att-pagination-info">
                         Hiển thị {{ history_page_obj.start_index }} - {{ history_page_obj.end_index }} / {{ history_page_obj.paginator.count }} buổi
                     </div>
                     <div class="att-page-links">
+                        {% if history_page_obj.has_other_pages %}
                         {% if history_page_obj.has_previous %}
+                        <a class="att-page" href="?page=1{% if selected_semester %}&semester={{ selected_semester.id }}{% endif %}{% if selected_class %}&class={{ selected_class.id }}{% endif %}" title="Về đầu">&laquo;</a>
                         <a class="att-page" href="?page={{ history_page_obj.previous_page_number }}{% if selected_semester %}&semester={{ selected_semester.id }}{% endif %}{% if selected_class %}&class={{ selected_class.id }}{% endif %}">&lsaquo;</a>
+                        {% else %}
+                        <span class="att-page disabled">&laquo;</span>
+                        <span class="att-page disabled">&lsaquo;</span>
                         {% endif %}
-                        {% for num in history_page_obj.paginator.page_range %}
-                            {% if history_page_obj.number == num %}
-                            <span class="att-page active">{{ num }}</span>
-                            {% elif num > history_page_obj.number|add:'-3' and num < history_page_obj.number|add:'3' %}
-                            <a class="att-page" href="?page={{ num }}{% if selected_semester %}&semester={{ selected_semester.id }}{% endif %}{% if selected_class %}&class={{ selected_class.id }}{% endif %}">{{ num }}</a>
-                            {% endif %}
-                        {% endfor %}
+
+                        <span class="att-page-label">Trang {{ history_page_obj.number }} / {{ history_page_obj.paginator.num_pages }}</span>
+
                         {% if history_page_obj.has_next %}
                         <a class="att-page" href="?page={{ history_page_obj.next_page_number }}{% if selected_semester %}&semester={{ selected_semester.id }}{% endif %}{% if selected_class %}&class={{ selected_class.id }}{% endif %}">&rsaquo;</a>
+                        <a class="att-page" href="?page={{ history_page_obj.paginator.num_pages }}{% if selected_semester %}&semester={{ selected_semester.id }}{% endif %}{% if selected_class %}&class={{ selected_class.id }}{% endif %}" title="Về cuối">&raquo;</a>
+                        {% else %}
+                        <span class="att-page disabled">&rsaquo;</span>
+                        <span class="att-page disabled">&raquo;</span>
+                        {% endif %}
                         {% endif %}
                     </div>
+                    <div class="att-pagination-spacer"></div>
                 </div>
-                {% endif %}
             </section>
         </div>
     </main>
