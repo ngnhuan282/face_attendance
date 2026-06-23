@@ -8,6 +8,7 @@ from .constants import ADMIN_GROUP_NAME, TEACHER_GROUP_NAME, STUDENT_GROUP_NAME
 # Default permissions (fallback nếu DB chưa có record)
 _DEFAULT_PERMS = {
     'admin': {
+        'dashboard':          {'view': True,  'add': False, 'edit': False, 'delete': False},
         'accounts':           {'view': True,  'add': True,  'edit': True,  'delete': True},
         'students':           {'view': True,  'add': True,  'edit': True,  'delete': True},
         'attendance':         {'view': True,  'add': True,  'edit': True,  'delete': True},
@@ -21,6 +22,7 @@ _DEFAULT_PERMS = {
         'notifications':      {'view': True,  'add': True,  'edit': True,  'delete': True},
     },
     'teacher': {
+        'dashboard':          {'view': False, 'add': False, 'edit': False, 'delete': False},
         'accounts':           {'view': False, 'add': False, 'edit': False, 'delete': False},
         'students':           {'view': False, 'add': False, 'edit': False, 'delete': False},
         'attendance':         {'view': True,  'add': True,  'edit': True,  'delete': False},

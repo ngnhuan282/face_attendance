@@ -8,12 +8,13 @@ from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
 from dashboards.views import home, dashboard
+from accounts.views import CustomLoginView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
 
     # Auth
-    path('login/', auth_views.LoginView.as_view(
+    path('login/', CustomLoginView.as_view(
         template_name='registration/login.html',
         redirect_authenticated_user=True,
     ), name='login'),

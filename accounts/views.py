@@ -11,6 +11,34 @@ from .constants import ADMIN_GROUP_NAME, TEACHER_GROUP_NAME, STUDENT_GROUP_NAME
 from .permissions import group_required, module_permission_required
 from .models import Teacher
 from .forms import AccountForm, AccountEditForm, TeacherProfileForm
+from django.contrib.auth.views import LoginView
+from django.urls import reverse_lazy
+
+
+class CustomLoginView(LoginView):
+    def get_success_url(self):
+        user = self.request.user
+        
+        # Sinh viên -> Hồ sơ sinh viên
+        if hasattr(user, 'student') and getattr(user, 'student', None) is not None:
+            return reverse_lazy('students:student_profile')
+            
+        # Do RoleFlagsMiddleware chạy trước khi form_valid() login user, 
+        # cờ self.request.is_teacher_group lúc này vẫn thuộc về AnonymousUser.
+        # Ta cần check trực tiếp user.groups:
+        if user.is_superuser:
+            return super().get_success_url()
+            
+        groups = user.groups.values_list('name', flat=True)
+        is_admin = ADMIN_GROUP_NAME in groups
+        is_teacher = TEACHER_GROUP_NAME in groups
+        
+        if is_teacher and not is_admin:
+            return reverse_lazy('attendance:demo')
+            
+        # Admin -> Dashboard (hoặc đường dẫn mặc định trong settings)
+        return super().get_success_url()
+
 
 
 @module_permission_required('accounts', 'view')
