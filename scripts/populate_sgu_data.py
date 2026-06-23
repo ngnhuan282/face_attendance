@@ -6,6 +6,7 @@ import datetime
 import pandas as pd
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.hashers import make_password
+from django.utils import timezone
 
 # Import Django models
 from academics.models import Faculty, Department, AcademicYear, Semester
@@ -13,6 +14,9 @@ from accounts.models import Teacher
 from students.models import StudentClass, Student
 from schedules.models import Room, Schedule
 from courses.models import Course, CourseClass, Enrollment
+from attendance.models import AttendanceSession, AttendanceRecord
+from reports.models import AttendanceReport
+from notifications.models import Notification, NotificationRead
 
 def run():
     print("Starting database population script with Saigon University (SGU) data...")
@@ -23,6 +27,11 @@ def run():
     print("Clearing existing database records in correct order...")
     from accounts.models import RolePermission
     RolePermission.objects.all().delete()
+    NotificationRead.objects.all().delete()
+    Notification.objects.all().delete()
+    AttendanceReport.objects.all().delete()
+    AttendanceRecord.objects.all().delete()
+    AttendanceSession.objects.all().delete()
     Enrollment.objects.all().delete()
     CourseClass.objects.all().delete()
     Course.objects.all().delete()
@@ -607,6 +616,140 @@ def run():
                 )
 
     print(f"Created {Enrollment.objects.count()} Enrollments.")
+
+    def make_aware_datetime(date_value, time_value):
+        naive_dt = datetime.datetime.combine(date_value, time_value)
+        if timezone.is_naive(naive_dt):
+            return timezone.make_aware(naive_dt, timezone.get_current_timezone())
+        return naive_dt
+
+    enrollment_start_at = make_aware_datetime(active_semester.start_date, datetime.time(8, 0))
+    Enrollment.objects.update(enrolled_at=enrollment_start_at)
+
+    # -------------------------------------------------------------
+    # 12. POPULATE SAMPLE ATTENDANCE DATA
+    #     Tạo dữ liệu điểm danh mẫu cho các sinh viên đã được ghi danh.
+    # -------------------------------------------------------------
+    print("Generating sample Attendance Sessions and Records...")
+
+    period_start_times = {
+        1: datetime.time(7, 0),
+        4: datetime.time(9, 35),
+        7: datetime.time(13, 0),
+    }
+
+    def choose_attendance_status(student_id):
+        # Một ít sinh viên có xu hướng vắng nhiều hơn để dữ liệu báo cáo/cảnh báo đa dạng.
+        risk_bucket = int(student_id[-2:]) if student_id[-2:].isdigit() else random.randint(0, 99)
+        if risk_bucket % 10 == 0:
+            return random.choices(
+                ["present", "late", "absent"],
+                weights=[58, 12, 30],
+                k=1
+            )[0]
+        return random.choices(
+            ["present", "late", "absent"],
+            weights=[82, 8, 10],
+            k=1
+        )[0]
+
+    created_sessions = 0
+    created_records = 0
+    today = datetime.date.today()
+
+    for cc in CourseClass.objects.all().select_related("teacher__user"):
+        enrolled_students = list(
+            Student.objects.filter(
+                enrollments__course_class=cc,
+                enrollments__is_active=True,
+                is_active=True,
+            ).distinct()
+        )
+        if not enrolled_students:
+            continue
+
+        completed_schedules = list(
+            Schedule.objects.filter(
+                course_class=cc,
+                date__lte=today,
+            ).order_by("date", "session_number")[:6]
+        )
+        if not completed_schedules:
+            continue
+
+        for schedule in completed_schedules:
+            start_time = period_start_times.get(schedule.start_period, datetime.time(7, 0))
+            started_at = make_aware_datetime(schedule.date, start_time)
+            ended_at = started_at + datetime.timedelta(minutes=105)
+
+            session = AttendanceSession.objects.create(
+                course_class=cc,
+                schedule=schedule,
+                created_by=cc.teacher.user,
+                status="open",
+                note="Dữ liệu điểm danh mẫu được tạo tự động từ script populate_sgu_data.py"
+            )
+            AttendanceSession.objects.filter(pk=session.pk).update(
+                started_at=started_at,
+                ended_at=ended_at,
+                status="closed",
+            )
+            session.started_at = started_at
+            session.ended_at = ended_at
+            session.status = "closed"
+            created_sessions += 1
+
+            records = []
+            for student in enrolled_students:
+                status = choose_attendance_status(student.student_id)
+                if status == "present":
+                    method = "face"
+                    confidence = round(random.uniform(0.82, 0.98), 4)
+                    timestamp = started_at + datetime.timedelta(minutes=random.randint(0, 15))
+                    note = "Nhận diện khuôn mặt tự động"
+                elif status == "late":
+                    method = random.choice(["face", "manual"])
+                    confidence = round(random.uniform(0.76, 0.94), 4) if method == "face" else 0.0
+                    timestamp = started_at + datetime.timedelta(minutes=random.randint(16, 35))
+                    note = "Sinh viên vào lớp trễ"
+                else:
+                    method = "manual"
+                    confidence = 0.0
+                    timestamp = None
+                    note = "Vắng mặt trong buổi học"
+
+                records.append(
+                    AttendanceRecord(
+                        session=session,
+                        student=student,
+                        status=status,
+                        method=method,
+                        confidence=confidence,
+                        timestamp=timestamp,
+                        note=note,
+                    )
+                )
+
+            AttendanceRecord.objects.bulk_create(records, ignore_conflicts=True)
+            created_records += len(records)
+
+    print(f"Created {created_sessions} Attendance Sessions.")
+    print(f"Created {created_records} Attendance Records.")
+
+    print("Refreshing attendance reports and notifications...")
+    from reports.services import refresh_class_reports
+    from notifications.services import check_and_notify
+
+    refreshed_reports = 0
+    refreshed_notifications = 0
+    for cc in CourseClass.objects.all():
+        for report in refresh_class_reports(cc):
+            refreshed_reports += 1
+            if check_and_notify(report.student, cc, report):
+                refreshed_notifications += 1
+
+    print(f"Refreshed {refreshed_reports} Attendance Reports.")
+    print(f"Created/Updated {refreshed_notifications} Notifications.")
     print("Database population completed successfully!")
 
 if __name__ == '__main__':
