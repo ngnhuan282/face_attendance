@@ -5,6 +5,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/student_profile.css' %}?v=2">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
 <style>
 .att-shell {
     display: grid;
@@ -90,6 +91,55 @@
 .att-select:focus {
     border-color: #1a6b3c;
     box-shadow: 0 0 0 3px rgba(26, 107, 60, 0.12);
+}
+
+.att-filter-form .select2-container {
+    min-width: 220px;
+}
+
+.att-filter-form .select2-container .select2-selection--single {
+    height: 40px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    background: #fff;
+}
+
+.att-filter-form .select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #374151;
+    font-size: 14px;
+    line-height: 40px;
+    padding-left: 10px;
+    padding-right: 28px;
+}
+
+.att-filter-form .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 38px;
+    right: 6px;
+}
+
+.att-filter-form .select2-container--default.select2-container--focus .select2-selection--single,
+.att-filter-form .select2-container--default.select2-container--open .select2-selection--single {
+    border-color: #1a6b3c;
+    box-shadow: 0 0 0 3px rgba(26, 107, 60, 0.12);
+}
+
+.select2-dropdown {
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.select2-container--default .select2-search--dropdown .select2-search__field {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    outline: none;
+    padding: 8px 10px;
+}
+
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background: #1a6b3c;
 }
 
 .att-risk {
@@ -349,7 +399,8 @@
     }
 
     .att-filter-form,
-    .att-select {
+    .att-select,
+    .att-filter-form .select2-container {
         width: 100%;
     }
 
@@ -388,7 +439,7 @@
                     </div>
 
                     <form method="get" class="att-filter-form" id="attendanceFilterForm">
-                        <select name="semester" class="att-select" onchange="document.getElementById('attendanceFilterForm').submit()">
+                        <select name="semester" class="att-select select2-filter">
                             {% for semester in semesters %}
                             <option value="{{ semester.id }}" {% if selected_semester and selected_semester.id == semester.id %}selected{% endif %}>
                                 {{ semester }}
@@ -397,7 +448,7 @@
                             <option value="">Chưa có học kỳ</option>
                             {% endfor %}
                         </select>
-                        <select name="class" class="att-select" onchange="document.getElementById('attendanceFilterForm').submit()">
+                        <select name="class" class="att-select select2-filter">
                             <option value="">Tất cả môn học</option>
                             {% for enrollment in enrollments %}
                             <option value="{{ enrollment.course_class.id }}" {% if selected_class and selected_class.id == enrollment.course_class.id %}selected{% endif %}>
@@ -580,4 +631,29 @@
         </div>
     </main>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('.select2-filter').select2({
+        width: 'resolve',
+        minimumResultsForSearch: 0,
+        language: {
+            noResults: function() {
+                return 'Không tìm thấy dữ liệu';
+            },
+            searching: function() {
+                return 'Đang tìm...';
+            }
+        }
+    });
+
+    $('.select2-filter').on('change', function() {
+        document.getElementById('attendanceFilterForm').submit();
+    });
+});
+</script>
 {% endblock %}
