@@ -21,19 +21,25 @@ def home(request):
     return render(request, 'dashboards/home.html')
 
 
-@module_permission_required('dashboard', 'view')
+@login_required
 def dashboard(request):
-    """Dashboard chính – yêu cầu quyền xem dashboard."""
+    """Dashboard chính."""
     user = request.user
 
     # Sinh viên → chuyển về trang hồ sơ sinh viên
     if hasattr(user, 'student') and user.student is not None:
         return redirect('students:student_profile')
 
+    # Nếu không phải sinh viên, kiểm tra quyền xem dashboard
+    if not (user.is_superuser or getattr(request, 'is_admin_group', False) or getattr(request, 'can_view_dashboard', False) or getattr(request, 'user_permissions', {}).get('dashboard', {}).get('view', False)):
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied
+
     # Nếu là Giảng viên, có thể lọc bớt dữ liệu (ví dụ chỉ lấy các lớp của GV đó)
     # Tuy nhiên, đối với "Tổng Quan" cấp trường, thường Admin thấy tất cả, GV cũng có thể thấy tổng quan
     # hoặc chỉ thấy của mình. Ở đây ta ưu tiên tính trên toàn trường (Admin view).
     # Nếu cần thu hẹp cho GV, ta lọc theo `teacher = user.teacher`.
+
     
     is_admin = request.is_admin_group
     teacher = getattr(user, 'teacher', None) if not is_admin else None
