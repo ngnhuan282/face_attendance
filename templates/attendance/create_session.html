@@ -505,13 +505,20 @@
                 <div>
                     <label class="field-label" for="courseClass">Lớp học phần</label>
                     <select class="form-control select2-course-class" id="courseClass" name="course_class_id" required>
-                        <option value="">Chọn lớp học phần</option>
+                        <option value="">{% if active_semester %}Chọn lớp học phần{% else %}Chưa có học kỳ đang áp dụng{% endif %}</option>
                         {% for course_class in course_classes %}
                             <option value="{{ course_class.id }}" {% if selected_session and selected_session.course_class_id == course_class.id %}selected{% endif %}>
                                 {{ course_class.class_code }} - {{ course_class.course.course_name }}
                             </option>
                         {% endfor %}
                     </select>
+                    <div class="capture-status">
+                        {% if active_semester %}
+                            Đang lấy lớp học phần của {{ active_semester }}.
+                        {% else %}
+                            Vào trang Học kỳ để chọn học kỳ đang áp dụng.
+                        {% endif %}
+                    </div>
                 </div>
                 <div>
                     <label class="field-label" for="sessionNote">Ghi chú</label>

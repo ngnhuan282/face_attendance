@@ -18,6 +18,7 @@ from django.views.decorators.http import require_http_methods
 
 from accounts.constants import ADMIN_GROUP_NAME, TEACHER_GROUP_NAME
 from accounts.permissions import group_required
+from academics.models import Semester
 from courses.models import CourseClass, Enrollment
 from recognition.face_detector import FaceDetector, draw_faces, open_webcam
 from recognition.face_matcher import recognize_faces_in_frame, recognize_from_image
@@ -98,10 +99,38 @@ def _teacher_for_request(request):
     return teacher
 
 
+def _active_semester():
+    return (
+        Semester.objects.select_related("academic_year")
+        .filter(is_active=True)
+        .order_by("-academic_year__start_date", "-semester_num")
+        .first()
+    )
+
+
 def _scope_course_classes(request, queryset):
     if _is_teacher_only(request):
         return queryset.filter(teacher=_teacher_for_request(request))
     return queryset
+
+
+def _active_semester_course_classes(request):
+    active_semester = _active_semester()
+    if not active_semester:
+        return CourseClass.objects.none(), None
+
+    course_classes = CourseClass.objects.select_related(
+        "course",
+        "semester",
+        "teacher",
+    ).filter(semester=active_semester).order_by("class_code")
+    return _scope_course_classes(request, course_classes), active_semester
+
+
+def _check_active_semester_course_class(course_class):
+    if not course_class.semester.is_active:
+        raise ValidationError("Lớp học phần không thuộc học kỳ đang áp dụng.")
+    return course_class
 
 
 def _scope_sessions(request, queryset):
@@ -123,12 +152,7 @@ def _check_session_access(request, session):
 
 @group_required(ADMIN_GROUP_NAME, TEACHER_GROUP_NAME)
 def attendance_demo(request):
-    course_classes = _scope_course_classes(
-        request,
-        CourseClass.objects.select_related("course", "semester", "teacher").order_by(
-            "semester", "class_code"
-        ),
-    )
+    course_classes, active_semester = _active_semester_course_classes(request)
     selected_session = None
     students = []
     records_by_student = {}
@@ -142,9 +166,13 @@ def attendance_demo(request):
 
         try:
             if schedule_id:
-                schedule = get_object_or_404(Schedule, pk=schedule_id)
+                schedule = get_object_or_404(
+                    Schedule.objects.select_related("course_class__semester", "course_class__teacher"),
+                    pk=schedule_id,
+                )
                 course_class = schedule.course_class
                 _check_course_class_access(request, course_class)
+                _check_active_semester_course_class(course_class)
                 if hasattr(schedule, 'attendance_session') and schedule.attendance_session:
                     return redirect(f"{reverse('attendance:demo')}?session_id={schedule.attendance_session.id}")
                 selected_session = AttendanceSession.objects.create(
@@ -154,8 +182,12 @@ def attendance_demo(request):
                     note=note,
                 )
             else:
-                course_class = get_object_or_404(CourseClass, pk=course_class_id)
+                course_class = get_object_or_404(
+                    CourseClass.objects.select_related("semester", "teacher"),
+                    pk=course_class_id,
+                )
                 _check_course_class_access(request, course_class)
+                _check_active_semester_course_class(course_class)
                 selected_session = AttendanceSession.objects.create(
                     course_class=course_class,
                     created_by=request.user,
@@ -207,6 +239,7 @@ def attendance_demo(request):
         {
             "active_menu": "attendance",
             "course_classes": course_classes,
+            "active_semester": active_semester,
             "selected_session": selected_session,
             "session_id_json": selected_session.id if selected_session else None,
             "students": students,
@@ -452,12 +485,20 @@ def session_list_create(request):
 
         course_class = _check_course_class_access(
             request,
-            get_object_or_404(CourseClass, pk=data.get("course_class_id")),
+            get_object_or_404(
+                CourseClass.objects.select_related("semester", "teacher"),
+                pk=data.get("course_class_id"),
+            ),
         )
+        _check_active_semester_course_class(course_class)
         schedule = None
         if data.get("schedule_id"):
-            schedule = get_object_or_404(Schedule, pk=data["schedule_id"])
+            schedule = get_object_or_404(
+                Schedule.objects.select_related("course_class__semester", "course_class__teacher"),
+                pk=data["schedule_id"],
+            )
             _check_course_class_access(request, schedule.course_class)
+            _check_active_semester_course_class(schedule.course_class)
 
         session = AttendanceSession.objects.create(
             course_class=course_class,
@@ -510,12 +551,24 @@ def session_detail(request, pk):
             if "course_class_id" in data:
                 session.course_class = _check_course_class_access(
                     request,
-                    get_object_or_404(CourseClass, pk=data["course_class_id"]),
+                    get_object_or_404(
+                        CourseClass.objects.select_related("semester", "teacher"),
+                        pk=data["course_class_id"],
+                    ),
                 )
+                _check_active_semester_course_class(session.course_class)
             if "schedule_id" in data:
-                session.schedule = get_object_or_404(Schedule, pk=data["schedule_id"]) if data["schedule_id"] else None
+                session.schedule = (
+                    get_object_or_404(
+                        Schedule.objects.select_related("course_class__semester", "course_class__teacher"),
+                        pk=data["schedule_id"],
+                    )
+                    if data["schedule_id"]
+                    else None
+                )
                 if session.schedule:
                     _check_course_class_access(request, session.schedule.course_class)
+                    _check_active_semester_course_class(session.schedule.course_class)
             if "status" in data:
                 if data["status"] == "closed" and not data.get("confirm_close"):
                     return _error("Can xac nhan truoc khi ket thuc buoi diem danh.", status=400)
