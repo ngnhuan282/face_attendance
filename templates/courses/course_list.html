@@ -330,46 +330,70 @@ textarea:focus {
     background: #fff !important;
 }
 
-/* Hide original select when Select2 is initialized */
+/* ── Select2 custom theme matching form-card ── */
 select.select2-hidden-accessible {
     display: none !important;
-    width: 0 !important;
-    height: 0 !important;
-    border: none !important;
-    padding: 0 !important;
+    width: 0 !important; height: 0 !important;
+    border: none !important; padding: 0 !important;
 }
-
-/* Tùy chỉnh chiều cao, viền và góc bo của hộp Select2 */
+.select2-container {
+    width: 100% !important;
+}
 .select2-container .select2-selection--single {
-    height: 40px !important; /* Cân đối chiều cao bằng với input thường */
-    border: 1.5px solid var(--border-color, #e5e7eb) !important;
-    border-radius: 6px !important;
+    height: 42px !important;
+    border: 1px solid var(--border, #e2e8f0) !important;
+    border-radius: 8px !important;
+    background: var(--bg-input, #f8fafc) !important;
     display: flex !important;
     align-items: center !important;
-    font-size: 13px !important;
-    font-family: var(--font-base) !important;
+    font-size: 14px !important;
+    font-family: inherit !important;
+    transition: border-color .2s, box-shadow .2s, background-color .2s;
 }
-
-/* Chỉnh khoảng cách chữ bên trong */
 .select2-container--default .select2-selection--single .select2-selection__rendered {
-    padding-left: 12px !important;
-    padding-right: 24px !important;
+    padding-left: 14px !important;
+    padding-right: 30px !important;
     line-height: normal !important;
-    color: var(--text-dark, #1f2937) !important;
+    color: var(--text-dark, #1e293b) !important;
 }
-
-/* Căn chỉnh lại mũi tên thả xuống */
+.select2-container--default .select2-selection--single .select2-selection__placeholder {
+    color: var(--text-muted, #94a3b8) !important;
+}
 .select2-container--default .select2-selection--single .select2-selection__arrow {
-    height: 38px !important;
-    right: 6px !important;
+    height: 40px !important;
+    right: 8px !important;
 }
-
-/* Thêm hiệu ứng phát sáng (focus) màu xanh giống hệt input của bạn khi click vào */
 .select2-container--default.select2-container--focus .select2-selection--single,
-.select2-container--default.select2-container--open .select2-selection--single {
+.select2-container--default.select2-container--open  .select2-selection--single {
     border-color: var(--primary-green, #1a6b3c) !important;
-    box-shadow: 0 0 0 3px rgba(26, 107, 60, 0.1) !important;
+    box-shadow: 0 0 0 3px rgba(26,107,60,0.15) !important;
     background: #fff !important;
+}
+.select2-dropdown {
+    border: 1px solid var(--border, #e2e8f0) !important;
+    border-radius: 8px !important;
+    font-family: inherit !important;
+    font-size: 14px !important;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08) !important;
+    overflow: hidden;
+}
+.select2-container--default .select2-search--dropdown .select2-search__field {
+    border: 1px solid var(--border, #e2e8f0) !important;
+    border-radius: 6px !important;
+    outline: none;
+    padding: 8px 12px;
+    font-family: inherit !important;
+    font-size: 14px !important;
+}
+.select2-container--default .select2-search--dropdown .select2-search__field:focus {
+    border-color: var(--primary-green, #1a6b3c) !important;
+    box-shadow: 0 0 0 2px rgba(26,107,60,0.1);
+}
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background: var(--primary-green, #1a6b3c) !important;
+}
+.select2-results__option {
+    padding: 9px 14px !important;
 }
 </style>
 
@@ -426,11 +450,9 @@ function submitCourseForm(event) {
     })
     .then(response => {
         if (!response.ok) {
-            return response.json().then(data => {
-                throw new Error(data.error || 'Lỗi khi tạo học phần');
-            }).catch(e => {
-                throw new Error('Lỗi máy chủ hoặc dữ liệu không hợp lệ');
-            });
+            return response.json()
+                .catch(() => { throw new Error('Lỗi máy chủ hoặc dữ liệu không hợp lệ'); })
+                .then(data => { throw new Error(data.error || 'Lỗi khi tạo học phần'); });
         }
         // Success - redirect or reload
         window.location.reload();
@@ -460,11 +482,9 @@ function submitEditCourseForm(event) {
     })
     .then(response => {
         if (!response.ok) {
-            return response.json().then(data => {
-                throw new Error(data.error || 'Lỗi khi cập nhật học phần');
-            }).catch(e => {
-                throw new Error('Lỗi máy chủ hoặc dữ liệu không hợp lệ');
-            });
+            return response.json()
+                .catch(() => { throw new Error('Lỗi máy chủ hoặc dữ liệu không hợp lệ'); })
+                .then(data => { throw new Error(data.error || 'Lỗi khi cập nhật học phần'); });
         }
         window.location.reload();
     })
